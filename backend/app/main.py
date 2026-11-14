@@ -1,20 +1,16 @@
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
-from fastapi import FastAPI, Depends, HTTPException
+from copy import deepcopy
+import secrets
+from fastapi import FastAPI, Depends, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select
+from sqlalchemy import select, delete, text
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 from .config import settings
 from .database import Base, engine, get_db
-from .models import Field, ClimateCache, Analysis
-from .schemas import (
-    AnalyzeRequest,
-    CropsResponse,
-    ErrorResponse,
-    FieldCreate,
-    FieldRead,
-    HealthResponse,
-)
+from .models import Field, ClimateCache, Analysis, Campaign, Plan
+from .schemas import FieldCreate, FieldRead, AnalyzeRequest, CampaignCreate, CampaignRead, PlanCreate, PlanRead, PlanUpdate
+from .schemas import CropsResponse, ErrorResponse, HealthResponse
 from .services.nasa import fetch_power
 from .services.rotation import CROPS, CROP_METADATA, evaluate
 
@@ -50,12 +46,12 @@ app = FastAPI(
         'y reglas heurísticas transparentes para comparar estrategias de rotación. '
         'Los puntajes son educativos y no constituyen una recomendación agronómica validada.'
     ),
-    version='0.1.0',
+    version='0.2.0',
     openapi_tags=tags_metadata,
     contact={'name': 'AgroShift AI'},
     lifespan=lifespan,
 )
-app.add_middleware(CORSMiddleware, allow_origins=[x.strip() for x in settings.cors_origins.split(',')], allow_credentials=False, allow_methods=['GET', 'POST'], allow_headers=['Content-Type'])
+app.add_middleware(CORSMiddleware, allow_origins=[x.strip() for x in settings.cors_origins.split(',')], allow_credentials=False, allow_methods=['GET', 'POST', 'PUT', 'DELETE'], allow_headers=['Content-Type', 'X-API-Key'])
 
 @app.get(
     '/api/health',
@@ -67,7 +63,7 @@ app.add_middleware(CORSMiddleware, allow_origins=[x.strip() for x in settings.co
 )
 def health():
     """Verifica que el servicio esté disponible."""
-    return {'status': 'ok', 'service': 'AgroShift AI', 'version': '0.1.0'}
+    return {'status': 'ok', 'service': 'AgroShift AI', 'version': '0.2.0'}
 
 @app.get(
     '/api/crops',
@@ -89,9 +85,8 @@ def crops():
     description='Devuelve hasta las 100 parcelas más recientes, ordenadas por identificador descendente.',
     response_description='Lista de parcelas registradas.',
 )
-def list_fields(db: Session = Depends(get_db)):
-    """Lista las parcelas registradas."""
-    return db.scalars(select(Field).order_by(Field.id.desc()).limit(100)).all()
+def list_fields(limit: int = Query(100, ge=1, le=100), offset: int = Query(0, ge=0), db: Session = Depends(get_db)):
+    return db.scalars(select(Field).order_by(Field.id.desc()).offset(offset).limit(limit)).all()
 
 @app.post(
     '/api/fields',
@@ -157,14 +152,32 @@ async def analyze(payload: AnalyzeRequest, db: Session = Depends(get_db)):
         ClimateCache.grid_lat == grid_lat, ClimateCache.grid_lon == grid_lon,
         ClimateCache.start_year == settings.climate_start_year,
         ClimateCache.end_year == settings.climate_end_year))
-    if cache:
-        climate = cache.payload
+    if cache and cache.payload.get("summary_version") == 2:
+        climate = deepcopy(cache.payload)
     else:
         climate = await fetch_power(grid_lat, grid_lon, settings.climate_start_year, settings.climate_end_year, settings.nasa_timeout_seconds)
-        cache = ClimateCache(grid_lat=grid_lat, grid_lon=grid_lon, start_year=settings.climate_start_year, end_year=settings.climate_end_year, payload=climate)
-        db.add(cache)
-        db.commit()
+        if cache:
+            cache.payload = climate
+        else:
+            cache = ClimateCache(grid_lat=grid_lat, grid_lon=grid_lon, start_year=settings.climate_start_year, end_year=settings.climate_end_year, payload=climate)
+            db.add(cache)
+        try:
+            db.commit()
+        except IntegrityError:
+            # Another request may have inserted the same cache key while NASA was responding.
+            db.rollback()
+            cache = db.scalar(select(ClimateCache).where(
+                ClimateCache.grid_lat == grid_lat, ClimateCache.grid_lon == grid_lon,
+                ClimateCache.start_year == settings.climate_start_year,
+                ClimateCache.end_year == settings.climate_end_year))
+            if cache is None:
+                raise
+            climate = deepcopy(cache.payload)
     result = evaluate(field, climate, payload.priorities.model_dump())
+    campaigns = db.scalars(select(Campaign).where(Campaign.field_id == field.id).order_by(Campaign.start_date)).all()
+    result['history'] = [CampaignRead.model_validate(c).model_dump(mode='json') for c in campaigns]
+    result['field_snapshot'] = FieldRead.model_validate(field).model_dump(mode='json')
+    result['history_note'] = 'Historial registrado como contexto; la línea base futura repite el cultivo actual, no reconstruye campañas pasadas.'
     result['climate']['query_coordinates'] = {'latitude': grid_lat, 'longitude': grid_lon}
     result['climate']['requested_coordinates'] = {'latitude': field.latitude, 'longitude': field.longitude}
     result['climate']['cache_grouping_note'] = 'Coordenadas redondeadas para caché; no equivalen necesariamente al centro de la celda nativa de NASA.'
@@ -188,3 +201,122 @@ def get_analysis(analysis_id: int, db: Session = Depends(get_db)):
     if not result:
         raise HTTPException(404, 'Análisis no encontrado')
     return {'id': result.id, 'created_at': result.created_at, **result.result}
+
+
+@app.middleware('http')
+async def protect_api(request: Request, call_next):
+    if settings.api_key and request.method != 'OPTIONS' and request.url.path != '/api/health':
+        supplied = request.headers.get('X-API-Key', '')
+        if not secrets.compare_digest(supplied.encode(), settings.api_key.encode()):
+            from fastapi.responses import JSONResponse
+            return JSONResponse(status_code=401, content={'detail': 'Credencial de API inválida'})
+    return await call_next(request)
+
+@app.get('/api/ready')
+def ready(db: Session = Depends(get_db)):
+    try:
+        db.execute(text('SELECT 1'))
+    except SQLAlchemyError as exc:
+        raise HTTPException(503, 'Base de datos no disponible') from exc
+    return {'status': 'ready'}
+
+@app.put('/api/fields/{field_id}', response_model=FieldRead)
+def update_field(field_id: int, payload: FieldCreate, db: Session = Depends(get_db)):
+    field = get_field(field_id, db)
+    for key, value in payload.model_dump().items():
+        setattr(field, key, value)
+    db.commit()
+    db.refresh(field)
+    return field
+
+@app.delete('/api/fields/{field_id}', status_code=204)
+def delete_field(field_id: int, db: Session = Depends(get_db)):
+    field = get_field(field_id, db)
+    db.execute(delete(Plan).where(Plan.field_id == field_id))
+    db.execute(delete(Campaign).where(Campaign.field_id == field_id))
+    db.delete(field)
+    db.commit()
+    return Response(status_code=204)
+
+@app.get('/api/fields/{field_id}/campaigns', response_model=list[CampaignRead])
+def list_campaigns(field_id: int, db: Session = Depends(get_db)):
+    get_field(field_id, db)
+    return db.scalars(select(Campaign).where(Campaign.field_id == field_id).order_by(Campaign.start_date)).all()
+
+@app.post('/api/fields/{field_id}/campaigns', response_model=CampaignRead, status_code=201)
+def create_campaign(field_id: int, payload: CampaignCreate, db: Session = Depends(get_db)):
+    # SQLite lacks row locks; reserve the writer before the overlap check.
+    if db.get_bind().dialect.name == 'sqlite':
+        db.execute(text('BEGIN IMMEDIATE'))
+    # Serialize writers per parcel on Postgres to prevent overlapping inserts.
+    field = db.scalar(select(Field).where(Field.id == field_id).with_for_update())
+    if field is None:
+        raise HTTPException(404, 'Parcela no encontrada')
+    overlap = db.scalar(select(Campaign).where(Campaign.field_id == field_id,
+        Campaign.start_date <= payload.end_date, Campaign.end_date >= payload.start_date))
+    if overlap:
+        raise HTTPException(409, 'La campaña se superpone con otra registrada')
+    row = Campaign(field_id=field_id, **payload.model_dump())
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+@app.delete('/api/fields/{field_id}/campaigns/{campaign_id}', status_code=204)
+def delete_campaign(field_id: int, campaign_id: int, db: Session = Depends(get_db)):
+    row = db.get(Campaign, campaign_id)
+    if row is None or row.field_id != field_id:
+        raise HTTPException(404, 'Campaña no encontrada')
+    db.delete(row)
+    db.commit()
+    return Response(status_code=204)
+
+@app.get('/api/fields/{field_id}/analyses')
+def list_analyses(field_id: int, limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0), db: Session = Depends(get_db)):
+    get_field(field_id, db)
+    rows = db.scalars(select(Analysis).where(Analysis.field_id == field_id).order_by(Analysis.id.desc()).offset(offset).limit(limit)).all()
+    return [{'id': r.id, 'created_at': r.created_at, **r.result} for r in rows]
+
+@app.post('/api/plans', response_model=PlanRead, status_code=201)
+def create_plan(payload: PlanCreate, db: Session = Depends(get_db)):
+    analysis = db.get(Analysis, payload.analysis_id)
+    if analysis is None:
+        raise HTTPException(404, 'Análisis no encontrado')
+    strategy = next((s for s in analysis.result['strategies'] if s['id'] == payload.strategy_id), None)
+    if strategy is None:
+        raise HTTPException(422, 'Estrategia ausente del análisis')
+    row = Plan(field_id=analysis.field_id, **payload.model_dump(), snapshot={
+        'strategy': deepcopy(strategy), 'priorities': analysis.priorities,
+        'field': analysis.result.get('field_snapshot'), 'methodology': analysis.result['methodology'],
+        'climate': analysis.result['climate']}, checklist={})
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+@app.get('/api/fields/{field_id}/plans', response_model=list[PlanRead])
+def list_plans(field_id: int, limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0), db: Session = Depends(get_db)):
+    get_field(field_id, db)
+    return db.scalars(select(Plan).where(Plan.field_id == field_id).order_by(Plan.id.desc()).offset(offset).limit(limit)).all()
+
+@app.get('/api/plans/{plan_id}', response_model=PlanRead)
+def get_plan(plan_id: int, db: Session = Depends(get_db)):
+    row = db.get(Plan, plan_id)
+    if row is None:
+        raise HTTPException(404, 'Plan no encontrado')
+    return row
+
+@app.put('/api/plans/{plan_id}', response_model=PlanRead)
+def update_plan(plan_id: int, payload: PlanUpdate, db: Session = Depends(get_db)):
+    row = get_plan(plan_id, db)
+    row.notes = payload.notes
+    row.checklist = payload.checklist
+    db.commit()
+    db.refresh(row)
+    return row
+
+@app.delete('/api/plans/{plan_id}', status_code=204)
+def delete_plan(plan_id: int, db: Session = Depends(get_db)):
+    db.delete(get_plan(plan_id, db))
+    db.commit()
+    return Response(status_code=204)
