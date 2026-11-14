@@ -47,7 +47,7 @@ export function InsightsTab({ parcel }: InsightsTabProps) {
               <span>
                 {item.sourceSummary} · {item.referenceDate}
               </span>
-              <span className="font-semibold text-[#f0c86c]">{item.validationState}</span>
+              <span className="font-semibold text-[var(--agro-warning-text)]">{item.validationState}</span>
             </div>
           </article>
         ))}

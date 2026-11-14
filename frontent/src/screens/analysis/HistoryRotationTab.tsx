@@ -94,7 +94,7 @@ export function HistoryRotationTab({
                 type="checkbox"
                 checked={isFallow}
                 onChange={(e) => setIsFallow(e.target.checked)}
-                className="rounded border-[var(--agro-line)] text-emerald-600"
+                className="rounded border-[var(--agro-line)] text-[var(--agro-success-text)]"
               />
               Período sin cultivo (descanso)
             </label>
@@ -305,7 +305,7 @@ export function HistoryRotationTab({
               <strong>Cobertura y suelo:</strong> {activeScenario.soilNote}
             </p>
           </div>
-          <p className="text-[11px] font-medium text-amber-800 bg-[#40351b] p-2.5 rounded-lg">
+          <p className="text-[11px] font-medium text-[var(--agro-warning-text)] bg-[var(--agro-warning-bg)] p-2.5 rounded-lg">
             {activeScenario.caveat}
           </p>
         </div>

@@ -306,7 +306,7 @@ export function ProfileScreen({
           conceptualización de fusión multisensor (SMAP, ECOSTRESS, GPM, Landsat, MODIS, GEDI y
           SoilGrids).
         </p>
-        <p className="text-[11px] text-amber-800 bg-[#40351b] p-2.5 rounded-xl leading-relaxed">
+        <p className="text-[11px] text-[var(--agro-warning-text)] bg-[var(--agro-warning-bg)] p-2.5 rounded-xl leading-relaxed">
           Todos los indicadores, series temporales y alertas mostrados en esta fase son datos
           demostrativos locales y no representan mediciones oficiales obtenidas en tiempo real.
         </p>

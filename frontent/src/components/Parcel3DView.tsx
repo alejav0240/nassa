@@ -34,7 +34,7 @@ export function Parcel3DView({ parcel }: Parcel3DViewProps) {
       <div className="grid lg:grid-cols-[minmax(170px,0.72fr)_minmax(320px,1.6fr)_minmax(190px,0.82fr)] gap-4 p-4 lg:p-5 items-stretch">
         <aside className="order-2 lg:order-1 space-y-3" aria-label="Información de ubicación">
           <div className="rounded-2xl bg-[var(--agro-surface-soft)] border border-[var(--agro-line)] p-3.5 h-full">
-            <div className="w-9 h-9 rounded-xl bg-emerald-100 text-[var(--agro-lime)] flex items-center justify-center mb-3">
+            <div className="w-9 h-9 rounded-xl bg-[var(--agro-success-bg)] text-[var(--agro-lime)] flex items-center justify-center mb-3">
               <MapPin className="w-4 h-4" />
             </div>
             <p className="text-[10px] uppercase tracking-wide font-bold text-[var(--agro-muted)]">Ubicación</p>
@@ -72,9 +72,9 @@ export function Parcel3DView({ parcel }: Parcel3DViewProps) {
               </svg>
             </div>
           </div>
-          <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 text-[10px] font-bold text-[#315d3a]">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/75 backdrop-blur px-2.5 py-1.5"><Compass className="w-3 h-3" /> Vista 3D referencial</span>
-            <span className="rounded-full bg-white/75 backdrop-blur px-2.5 py-1.5">N ↑</span>
+          <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 text-[10px] font-bold text-[var(--agro-success-text)]">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--agro-surface)] backdrop-blur px-2.5 py-1.5"><Compass className="w-3 h-3" /> Vista 3D referencial</span>
+            <span className="rounded-full bg-[var(--agro-surface)] backdrop-blur px-2.5 py-1.5">N ↑</span>
           </div>
         </div>
 

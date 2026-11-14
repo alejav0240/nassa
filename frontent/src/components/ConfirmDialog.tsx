@@ -28,7 +28,7 @@ export function ConfirmDialog({
     >
       <div className="bg-[var(--agro-surface)] w-full max-w-sm rounded-3xl p-5 shadow-xl border border-[var(--agro-line)] space-y-4">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#442821] text-[#EF4444] flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-full bg-[var(--agro-danger-bg)] text-[var(--agro-danger-text)] flex items-center justify-center shrink-0">
             <AlertTriangle className="w-5 h-5" />
           </div>
           <div>
@@ -49,7 +49,7 @@ export function ConfirmDialog({
           <button
             type="button"
             onClick={onConfirm}
-            className="flex-1 h-11 rounded-xl bg-[#EF4444] hover:bg-red-700 text-white text-sm font-semibold transition-colors"
+            className="flex-1 h-11 rounded-xl bg-[var(--agro-danger-text)] hover:bg-red-700 text-white text-sm font-semibold transition-colors"
           >
             {confirmLabel}
           </button>

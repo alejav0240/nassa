@@ -88,10 +88,10 @@ export function AnalysisScreen({
           role={analysisStatus === 'error' ? 'alert' : 'status'}
           className={`rounded-2xl border px-4 py-3 text-xs ${
             analysisStatus === 'error'
-              ? 'border-red-200 bg-[#442821] text-red-800'
+              ? 'border-red-200 bg-[var(--agro-danger-bg)] text-[var(--agro-danger-text)]'
               : analysisStatus === 'loading'
-                ? 'border-amber-200 bg-[#40351b] text-amber-900'
-                : 'border-emerald-200 bg-[var(--agro-selected)] text-emerald-900'
+                ? 'border-amber-200 bg-[var(--agro-warning-bg)] text-[var(--agro-warning-text)]'
+                : 'border-emerald-200 bg-[var(--agro-selected)] text-[var(--agro-success-text)]'
           }`}
         >
           {analysisStatus === 'loading' && 'Consultando NASA POWER y calculando estrategias…'}
@@ -111,7 +111,7 @@ export function AnalysisScreen({
       )}
 
       {/* Sub-navigation Tabs */}
-      <div role="tablist" aria-label="Secciones del análisis" className="flex items-center gap-1 p-1 bg-slate-200/70 rounded-xl overflow-x-auto no-scrollbar">
+      <div role="tablist" aria-label="Secciones del análisis" className="flex items-center gap-1 p-1 bg-[var(--agro-surface-soft)] rounded-xl overflow-x-auto no-scrollbar">
         {SUB_TABS.map((t) => (
           <button
             key={t.id}

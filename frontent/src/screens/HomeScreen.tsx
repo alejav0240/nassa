@@ -78,7 +78,7 @@ export function HomeScreen({
       source: hasIndicators ? 'Fuente: SMAP' : 'Sin análisis',
       status: hasIndicators ? 'Referencia regional' : 'Pendiente de análisis',
       icon: Droplets,
-      accent: 'text-[#8dd4ef] bg-[#12394a]',
+      accent: 'text-[var(--agro-info-text)] bg-[var(--agro-info-bg)]',
     },
     {
       id: 'temperatura',
@@ -87,7 +87,7 @@ export function HomeScreen({
       source: hasIndicators ? 'Fuente: ECOSTRESS' : 'Sin análisis',
       status: hasIndicators ? 'Observación disponible' : 'Pendiente de análisis',
       icon: Thermometer,
-      accent: 'text-[#f0c86c] bg-[#40351b]',
+      accent: 'text-[var(--agro-warning-text)] bg-[var(--agro-warning-bg)]',
     },
     {
       id: 'precipitacion',
@@ -96,7 +96,7 @@ export function HomeScreen({
       source: hasIndicators ? 'Fuente: GPM' : 'Sin análisis',
       status: hasIndicators ? 'Acumulado del período' : 'Pendiente de análisis',
       icon: CloudRain,
-      accent: 'text-[#8dd4ef] bg-[#12394a]',
+      accent: 'text-[var(--agro-info-text)] bg-[var(--agro-info-bg)]',
     },
     {
       id: 'ndvi',
@@ -169,7 +169,7 @@ export function HomeScreen({
         <div className="flex items-center justify-between gap-2 mt-2">
           <p className="text-sm text-emerald-50/90">Tu campo, más inteligente</p>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2 py-1 text-[10px] font-semibold text-emerald-50 whitespace-nowrap">
-            <span className={`w-1.5 h-1.5 rounded-full ${backendStatus === 'connected' ? 'bg-lime-300' : backendStatus === 'offline' ? 'bg-amber-300' : 'bg-white/70 animate-pulse'}`} />
+            <span className={`w-1.5 h-1.5 rounded-full ${backendStatus === 'connected' ? 'bg-lime-300' : backendStatus === 'offline' ? 'bg-amber-300' : 'bg-[var(--agro-surface)] animate-pulse'}`} />
             {backendStatus === 'connected' ? 'Backend conectado' : backendStatus === 'offline' ? 'Modo local' : 'Conectando…'}
           </span>
           {syncStatus !== 'idle' && (

@@ -227,3 +227,20 @@ html, body { background: var(--agro-canvas); color: var(--agro-text); }
 .theme-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 8px 14px; border: 1px solid var(--agro-line); border-radius: 999px; background: var(--agro-surface); color: var(--agro-text); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
 .theme-toggle:hover { background: var(--agro-selected); }
 .theme-toggle:focus-visible { outline: 2px solid var(--agro-lime); outline-offset: 3px; }
+
+/* Semantic foreground/background pairs prevent mixed light/dark notices. */
+:root {
+  --agro-info-bg: #12394a; --agro-info-text: #a5def4;
+  --agro-warning-bg: #40351b; --agro-warning-text: #ffe099;
+  --agro-danger-bg: #442821; --agro-danger-text: #ffb6ae;
+  --agro-success-bg: #294b2d; --agro-success-text: #b9eea0;
+}
+:root[data-theme="light"] {
+  --agro-info-bg: #e2f2fa; --agro-info-text: #154c68;
+  --agro-warning-bg: #fff2d5; --agro-warning-text: #74500b;
+  --agro-danger-bg: #ffe9e4; --agro-danger-text: #922f27;
+  --agro-success-bg: #e0f1d6; --agro-success-text: #285b25;
+}
+.theme-toggle select { background: var(--agro-surface); color: var(--agro-text); border: 1px solid var(--agro-line); border-radius: 10px; padding: 6px 10px; min-height: 36px; font: inherit; }
+.agro-theme input:not([type="checkbox"]):not([type="range"]):not([type="radio"]), .agro-theme textarea { color: var(--agro-text); background-color: var(--agro-surface); }
+.agro-theme input::placeholder, .agro-theme textarea::placeholder { color: var(--agro-muted); opacity: 1; }

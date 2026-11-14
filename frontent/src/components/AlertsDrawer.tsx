@@ -69,9 +69,9 @@ export function AlertsDrawer({
   };
 
   const getSeverityStyles = (severity: AppAlert['severity']) => {
-    if (severity === 'alert') return 'text-[#EF4444] bg-[#442821]';
-    if (severity === 'warning') return 'text-[#f0c86c] bg-[#40351b]';
-    return 'text-[#8dd4ef] bg-[#12394a]';
+    if (severity === 'alert') return 'text-[var(--agro-danger-text)] bg-[var(--agro-danger-bg)]';
+    if (severity === 'warning') return 'text-[var(--agro-warning-text)] bg-[var(--agro-warning-bg)]';
+    return 'text-[var(--agro-info-text)] bg-[var(--agro-info-bg)]';
   };
 
   return (
@@ -165,7 +165,7 @@ export function AlertsDrawer({
                   <span className="font-semibold text-[var(--agro-text)]">Fuente asociada:</span>{' '}
                   {selectedAlert.source}
                 </p>
-                <p className="text-amber-700 font-medium pt-1">
+                <p className="text-[var(--agro-warning-text)] font-medium pt-1">
                   Aviso: Esta notificación es demostrativa y no predice eventos climáticos reales.
                 </p>
               </div>

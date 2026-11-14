@@ -1,9 +1,10 @@
 import 'leaflet/dist/leaflet.css';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
-import { applyTheme, initialTheme } from './theme/theme';
+import { initializeTheme } from './theme/theme';
 import './index.css';
 
-applyTheme(initialTheme());
+const disposeTheme = initializeTheme();
+if (import.meta.hot) import.meta.hot.dispose(disposeTheme);
 
 createRoot(document.getElementById('root')!).render(<App />);

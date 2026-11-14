@@ -174,7 +174,7 @@ export function ParcelFormModal({
 
         <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4">
           {error && (
-            <div className="p-3 rounded-xl bg-[#442821] border border-red-200 text-xs text-red-700 font-medium">
+            <div className="p-3 rounded-xl bg-[var(--agro-danger-bg)] border border-red-200 text-xs text-[var(--agro-danger-text)] font-medium">
               {error}
             </div>
           )}

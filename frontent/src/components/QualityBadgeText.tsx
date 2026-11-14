@@ -18,17 +18,17 @@ export function QualityIndicator({ quality, compact = false }: QualityIndicatorP
     },
     'Datos parcialmente disponibles': {
       icon: Info,
-      colorClass: 'text-[#8dd4ef]',
+      colorClass: 'text-[var(--agro-info-text)]',
       shortLabel: 'Parcial',
     },
     'Resolución insuficiente': {
       icon: AlertTriangle,
-      colorClass: 'text-[#f0c86c]',
+      colorClass: 'text-[var(--agro-warning-text)]',
       shortLabel: 'Resolución gruesa',
     },
     'Requiere validación local': {
       icon: HelpCircle,
-      colorClass: 'text-[#f0c86c]',
+      colorClass: 'text-[var(--agro-warning-text)]',
       shortLabel: 'Validar en campo',
     },
   };

@@ -37,7 +37,7 @@ export function PolygonMiniMap({ parcel, heightClass = 'h-44' }: PolygonMiniMapP
           />
         )}
       </MapContainer>
-      <div className="absolute bottom-2 left-2 z-[400] bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg text-[11px] font-medium text-[var(--agro-text)] border border-[var(--agro-line)]/80">
+      <div className="absolute bottom-2 left-2 z-[400] bg-[var(--agro-surface)] backdrop-blur-sm px-2.5 py-1 rounded-lg text-[11px] font-medium text-[var(--agro-text)] border border-[var(--agro-line)]/80">
         Mapa base OSM · Polígono referencial
       </div>
     </div>

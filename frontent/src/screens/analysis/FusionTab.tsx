@@ -82,7 +82,7 @@ export function FusionTab({ parcel }: FusionTabProps) {
               <div
                 className={`rounded-xl px-3.5 py-2.5 border text-left ${
                   index === 0
-                    ? 'bg-emerald-50/80 border-emerald-200'
+                    ? 'bg-[var(--agro-success-bg)] border-emerald-200'
                     : index === PIPELINE_STEPS.length - 1
                     ? 'bg-[#166534] text-white border-[#166534]'
                     : 'bg-[var(--agro-surface-soft)] border-[var(--agro-line)]/80'
@@ -240,12 +240,12 @@ export function FusionTab({ parcel }: FusionTabProps) {
 
       {/* Explainable Warnings */}
       <section className="space-y-2.5">
-        <div className="bg-[#40351b] border border-amber-200 rounded-2xl p-4 space-y-2">
+        <div className="bg-[var(--agro-warning-bg)] border border-amber-200 rounded-2xl p-4 space-y-2">
           <div className="flex items-start gap-2.5">
-            <ShieldAlert className="w-5 h-5 text-[#f0c86c] shrink-0 mt-0.5" />
-            <div className="space-y-1.5 text-xs text-amber-950">
+            <ShieldAlert className="w-5 h-5 text-[var(--agro-warning-text)] shrink-0 mt-0.5" />
+            <div className="space-y-1.5 text-xs text-[var(--agro-warning-text)]">
               <p className="font-bold">Advertencias metodológicas y de escala</p>
-              <ul className="list-disc pl-4 space-y-1 text-amber-900 leading-relaxed">
+              <ul className="list-disc pl-4 space-y-1 text-[var(--agro-warning-text)] leading-relaxed">
                 <li>El remuestreo no incrementa la resolución real del sensor.</li>
                 <li>Esta parcela puede ser menor que el tamaño del píxel de algunas fuentes.</li>
                 <li>Se recomienda validación local en campo antes de tomar decisiones.</li>

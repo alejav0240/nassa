@@ -594,7 +594,7 @@ export function MapScreen({
         </div>
 
         {!searchOpen && !isDrawing && (
-          <div className="pointer-events-auto max-w-md bg-white/92 backdrop-blur-md rounded-2xl border border-[var(--agro-line)]/80 shadow-sm px-3.5 py-2.5">
+          <div className="pointer-events-auto max-w-md bg-[var(--agro-surface)] backdrop-blur-md rounded-2xl border border-[var(--agro-line)]/80 shadow-sm px-3.5 py-2.5">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-bold text-[var(--agro-text)]">Mapa de parcelas</p>
@@ -627,7 +627,7 @@ export function MapScreen({
                   className={`min-h-[34px] px-3.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all border ${
                     active
                       ? 'bg-[#166534] text-white border-[#166534] shadow-md shadow-emerald-900/15'
-                      : 'bg-white/92 backdrop-blur-md text-[var(--agro-text)] border-[var(--agro-line)]/80 shadow-xs hover:bg-[var(--agro-surface)]'
+                      : 'bg-[var(--agro-surface)] backdrop-blur-md text-[var(--agro-text)] border-[var(--agro-line)]/80 shadow-xs hover:bg-[var(--agro-surface)]'
                   }`}
                 >
                   {p.name}
@@ -648,7 +648,7 @@ export function MapScreen({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.14 }}
-              className="pointer-events-auto max-w-md bg-white/98 backdrop-blur-md rounded-3xl border border-[var(--agro-line)]/90 shadow-[0_12px_32px_rgba(15,23,42,0.12)] overflow-hidden"
+              className="pointer-events-auto max-w-md bg-[var(--agro-surface)] backdrop-blur-md rounded-3xl border border-[var(--agro-line)]/90 shadow-[0_12px_32px_rgba(15,23,42,0.12)] overflow-hidden"
             >
               <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--agro-line)] text-[11px] font-semibold text-[var(--agro-muted)]">
                 <span>Parcelas y ubicaciones en Bolivia</span>
@@ -674,7 +674,7 @@ export function MapScreen({
                       }
                       setSearchOpen(false);
                     }}
-                    className="w-full px-4 py-3 text-left hover:bg-emerald-50/60 flex items-center gap-3 transition-colors"
+                    className="w-full px-4 py-3 text-left hover:bg-[var(--agro-success-bg)] flex items-center gap-3 transition-colors"
                   >
                     <div className="w-8 h-8 rounded-xl bg-[var(--agro-selected)] text-[var(--agro-lime)] flex items-center justify-center shrink-0">
                       <MapPin className="w-4 h-4" />
@@ -779,7 +779,7 @@ export function MapScreen({
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: 14, scale: 0.96 }}
             transition={{ duration: 0.16 }}
-            className="absolute right-16 top-28 z-[460] w-72 max-w-[calc(100vw-88px)] bg-white/98 backdrop-blur-md rounded-3xl border border-[var(--agro-line)]/90 shadow-[0_14px_34px_rgba(15,23,42,0.14)] p-4 space-y-3"
+            className="absolute right-16 top-28 z-[460] w-72 max-w-[calc(100vw-88px)] bg-[var(--agro-surface)] backdrop-blur-md rounded-3xl border border-[var(--agro-line)]/90 shadow-[0_14px_34px_rgba(15,23,42,0.14)] p-4 space-y-3"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -856,7 +856,7 @@ export function MapScreen({
             >
               <div className="flex items-center justify-between gap-2 text-xs">
                 <span className="font-bold text-[var(--agro-text)]">{currentLayerInfo.name}</span>
-                <span className="text-[10px] font-semibold text-[#f0c86c]">
+                <span className="text-[10px] font-semibold text-[var(--agro-warning-text)]">
                   {currentLayerInfo.source}
                 </span>
               </div>
@@ -874,7 +874,7 @@ export function MapScreen({
                 </div>
               )}
               {isSmallParcelForLayer && (
-                <div className="flex items-center gap-1.5 text-[11px] text-amber-900 bg-amber-50/90 px-2.5 py-1 rounded-xl">
+                <div className="flex items-center gap-1.5 text-[11px] text-[var(--agro-warning-text)] bg-[var(--agro-warning-bg)] px-2.5 py-1 rounded-xl">
                   <AlertTriangle className="w-3.5 h-3.5 text-[#F59E0B] shrink-0" />
                   <span className="leading-snug">
                     La resolución de esta fuente puede no representar con precisión una parcela pequeña.
@@ -891,7 +891,7 @@ export function MapScreen({
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white/98 backdrop-blur-md rounded-3xl p-4 border border-emerald-300 shadow-[0_12px_32px_rgba(15,23,42,0.14)] space-y-3"
+              className="bg-[var(--agro-surface)] backdrop-blur-md rounded-3xl p-4 border border-emerald-300 shadow-[0_12px_32px_rgba(15,23,42,0.14)] space-y-3"
             >
               <div className="flex items-center justify-between gap-2">
                 <div>
@@ -933,7 +933,7 @@ export function MapScreen({
                 </button>
               </div>
               {drawingError && (
-                <p role="alert" className="rounded-xl bg-[#442821] border border-red-200 px-3 py-2 text-[11px] text-red-700">
+                <p role="alert" className="rounded-xl bg-[var(--agro-danger-bg)] border border-red-200 px-3 py-2 text-[11px] text-[var(--agro-danger-text)]">
                   {drawingError}
                 </p>
               )}
@@ -946,7 +946,7 @@ export function MapScreen({
               </p>
             </motion.div>
           ) : parcels.length === 0 ? (
-            <div className="bg-white/98 backdrop-blur-md rounded-3xl p-4 border border-[var(--agro-line)] shadow-xl text-center space-y-2.5">
+            <div className="bg-[var(--agro-surface)] backdrop-blur-md rounded-3xl p-4 border border-[var(--agro-line)] shadow-xl text-center space-y-2.5">
               <p className="text-sm font-bold text-[var(--agro-text)]">
                 Dibuja o registra una parcela para comenzar el monitoreo
               </p>
@@ -978,7 +978,7 @@ export function MapScreen({
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.18 }}
-                className="bg-white/98 backdrop-blur-md rounded-3xl px-4 pt-2.5 pb-4 border border-[var(--agro-line)]/90 shadow-[0_12px_36px_rgba(15,23,42,0.14)] space-y-3"
+                className="bg-[var(--agro-surface)] backdrop-blur-md rounded-3xl px-4 pt-2.5 pb-4 border border-[var(--agro-line)]/90 shadow-[0_12px_36px_rgba(15,23,42,0.14)] space-y-3"
               >
                 {/* Drag Handle Affordance */}
                 <button
@@ -1076,7 +1076,7 @@ export function MapScreen({
                         type="button"
                         whileTap={{ scale: 0.97 }}
                         onClick={() => onAnalyzeParcel(selectedParcel.id)}
-                        className="flex-1 min-h-[42px] px-2.5 rounded-2xl bg-[var(--agro-selected)] hover:bg-emerald-200/80 text-[var(--agro-lime)] text-xs font-semibold flex items-center justify-center gap-1 transition-colors"
+                        className="flex-1 min-h-[42px] px-2.5 rounded-2xl bg-[var(--agro-selected)] hover:bg-[var(--agro-success-bg)] text-[var(--agro-lime)] text-xs font-semibold flex items-center justify-center gap-1 transition-colors"
                       >
                         <BarChart3 className="w-3.5 h-3.5 shrink-0" />
                         <span>Analizar</span>

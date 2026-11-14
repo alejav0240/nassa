@@ -141,11 +141,11 @@ export function SatelliteTab({ parcel, preferences }: SatelliteTabProps) {
           <p className="text-xs font-medium">Cargando serie demostrativa para {parcel.name}...</p>
         </div>
       ) : viewState === 'error' ? (
-        <div className="bg-[#40351b] rounded-2xl p-5 border border-amber-200 space-y-2">
-          <p className="text-sm font-bold text-amber-900">
+        <div className="bg-[var(--agro-warning-bg)] rounded-2xl p-5 border border-amber-200 space-y-2">
+          <p className="text-sm font-bold text-[var(--agro-warning-text)]">
             Datos temporalmente no disponibles (simulación de estado)
           </p>
-          <p className="text-xs text-amber-800">
+          <p className="text-xs text-[var(--agro-warning-text)]">
             La cobertura satelital óptica puede presentar ausencia de datos por nubosidad o mantenimiento del servicio.
           </p>
           <button
@@ -207,7 +207,7 @@ export function SatelliteTab({ parcel, preferences }: SatelliteTabProps) {
                     <h3 className="text-sm font-bold text-[var(--agro-text)]">2. Precipitación mensual</h3>
                     <p className="text-[11px] text-[var(--agro-muted)]">GPM (IMERG) · Acumulado mensual (mm)</p>
                   </div>
-                  <span className="text-xs font-mono font-bold text-[#8dd4ef] tabular-nums">
+                  <span className="text-xs font-mono font-bold text-[var(--agro-info-text)] tabular-nums">
                     {parcel.indicators.precipitationMm.toFixed(1)} mm
                   </span>
                 </div>
@@ -237,7 +237,7 @@ export function SatelliteTab({ parcel, preferences }: SatelliteTabProps) {
                     <h3 className="text-sm font-bold text-[var(--agro-text)]">3. Cambios de temperatura</h3>
                     <p className="text-[11px] text-[var(--agro-muted)]">ECOSTRESS · Radiométrica superficial (°C)</p>
                   </div>
-                  <span className="text-xs font-mono font-bold text-[#f0c86c] tabular-nums">
+                  <span className="text-xs font-mono font-bold text-[var(--agro-warning-text)] tabular-nums">
                     {parcel.indicators.temperatureC.toFixed(1)} °C
                   </span>
                 </div>
@@ -272,7 +272,7 @@ export function SatelliteTab({ parcel, preferences }: SatelliteTabProps) {
                       {preferences.moistureUnit === 'volumetric' ? 'm³/m³' : '%'})
                     </p>
                   </div>
-                  <span className="text-xs font-mono font-bold text-[#8dd4ef] tabular-nums">
+                  <span className="text-xs font-mono font-bold text-[var(--agro-info-text)] tabular-nums">
                     {preferences.moistureUnit === 'volumetric'
                       ? `${parcel.indicators.moistureVolumetric.toFixed(2)} m³/m³`
                       : `${parcel.indicators.moisturePct} %`}
@@ -366,7 +366,7 @@ export function SatelliteTab({ parcel, preferences }: SatelliteTabProps) {
                     <button
                       type="button"
                       onClick={() => setExpandedSource(isOpen ? null : src.id)}
-                      className="w-full p-4 text-left flex items-center justify-between gap-3 hover:bg-slate-50/70"
+                      className="w-full p-4 text-left flex items-center justify-between gap-3 hover:bg-[var(--agro-surface-soft)]"
                     >
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -416,11 +416,11 @@ export function SatelliteTab({ parcel, preferences }: SatelliteTabProps) {
                           {src.lastObservationDate}
                         </p>
                         {src.clarification && (
-                          <p className="text-[#8dd4ef] bg-[#12394a] p-2 rounded-xl font-semibold">
+                          <p className="text-[var(--agro-info-text)] bg-[var(--agro-info-bg)] p-2 rounded-xl font-semibold">
                             Aclaración: {src.clarification}
                           </p>
                         )}
-                        <p className="text-amber-800 bg-[#40351b] p-2.5 rounded-xl">
+                        <p className="text-[var(--agro-warning-text)] bg-[var(--agro-warning-bg)] p-2.5 rounded-xl">
                           <strong>Limitaciones:</strong> {src.limitations}
                         </p>
                       </div>

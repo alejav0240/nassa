@@ -1,23 +1,22 @@
-import { useState } from 'react';
-import { Moon, Sun } from 'lucide-react';
-import { applyTheme, initialTheme, THEME_KEY, type Theme } from '../theme/theme';
+import { useSyncExternalStore } from 'react';
+import { Monitor, Moon, Sun } from 'lucide-react';
+import { getThemePreference, setThemePreference, subscribeTheme, type ThemePreference } from '../theme/theme';
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>(initialTheme);
-  function toggle() {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    applyTheme(next);
-    setTheme(next);
-    try { localStorage.setItem(THEME_KEY, next); } catch { /* Keep session preference. */ }
-  }
+  const preference = useSyncExternalStore(subscribeTheme, getThemePreference);
+  const Icon = preference === 'system' ? Monitor : preference === 'dark' ? Moon : Sun;
   return (
     <div className="theme-toolbar">
-      <button type="button" className="theme-toggle" onClick={toggle}
-        aria-label={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
-        aria-pressed={theme === 'dark'}>
-        {theme === 'dark' ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
-        <span>{theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}</span>
-      </button>
+      <label className="theme-toggle">
+        <Icon size={18} aria-hidden="true" />
+        <span>Apariencia</span>
+        <select aria-label="Apariencia" value={preference}
+          onChange={event => setThemePreference(event.target.value as ThemePreference)}>
+          <option value="system">Sistema</option>
+          <option value="light">Claro</option>
+          <option value="dark">Oscuro</option>
+        </select>
+      </label>
     </div>
   );
 }

@@ -86,7 +86,7 @@ export function ParcelDetailScreen({
       <Parcel3DView parcel={parcel} />
 
       {!hasIndicators && (
-        <div className="rounded-2xl border border-amber-200 bg-[#40351b] px-4 py-3 text-xs text-amber-900">
+        <div className="rounded-2xl border border-amber-200 bg-[var(--agro-warning-bg)] px-4 py-3 text-xs text-[var(--agro-warning-text)]">
           Esta parcela está registrada, pero todavía no tiene indicadores ambientales. Ejecutá un análisis para consultar datos climáticos y generar métricas.
         </div>
       )}
@@ -144,7 +144,7 @@ export function ParcelDetailScreen({
       </div>
 
       {/* 5 Internal Tabs */}
-      <div className="flex items-center gap-1 p-1 bg-slate-200/70 rounded-xl overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-1 p-1 bg-[var(--agro-surface-soft)] rounded-xl overflow-x-auto no-scrollbar">
         {(
           [
             ['resumen', 'Resumen'],
@@ -286,7 +286,7 @@ export function ParcelDetailScreen({
         <div className="bg-[var(--agro-surface)] rounded-2xl p-4 border border-[var(--agro-line)]/90 space-y-4 shadow-xs">
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-[#40351b] text-amber-800 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-[var(--agro-warning-bg)] text-[var(--agro-warning-text)] flex items-center justify-center shrink-0">
                 <Mountain className="w-5 h-5" />
               </div>
               <div>
@@ -328,7 +328,7 @@ export function ParcelDetailScreen({
             </div>
           </div>
 
-          <div className="bg-[#40351b] border border-amber-200/80 rounded-xl p-3 text-xs text-amber-950 leading-relaxed">
+          <div className="bg-[var(--agro-warning-bg)] border border-amber-200/80 rounded-xl p-3 text-xs text-[var(--agro-warning-text)] leading-relaxed">
             <strong>Alcance SoilGrids:</strong> Estos parámetros caracterizan la tendencia edáfica de
             la zona a escala de 250 m como referencia inicial. Para fertilización o enmiendas, realiza
             un muestreo compuesto y análisis de laboratorio en la parcela.
@@ -393,7 +393,7 @@ export function ParcelDetailScreen({
                     type="button"
                     onClick={() => onDeleteObservation(parcel.id, obs.id)}
                     aria-label="Eliminar observación"
-                    className="p-2 rounded-lg text-[var(--agro-muted)] hover:text-[#EF4444] hover:bg-[#442821] shrink-0"
+                    className="p-2 rounded-lg text-[var(--agro-muted)] hover:text-[var(--agro-danger-text)] hover:bg-[var(--agro-danger-bg)] shrink-0"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

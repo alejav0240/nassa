@@ -155,8 +155,8 @@ export function ParcelsScreen({
                           parcel.monitoringStatus === 'Disponible'
                             ? 'text-[var(--agro-lime)]'
                             : parcel.monitoringStatus === 'Parcial'
-                            ? 'text-[#f0c86c]'
-                            : 'text-[#8dd4ef]'
+                            ? 'text-[var(--agro-warning-text)]'
+                            : 'text-[var(--agro-info-text)]'
                         }`}
                       >
                         {parcel.monitoringStatus}
@@ -226,7 +226,7 @@ export function ParcelsScreen({
                       type="button"
                       onClick={() => setDeletingParcel(parcel)}
                       aria-label={`Eliminar ${parcel.name}`}
-                      className="min-h-[38px] min-w-[38px] rounded-xl text-[var(--agro-muted)] hover:text-[#EF4444] hover:bg-[#442821] flex items-center justify-center"
+                      className="min-h-[38px] min-w-[38px] rounded-xl text-[var(--agro-muted)] hover:text-[var(--agro-danger-text)] hover:bg-[var(--agro-danger-bg)] flex items-center justify-center"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

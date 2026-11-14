@@ -36,17 +36,17 @@ const TAG_FILTERS: ('todas' | SourceTag)[] = [
 function getSourceIcon(tag: SourceTag) {
   switch (tag) {
     case 'humedad':
-      return { Icon: Droplets, bg: 'bg-[#12394a] text-[#8dd4ef]' };
+      return { Icon: Droplets, bg: 'bg-[var(--agro-info-bg)] text-[var(--agro-info-text)]' };
     case 'temperatura':
-      return { Icon: Thermometer, bg: 'bg-[#40351b] text-[#f0c86c]' };
+      return { Icon: Thermometer, bg: 'bg-[var(--agro-warning-bg)] text-[var(--agro-warning-text)]' };
     case 'lluvia':
-      return { Icon: CloudRain, bg: 'bg-[#12394a] text-[#8dd4ef]' };
+      return { Icon: CloudRain, bg: 'bg-[var(--agro-info-bg)] text-[var(--agro-info-text)]' };
     case 'vegetación':
       return { Icon: Sprout, bg: 'bg-[var(--agro-selected)] text-[var(--agro-lime)]' };
     case 'biomasa':
       return { Icon: Trees, bg: 'bg-[var(--agro-selected)] text-[var(--agro-lime)]' };
     case 'suelo':
-      return { Icon: Mountain, bg: 'bg-[#40351b] text-amber-800' };
+      return { Icon: Mountain, bg: 'bg-[var(--agro-warning-bg)] text-[var(--agro-warning-text)]' };
     case 'mapa base':
       return { Icon: MapIcon, bg: 'bg-[var(--agro-surface-soft)] text-[var(--agro-text)]' };
     default:
@@ -70,8 +70,8 @@ export function DataSourcesCatalog({
   return (
     <div className="space-y-4">
       {/* General Harmonization Note */}
-      <div className="bg-[#12394a] border border-sky-200 rounded-2xl p-3.5 flex items-start gap-2.5 text-xs text-sky-950 leading-relaxed">
-        <Info className="w-4 h-4 text-[#8dd4ef] shrink-0 mt-0.5" />
+      <div className="bg-[var(--agro-info-bg)] border border-sky-200 rounded-2xl p-3.5 flex items-start gap-2.5 text-xs text-[var(--agro-info-text)] leading-relaxed">
+        <Info className="w-4 h-4 text-[var(--agro-info-text)] shrink-0 mt-0.5" />
         <p>
           <strong>Nota general sobre fuentes:</strong> Estas fuentes no miden lo mismo ni tienen la
           misma resolución espacial o temporal, por lo que deben armonizarse para realizar
@@ -110,7 +110,7 @@ export function DataSourcesCatalog({
               <button
                 type="button"
                 onClick={() => setExpandedId(isOpen ? null : src.id)}
-                className="w-full p-3.5 text-left flex items-center justify-between gap-3 hover:bg-slate-50/70 transition-colors"
+                className="w-full p-3.5 text-left flex items-center justify-between gap-3 hover:bg-[var(--agro-surface-soft)] transition-colors"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${bg}`}>
@@ -176,13 +176,13 @@ export function DataSourcesCatalog({
                   </div>
 
                   {src.clarification && (
-                    <p className="text-[11px] font-semibold text-[#8dd4ef] bg-[#12394a] px-2.5 py-2 rounded-xl">
+                    <p className="text-[11px] font-semibold text-[var(--agro-info-text)] bg-[var(--agro-info-bg)] px-2.5 py-2 rounded-xl">
                       Aclaración: {src.clarification}
                     </p>
                   )}
 
-                  <div className="bg-[#40351b] border border-amber-200/70 text-amber-900 p-2.5 rounded-xl flex items-start gap-2 text-[11px] leading-relaxed">
-                    <AlertTriangle className="w-3.5 h-3.5 text-[#f0c86c] shrink-0 mt-0.5" />
+                  <div className="bg-[var(--agro-warning-bg)] border border-amber-200/70 text-[var(--agro-warning-text)] p-2.5 rounded-xl flex items-start gap-2 text-[11px] leading-relaxed">
+                    <AlertTriangle className="w-3.5 h-3.5 text-[var(--agro-warning-text)] shrink-0 mt-0.5" />
                     <span>
                       <strong>Limitaciones:</strong> {src.limitations}
                     </span>
