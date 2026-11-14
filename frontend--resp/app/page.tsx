@@ -57,6 +57,18 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [tab, setTab] = useState<"analysis" | "method">("analysis");
+  const priorityTotal = Object.values(priorities).reduce(
+    (total, value) => total + value,
+    0,
+  );
+  const canAnalyze =
+    field.name.trim().length >= 2 &&
+    Number.isFinite(field.latitude) &&
+    Number.isFinite(field.longitude) &&
+    field.hectares > 0 &&
+    priorityTotal > 0;
+  const resetPriorities = () =>
+    setPriorities({ water: 45, soil: 40, income: 15 });
   const update = <K extends keyof FieldInput>(k: K, value: FieldInput[K]) =>
     setField((prev) => ({ ...prev, [k]: value }));
   const run = async () => {
@@ -138,6 +150,22 @@ export default function Home() {
             </div>
           </div>
         </div>
+        <nav
+          className="panel p-2 grid grid-cols-3 gap-1"
+          aria-label="Progreso del análisis"
+        >
+          <span className="rounded-lg bg-[#def3e5] text-[#176044] px-2 py-2 text-center text-[11px] sm:text-xs font-bold">
+            1. Ubicación
+          </span>
+          <span className="rounded-lg bg-[#edf3ed] text-[#5f756b] px-2 py-2 text-center text-[11px] sm:text-xs font-semibold">
+            2. Contexto
+          </span>
+          <span
+            className={`rounded-lg px-2 py-2 text-center text-[11px] sm:text-xs font-semibold ${analysis ? "bg-[#def3e5] text-[#176044]" : "bg-[#edf3ed] text-[#5f756b]"}`}
+          >
+            {analysis ? "4. Resultado" : "3. Prioridades"}
+          </span>
+        </nav>
         <div className="grid lg:grid-cols-[1.25fr_.75fr] gap-5 items-start">
           <section className="panel p-4 sm:p-5 md:p-6">
             <div className="flex justify-between items-start gap-3 mb-4">
@@ -281,8 +309,21 @@ export default function Home() {
                 Tengo acceso a riego
               </label>
               <div className="pt-2">
-                <div className="flex items-center gap-2 mb-2">
-                  <p className="small-label">Paso 03 / Prioridades</p>
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div>
+                    <p className="small-label">Paso 03 / Prioridades</p>
+                    <p className="text-xs text-slate-500 mt-1 leading-5">
+                      Ajustá qué te importa más. Los pesos se normalizan al
+                      calcular.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={resetPriorities}
+                    className="text-xs font-bold text-[#17694c] underline underline-offset-2 shrink-0"
+                  >
+                    Restablecer
+                  </button>
                 </div>
                 {(
                   [
@@ -313,15 +354,25 @@ export default function Home() {
                     />
                   </div>
                 ))}
+                <div className="flex items-center justify-between rounded-lg bg-[#f5f8f4] px-3 py-2 text-xs mt-1">
+                  <span className="text-slate-600">
+                    Peso total seleccionado
+                  </span>
+                  <strong
+                    className={
+                      priorityTotal === 100
+                        ? "text-[#176c4b]"
+                        : "text-[#97683b]"
+                    }
+                  >
+                    {priorityTotal}%
+                  </strong>
+                </div>
               </div>
               <button
                 onClick={run}
-                disabled={
-                  busy ||
-                  !Object.values(priorities).some(Boolean) ||
-                  field.hectares <= 0 ||
-                  field.name.trim().length < 2
-                }
+                disabled={busy || !canAnalyze}
+                aria-describedby="analysis-help"
                 className="btn-primary w-full flex items-center justify-center gap-2"
               >
                 {busy ? (
@@ -343,9 +394,14 @@ export default function Home() {
                   {error}
                 </div>
               )}
-              <p className="text-[11px] text-slate-500 leading-4">
-                Datos NASA reales; la primera consulta puede tardar. Sin NASA
-                disponible, no fabricamos resultados.
+              <p
+                id="analysis-help"
+                aria-live="polite"
+                className="text-[11px] text-slate-500 leading-4"
+              >
+                {!canAnalyze && !busy
+                  ? "Completá el nombre, una superficie mayor que cero y al menos una prioridad."
+                  : "Datos NASA reales; la primera consulta puede tardar. Sin NASA disponible, no fabricamos resultados."}
               </p>
             </div>
           </section>
@@ -362,15 +418,22 @@ export default function Home() {
                     Diagnóstico de la parcela
                   </h2>
                 </div>
-                <div className="flex w-full sm:w-auto p-1 bg-white rounded-xl border border-green-100">
+                <div
+                  role="tablist"
+                  className="flex w-full sm:w-auto p-1 bg-white rounded-xl border border-green-100"
+                >
                   <button
                     onClick={() => setTab("analysis")}
+                    aria-selected={tab === "analysis"}
+                    role="tab"
                     className={`flex-1 sm:flex-none px-3 sm:px-4 py-2.5 rounded-lg text-sm font-semibold ${tab === "analysis" ? "bg-[#196c4b] text-white" : "text-slate-600"}`}
                   >
                     Análisis
                   </button>
                   <button
                     onClick={() => setTab("method")}
+                    aria-selected={tab === "method"}
+                    role="tab"
                     className={`flex-1 sm:flex-none px-3 sm:px-4 py-2.5 rounded-lg text-sm font-semibold ${tab === "method" ? "bg-[#196c4b] text-white" : "text-slate-600"}`}
                   >
                     Método y límites

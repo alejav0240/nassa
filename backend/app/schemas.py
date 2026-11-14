@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 
 CropId = Literal['papa','quinua','haba','cebada','avena','tarwi']
@@ -50,3 +50,30 @@ class Priorities(BaseModel):
 class AnalyzeRequest(BaseModel):
     field_id: int
     priorities: Priorities = Field(default_factory=Priorities)
+
+
+class ErrorResponse(BaseModel):
+    detail: str = Field(description='Descripción del error')
+
+
+class HealthResponse(BaseModel):
+    status: str
+    service: str
+    version: str
+
+
+class CropResponse(BaseModel):
+    id: CropId
+    label: str
+    water: int
+    soil: int
+    market: int
+    min_rain: int
+    max_frost: int
+    family: str
+    notes: str
+
+
+class CropsResponse(BaseModel):
+    crops: list[CropResponse]
+    methodology: dict[str, Any]

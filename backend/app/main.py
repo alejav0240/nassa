@@ -7,7 +7,14 @@ from sqlalchemy.orm import Session
 from .config import settings
 from .database import Base, engine, get_db
 from .models import Field, ClimateCache, Analysis
-from .schemas import FieldCreate, FieldRead, AnalyzeRequest
+from .schemas import (
+    AnalyzeRequest,
+    CropsResponse,
+    ErrorResponse,
+    FieldCreate,
+    FieldRead,
+    HealthResponse,
+)
 from .services.nasa import fetch_power
 from .services.rotation import CROPS, CROP_METADATA, evaluate
 
@@ -16,38 +23,129 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     yield
 
-app = FastAPI(title='AgroShift AI API', version='0.1.0', lifespan=lifespan)
+tags_metadata = [
+    {
+        'name': 'Health',
+        'description': 'Verificación de disponibilidad del servicio.',
+    },
+    {
+        'name': 'Crops',
+        'description': 'Catálogo de cultivos y metodología heurística.',
+    },
+    {
+        'name': 'Fields',
+        'description': 'Registro y consulta de parcelas agrícolas.',
+    },
+    {
+        'name': 'Analyses',
+        'description': 'Evaluación climática y comparación de estrategias de rotación.',
+    },
+]
+
+app = FastAPI(
+    title='AgroShift AI API',
+    summary='API para explorar rotaciones agrícolas con información climática histórica.',
+    description=(
+        'AgroShift AI combina información de parcelas, datos históricos de NASA POWER '
+        'y reglas heurísticas transparentes para comparar estrategias de rotación. '
+        'Los puntajes son educativos y no constituyen una recomendación agronómica validada.'
+    ),
+    version='0.1.0',
+    openapi_tags=tags_metadata,
+    contact={'name': 'AgroShift AI'},
+    lifespan=lifespan,
+)
 app.add_middleware(CORSMiddleware, allow_origins=[x.strip() for x in settings.cors_origins.split(',')], allow_credentials=False, allow_methods=['GET', 'POST'], allow_headers=['Content-Type'])
 
-@app.get('/api/health')
+@app.get(
+    '/api/health',
+    tags=['Health'],
+    response_model=HealthResponse,
+    summary='Verificar disponibilidad de la API',
+    description='Devuelve el estado básico y la versión del servicio.',
+    response_description='Estado actual de la API.',
+)
 def health():
+    """Verifica que el servicio esté disponible."""
     return {'status': 'ok', 'service': 'AgroShift AI', 'version': '0.1.0'}
 
-@app.get('/api/crops')
+@app.get(
+    '/api/crops',
+    tags=['Crops'],
+    response_model=CropsResponse,
+    summary='Listar cultivos disponibles',
+    description='Devuelve el catálogo de cultivos y los parámetros heurísticos usados por el prototipo.',
+    response_description='Catálogo de cultivos y metodología.',
+)
 def crops():
+    """Lista cultivos soportados y su metodología de puntuación."""
     return {'crops': [{'id': k, **v} for k, v in CROPS.items()], 'methodology': CROP_METADATA}
 
-@app.get('/api/fields', response_model=list[FieldRead])
+@app.get(
+    '/api/fields',
+    tags=['Fields'],
+    response_model=list[FieldRead],
+    summary='Listar parcelas',
+    description='Devuelve hasta las 100 parcelas más recientes, ordenadas por identificador descendente.',
+    response_description='Lista de parcelas registradas.',
+)
 def list_fields(db: Session = Depends(get_db)):
+    """Lista las parcelas registradas."""
     return db.scalars(select(Field).order_by(Field.id.desc()).limit(100)).all()
 
-@app.post('/api/fields', response_model=FieldRead, status_code=201)
+@app.post(
+    '/api/fields',
+    tags=['Fields'],
+    response_model=FieldRead,
+    status_code=201,
+    summary='Crear una parcela',
+    description='Registra una parcela y valida sus coordenadas, superficie, cultivo y geometría GeoJSON opcional.',
+    response_description='Parcela creada.',
+    responses={422: {'description': 'Los datos de la parcela no cumplen las reglas de validación.'}},
+)
 def create_field(payload: FieldCreate, db: Session = Depends(get_db)):
+    """Crea y persiste una parcela agrícola."""
     field = Field(**payload.model_dump())
     db.add(field)
     db.commit()
     db.refresh(field)
     return field
 
-@app.get('/api/fields/{field_id}', response_model=FieldRead)
+@app.get(
+    '/api/fields/{field_id}',
+    tags=['Fields'],
+    response_model=FieldRead,
+    summary='Obtener una parcela',
+    description='Busca una parcela por su identificador.',
+    response_description='Parcela solicitada.',
+    responses={404: {'model': ErrorResponse, 'description': 'La parcela no existe.'}},
+)
 def get_field(field_id: int, db: Session = Depends(get_db)):
+    """Obtiene una parcela por identificador."""
     field = db.get(Field, field_id)
     if not field:
         raise HTTPException(404, 'Parcela no encontrada')
     return field
 
-@app.post('/api/analyze')
+@app.post(
+    '/api/analyze',
+    tags=['Analyses'],
+    status_code=200,
+    summary='Analizar estrategias de rotación',
+    description=(
+        'Consulta o reutiliza datos climáticos de NASA POWER, evalúa tres estrategias '
+        'de rotación con las prioridades indicadas y persiste el resultado. '
+        'Los puntajes son heurísticos y deben validarse con especialistas locales.'
+    ),
+    response_description='Análisis climático y estrategias de rotación.',
+    responses={
+        404: {'model': ErrorResponse, 'description': 'La parcela no existe.'},
+        422: {'description': 'Las prioridades o el identificador de parcela son inválidos.'},
+        503: {'model': ErrorResponse, 'description': 'NASA POWER no está disponible o devolvió una respuesta inválida.'},
+    },
+)
 async def analyze(payload: AnalyzeRequest, db: Session = Depends(get_db)):
+    """Genera y almacena un análisis de rotación para una parcela."""
     field = db.get(Field, payload.field_id)
     if not field:
         raise HTTPException(404, 'Parcela no encontrada')
@@ -76,8 +174,16 @@ async def analyze(payload: AnalyzeRequest, db: Session = Depends(get_db)):
     db.refresh(row)
     return {'id': row.id, 'created_at': row.created_at, **result}
 
-@app.get('/api/analyses/{analysis_id}')
+@app.get(
+    '/api/analyses/{analysis_id}',
+    tags=['Analyses'],
+    summary='Obtener un análisis',
+    description='Recupera el resultado completo de un análisis previamente persistido.',
+    response_description='Resultado del análisis solicitado.',
+    responses={404: {'model': ErrorResponse, 'description': 'El análisis no existe.'}},
+)
 def get_analysis(analysis_id: int, db: Session = Depends(get_db)):
+    """Obtiene un análisis persistido por identificador."""
     result = db.get(Analysis, analysis_id)
     if not result:
         raise HTTPException(404, 'Análisis no encontrado')
