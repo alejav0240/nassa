@@ -59,21 +59,21 @@ export function SatelliteTab({ parcel, preferences }: SatelliteTabProps) {
   return (
     <div className="space-y-5">
       {/* Analytical Filters */}
-      <div className="bg-white rounded-2xl p-4 border border-slate-200/90 space-y-3">
+      <div className="bg-[var(--agro-surface)] rounded-2xl p-4 border border-[var(--agro-line)]/90 space-y-3">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-xs font-bold text-slate-900">Parámetros de consulta (DEMO)</p>
+          <p className="text-xs font-bold text-[var(--agro-text)]">Parámetros de consulta (DEMO)</p>
           <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={triggerReloadDemo}
-              className="text-[11px] font-semibold text-[#166534] hover:underline inline-flex items-center gap-1"
+              className="text-[11px] font-semibold text-[var(--agro-lime)] hover:underline inline-flex items-center gap-1"
             >
               <RefreshCw className="w-3 h-3" /> Actualizar
             </button>
             <button
               type="button"
               onClick={() => setViewState((v) => (v === 'error' ? 'ready' : 'error'))}
-              className="text-[11px] font-medium text-slate-500 hover:text-slate-800"
+              className="text-[11px] font-medium text-[var(--agro-muted)] hover:text-[var(--agro-text)]"
             >
               {viewState === 'error' ? 'Restaurar vista' : 'Simular falla'}
             </button>
@@ -82,15 +82,15 @@ export function SatelliteTab({ parcel, preferences }: SatelliteTabProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           <div>
-            <label className="block text-[11px] font-semibold text-slate-500 mb-1">Período</label>
-            <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl">
+            <label className="block text-[11px] font-semibold text-[var(--agro-muted)] mb-1">Período</label>
+            <div className="grid grid-cols-3 gap-1 p-1 bg-[var(--agro-surface-soft)] rounded-xl">
               {(['3M', '6M', '12M'] as PeriodOption[]).map((opt) => (
                 <button
                   key={opt}
                   type="button"
                   onClick={() => setPeriod(opt)}
                   className={`h-8 rounded-lg text-xs font-semibold transition-colors ${
-                    period === opt ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600'
+                    period === opt ? 'bg-[var(--agro-surface)] text-[var(--agro-text)] shadow-xs' : 'text-[var(--agro-muted)]'
                   }`}
                 >
                   {opt}
@@ -100,11 +100,11 @@ export function SatelliteTab({ parcel, preferences }: SatelliteTabProps) {
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-500 mb-1">Variable</label>
+            <label className="block text-[11px] font-semibold text-[var(--agro-muted)] mb-1">Variable</label>
             <select
               value={variable}
               onChange={(e) => setVariable(e.target.value as VariableFilter)}
-              className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs font-medium bg-white text-slate-900"
+              className="w-full h-10 px-3 rounded-xl border border-[var(--agro-line)] text-xs font-medium bg-[var(--agro-surface)] text-[var(--agro-text)]"
             >
               <option value="Todas">Todas las variables</option>
               <option value="NDVI">Índice NDVI</option>
@@ -115,13 +115,13 @@ export function SatelliteTab({ parcel, preferences }: SatelliteTabProps) {
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+            <label className="block text-[11px] font-semibold text-[var(--agro-muted)] mb-1">
               Fuente satelital
             </label>
             <select
               value={sourceFilter}
               onChange={(e) => setSourceFilter(e.target.value as 'Todas' | SatelliteSourceId)}
-              className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs font-medium bg-white text-slate-900"
+              className="w-full h-10 px-3 rounded-xl border border-[var(--agro-line)] text-xs font-medium bg-[var(--agro-surface)] text-[var(--agro-text)]"
             >
               <option value="Todas">Todas (7 fuentes)</option>
               {sources.map((s) => (
@@ -136,12 +136,12 @@ export function SatelliteTab({ parcel, preferences }: SatelliteTabProps) {
 
       {/* Loading / Error State Handling */}
       {viewState === 'loading' ? (
-        <div className="bg-white rounded-2xl p-10 border border-slate-200 flex flex-col items-center justify-center gap-2 text-slate-600">
-          <Loader2 className="w-6 h-6 animate-spin text-[#16A34A]" />
+        <div className="bg-[var(--agro-surface)] rounded-2xl p-10 border border-[var(--agro-line)] flex flex-col items-center justify-center gap-2 text-[var(--agro-muted)]">
+          <Loader2 className="w-6 h-6 animate-spin text-[var(--agro-lime)]" />
           <p className="text-xs font-medium">Cargando serie demostrativa para {parcel.name}...</p>
         </div>
       ) : viewState === 'error' ? (
-        <div className="bg-amber-50 rounded-2xl p-5 border border-amber-200 space-y-2">
+        <div className="bg-[#40351b] rounded-2xl p-5 border border-amber-200 space-y-2">
           <p className="text-sm font-bold text-amber-900">
             Datos temporalmente no disponibles (simulación de estado)
           </p>
@@ -161,15 +161,15 @@ export function SatelliteTab({ parcel, preferences }: SatelliteTabProps) {
           {/* 5 Interactive Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {showNdvi && (
-              <div className="bg-white rounded-2xl p-4 border border-slate-200/90 space-y-2">
+              <div className="bg-[var(--agro-surface)] rounded-2xl p-4 border border-[var(--agro-line)]/90 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">1. Evolución NDVI</h3>
-                    <p className="text-[11px] text-slate-500">
+                    <h3 className="text-sm font-bold text-[var(--agro-text)]">1. Evolución NDVI</h3>
+                    <p className="text-[11px] text-[var(--agro-muted)]">
                       Landsat/MODIS · Serie demostrativa ({period})
                     </p>
                   </div>
-                  <span className="text-xs font-mono font-bold text-[#166534] tabular-nums">
+                  <span className="text-xs font-mono font-bold text-[var(--agro-lime)] tabular-nums">
                     Actual: {parcel.indicators.ndvi.toFixed(2)}
                   </span>
                 </div>
@@ -201,13 +201,13 @@ export function SatelliteTab({ parcel, preferences }: SatelliteTabProps) {
             )}
 
             {showRain && (
-              <div className="bg-white rounded-2xl p-4 border border-slate-200/90 space-y-2">
+              <div className="bg-[var(--agro-surface)] rounded-2xl p-4 border border-[var(--agro-line)]/90 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">2. Precipitación mensual</h3>
-                    <p className="text-[11px] text-slate-500">GPM (IMERG) · Acumulado mensual (mm)</p>
+                    <h3 className="text-sm font-bold text-[var(--agro-text)]">2. Precipitación mensual</h3>
+                    <p className="text-[11px] text-[var(--agro-muted)]">GPM (IMERG) · Acumulado mensual (mm)</p>
                   </div>
-                  <span className="text-xs font-mono font-bold text-[#0284C7] tabular-nums">
+                  <span className="text-xs font-mono font-bold text-[#8dd4ef] tabular-nums">
                     {parcel.indicators.precipitationMm.toFixed(1)} mm
                   </span>
                 </div>
@@ -231,13 +231,13 @@ export function SatelliteTab({ parcel, preferences }: SatelliteTabProps) {
             )}
 
             {showTemp && (
-              <div className="bg-white rounded-2xl p-4 border border-slate-200/90 space-y-2">
+              <div className="bg-[var(--agro-surface)] rounded-2xl p-4 border border-[var(--agro-line)]/90 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">3. Cambios de temperatura</h3>
-                    <p className="text-[11px] text-slate-500">ECOSTRESS · Radiométrica superficial (°C)</p>
+                    <h3 className="text-sm font-bold text-[var(--agro-text)]">3. Cambios de temperatura</h3>
+                    <p className="text-[11px] text-[var(--agro-muted)]">ECOSTRESS · Radiométrica superficial (°C)</p>
                   </div>
-                  <span className="text-xs font-mono font-bold text-[#B45309] tabular-nums">
+                  <span className="text-xs font-mono font-bold text-[#f0c86c] tabular-nums">
                     {parcel.indicators.temperatureC.toFixed(1)} °C
                   </span>
                 </div>
@@ -263,16 +263,16 @@ export function SatelliteTab({ parcel, preferences }: SatelliteTabProps) {
             )}
 
             {showMoisture && (
-              <div className="bg-white rounded-2xl p-4 border border-slate-200/90 space-y-2">
+              <div className="bg-[var(--agro-surface)] rounded-2xl p-4 border border-[var(--agro-line)]/90 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">4. Humedad superficial</h3>
-                    <p className="text-[11px] text-slate-500">
+                    <h3 className="text-sm font-bold text-[var(--agro-text)]">4. Humedad superficial</h3>
+                    <p className="text-[11px] text-[var(--agro-muted)]">
                       SMAP · Referencia regional (
                       {preferences.moistureUnit === 'volumetric' ? 'm³/m³' : '%'})
                     </p>
                   </div>
-                  <span className="text-xs font-mono font-bold text-[#0284C7] tabular-nums">
+                  <span className="text-xs font-mono font-bold text-[#8dd4ef] tabular-nums">
                     {preferences.moistureUnit === 'volumetric'
                       ? `${parcel.indicators.moistureVolumetric.toFixed(2)} m³/m³`
                       : `${parcel.indicators.moisturePct} %`}
@@ -308,12 +308,12 @@ export function SatelliteTab({ parcel, preferences }: SatelliteTabProps) {
             )}
 
             {/* 5. Seasonal Comparison */}
-            <div className="bg-white rounded-2xl p-4 border border-slate-200/90 space-y-2 lg:col-span-2">
+            <div className="bg-[var(--agro-surface)] rounded-2xl p-4 border border-[var(--agro-line)]/90 space-y-2 lg:col-span-2">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">
+                <h3 className="text-sm font-bold text-[var(--agro-text)]">
                   5. Comparación estacional (NDVI actual vs. ciclo previo)
                 </h3>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-[var(--agro-muted)]">
                   MODIS/Landsat · Trayectoria demostrativa comparativa
                 </p>
               </div>
@@ -349,8 +349,8 @@ export function SatelliteTab({ parcel, preferences }: SatelliteTabProps) {
           {/* Satellite Source Explanatory Cards */}
           <section className="space-y-2.5">
             <div className="flex items-center gap-1.5 px-1">
-              <Info className="w-4 h-4 text-[#166534]" />
-              <h2 className="text-sm font-bold text-slate-900">
+              <Info className="w-4 h-4 text-[var(--agro-lime)]" />
+              <h2 className="text-sm font-bold text-[var(--agro-text)]">
                 Fichas técnicas de fuentes satelitales
               </h2>
             </div>
@@ -361,7 +361,7 @@ export function SatelliteTab({ parcel, preferences }: SatelliteTabProps) {
                 return (
                   <div
                     key={src.id}
-                    className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden"
+                    className="bg-[var(--agro-surface)] rounded-2xl border border-[var(--agro-line)]/90 overflow-hidden"
                   >
                     <button
                       type="button"
@@ -370,57 +370,57 @@ export function SatelliteTab({ parcel, preferences }: SatelliteTabProps) {
                     >
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-bold text-slate-900">{src.name}</span>
-                          <span className="text-xs text-slate-500">· {src.variable}</span>
+                          <span className="text-sm font-bold text-[var(--agro-text)]">{src.name}</span>
+                          <span className="text-xs text-[var(--agro-muted)]">· {src.variable}</span>
                         </div>
-                        <p className="text-[11px] text-slate-500 mt-0.5 font-mono">
+                        <p className="text-[11px] text-[var(--agro-muted)] mt-0.5 font-mono">
                           Res. {src.spatialResolution} · Obs. {src.lastObservationDate}
                         </p>
                       </div>
                       {isOpen ? (
-                        <ChevronUp className="w-4 h-4 text-slate-500 shrink-0" />
+                        <ChevronUp className="w-4 h-4 text-[var(--agro-muted)] shrink-0" />
                       ) : (
-                        <ChevronDown className="w-4 h-4 text-slate-500 shrink-0" />
+                        <ChevronDown className="w-4 h-4 text-[var(--agro-muted)] shrink-0" />
                       )}
                     </button>
 
                     {isOpen && (
-                      <div className="px-4 pb-4 pt-2 border-t border-slate-100 space-y-2 text-xs text-slate-700">
+                      <div className="px-4 pb-4 pt-2 border-t border-[var(--agro-line)] space-y-2 text-xs text-[var(--agro-text)]">
                         <div className="flex items-center justify-between flex-wrap gap-2">
-                          <span className="text-slate-500">
-                            Acceso: <strong className="text-slate-800">{src.accessSource}</strong> ·{' '}
-                            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-semibold text-slate-700">
+                          <span className="text-[var(--agro-muted)]">
+                            Acceso: <strong className="text-[var(--agro-text)]">{src.accessSource}</strong> ·{' '}
+                            <span className="px-2 py-0.5 rounded-full bg-[var(--agro-surface-soft)] text-[10px] font-semibold text-[var(--agro-text)]">
                               {src.tag}
                             </span>
                           </span>
                           <QualityIndicator quality={src.quality} />
                         </div>
                         <p>
-                          <strong className="text-slate-900">
+                          <strong className="text-[var(--agro-text)]">
                             {src.id === 'OSM' ? '¿Qué proporciona?' : '¿Qué mide?'}
                           </strong>{' '}
                           {src.whatItMeasures}
                         </p>
                         <p>
-                          <strong className="text-slate-900">¿Para qué sirve?</strong> {src.purpose}
+                          <strong className="text-[var(--agro-text)]">¿Para qué sirve?</strong> {src.purpose}
                         </p>
                         <p>
-                          <strong className="text-slate-900">Uso en la app:</strong> {src.appUsage}
+                          <strong className="text-[var(--agro-text)]">Uso en la app:</strong> {src.appUsage}
                         </p>
                         <p>
-                          <strong className="text-slate-900">Resolución / Frecuencia:</strong>{' '}
+                          <strong className="text-[var(--agro-text)]">Resolución / Frecuencia:</strong>{' '}
                           {src.spatialResolution} ({src.temporalResolution}) · {src.detailLevel}
                         </p>
                         <p>
-                          <strong className="text-slate-900">Unidad / Fecha:</strong> {src.unit} ·{' '}
+                          <strong className="text-[var(--agro-text)]">Unidad / Fecha:</strong> {src.unit} ·{' '}
                           {src.lastObservationDate}
                         </p>
                         {src.clarification && (
-                          <p className="text-[#0284C7] bg-sky-50 p-2 rounded-xl font-semibold">
+                          <p className="text-[#8dd4ef] bg-[#12394a] p-2 rounded-xl font-semibold">
                             Aclaración: {src.clarification}
                           </p>
                         )}
-                        <p className="text-amber-800 bg-amber-50 p-2.5 rounded-xl">
+                        <p className="text-amber-800 bg-[#40351b] p-2.5 rounded-xl">
                           <strong>Limitaciones:</strong> {src.limitations}
                         </p>
                       </div>

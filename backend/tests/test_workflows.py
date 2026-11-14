@@ -176,3 +176,21 @@ def test_cache_insertion_race_recovers(client, monkeypatch):
     response = client.post('/api/analyze', json={'field_id': fid})
     assert response.status_code == 200, response.text
     assert injected
+
+def test_simultaneous_analysis_queries_nasa_once(client, monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Lock
+    calls = []
+    guard = Lock()
+    async def fake(*args):
+        with guard:
+            calls.append(1)
+        await asyncio.sleep(0.1)
+        return summarize_power(power_payload(), 2024, 2024)
+    monkeypatch.setattr('app.main.fetch_power', fake)
+    fid = client.post('/api/fields', json=FIELD).json()['id']
+    def analyze(_):
+        return client.post('/api/analyze', json={'field_id': fid}).status_code
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        assert list(pool.map(analyze, range(6))) == [200] * 6
+    assert len(calls) == 1

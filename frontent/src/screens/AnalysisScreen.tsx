@@ -49,7 +49,7 @@ export function AnalysisScreen({
 }: AnalysisScreenProps) {
   if (!selectedParcel) {
     return (
-      <div className="p-6 text-center text-sm text-slate-600">
+      <div className="p-6 text-center text-sm text-[var(--agro-muted)]">
         Registra o selecciona una parcela para explorar los análisis demostrativos.
       </div>
     );
@@ -60,8 +60,8 @@ export function AnalysisScreen({
       {/* Header + Parcel Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Centro de Análisis</h1>
-          <p className="text-xs text-slate-500">
+          <h1 className="text-xl font-bold text-[var(--agro-text)]">Centro de Análisis</h1>
+          <p className="text-xs text-[var(--agro-muted)]">
             Datos demostrativos multisensor · {selectedParcel.name}
           </p>
         </div>
@@ -71,7 +71,7 @@ export function AnalysisScreen({
             aria-label="Parcela para análisis"
             value={selectedParcel.id}
             onChange={(e) => onSelectParcel(e.target.value)}
-            className="w-full h-10 pl-3 pr-9 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-900 appearance-none focus:outline-none focus:ring-2 focus:ring-emerald-600"
+            className="w-full h-10 pl-3 pr-9 rounded-xl bg-[var(--agro-surface)] border border-[var(--agro-line)] text-xs font-semibold text-[var(--agro-text)] appearance-none focus:outline-none focus:ring-2 focus:ring-emerald-600"
           >
             {parcels.map((p) => (
               <option key={p.id} value={p.id}>
@@ -79,7 +79,7 @@ export function AnalysisScreen({
               </option>
             ))}
           </select>
-          <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <ChevronDown className="w-4 h-4 text-[var(--agro-muted)] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
       </div>
 
@@ -88,10 +88,10 @@ export function AnalysisScreen({
           role={analysisStatus === 'error' ? 'alert' : 'status'}
           className={`rounded-2xl border px-4 py-3 text-xs ${
             analysisStatus === 'error'
-              ? 'border-red-200 bg-red-50 text-red-800'
+              ? 'border-red-200 bg-[#442821] text-red-800'
               : analysisStatus === 'loading'
-                ? 'border-amber-200 bg-amber-50 text-amber-900'
-                : 'border-emerald-200 bg-emerald-50 text-emerald-900'
+                ? 'border-amber-200 bg-[#40351b] text-amber-900'
+                : 'border-emerald-200 bg-[var(--agro-selected)] text-emerald-900'
           }`}
         >
           {analysisStatus === 'loading' && 'Consultando NASA POWER y calculando estrategias…'}
@@ -122,8 +122,8 @@ export function AnalysisScreen({
             aria-controls={`analysis-panel-${t.id}`}
             className={`flex-1 min-h-[38px] px-3 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
               subTab === t.id
-                ? 'bg-white text-[#166534] shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-[var(--agro-surface)] text-[var(--agro-lime)] shadow-xs'
+                : 'text-[var(--agro-muted)] hover:text-[var(--agro-text)]'
             }`}
           >
             {t.label}
@@ -137,10 +137,10 @@ export function AnalysisScreen({
       {subTab === 'fuentes' && (
         <div id="analysis-panel-fuentes" role="tabpanel" className="space-y-3">
           <div className="px-1">
-            <h2 className="text-base font-bold text-slate-900">
+            <h2 className="text-base font-bold text-[var(--agro-text)]">
               Fuentes satelitales y cartográficas del sistema
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[var(--agro-muted)]">
               Especificaciones técnicas, resolución, frecuencia de actualización y alcance
             </p>
           </div>

@@ -26,23 +26,23 @@ export function ConfirmDialog({
       aria-modal="true"
       aria-labelledby="confirm-title"
     >
-      <div className="bg-white w-full max-w-sm rounded-3xl p-5 shadow-xl border border-slate-200 space-y-4">
+      <div className="bg-[var(--agro-surface)] w-full max-w-sm rounded-3xl p-5 shadow-xl border border-[var(--agro-line)] space-y-4">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-full bg-red-50 text-[#EF4444] flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-full bg-[#442821] text-[#EF4444] flex items-center justify-center shrink-0">
             <AlertTriangle className="w-5 h-5" />
           </div>
           <div>
-            <h3 id="confirm-title" className="text-base font-bold text-slate-900">
+            <h3 id="confirm-title" className="text-base font-bold text-[var(--agro-text)]">
               {title}
             </h3>
-            <p className="text-sm text-slate-600 mt-1 leading-relaxed">{message}</p>
+            <p className="text-sm text-[var(--agro-muted)] mt-1 leading-relaxed">{message}</p>
           </div>
         </div>
         <div className="flex items-center gap-3 pt-1">
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 h-11 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            className="flex-1 h-11 rounded-xl border border-[var(--agro-line)] text-sm font-semibold text-[var(--agro-text)] hover:bg-[var(--agro-surface-soft)]"
           >
             Cancelar
           </button>

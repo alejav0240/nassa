@@ -169,3 +169,61 @@
 @media (max-width: 900px) { .ds-component-grid, .ds-principles { grid-template-columns: 1fr 1fr; } .ds-metric-grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 640px) { .ds-shell { padding: 16px; } .ds-header { align-items: flex-start; flex-direction: column; } .ds-hero { padding: 48px 0 40px; } .ds-hero h1 { font-size: 46px; } .ds-component-grid, .ds-metric-grid, .ds-principles { grid-template-columns: 1fr; } .ds-button--lg { width: 100%; } .ds-hero__actions { align-items: stretch; flex-direction: column; } }
 @media (prefers-reduced-motion: reduce) { .ds-button, .ds-nav-item { transition: none; } }
+
+
+/* Forest / lime theme adapted from the supplied agricultural app reference. */
+:root {
+  --agro-canvas: #0c2416;
+  --agro-surface: #1b3726;
+  --agro-surface-soft: #15301f;
+  --agro-text: #f2f8ec;
+  --agro-muted: #b7cdb4;
+  --agro-line: #405c47;
+  --agro-lime: #9be04a;
+  --agro-selected: #294b2d;
+}
+html, body { background: var(--agro-canvas); color: var(--agro-text); }
+.agro-theme { color: var(--agro-text); background: var(--agro-canvas); }
+.agro-theme h1, .agro-theme h2 { letter-spacing: -.035em; }
+.agro-theme button, .agro-theme input, .agro-theme select { min-height: 44px; }
+.agro-theme :focus-visible { outline: 2px solid var(--agro-lime); outline-offset: 3px; }
+.agro-theme input, .agro-theme select, .agro-theme textarea { color-scheme: inherit; }
+.agro-theme select option { background: var(--agro-surface); color: var(--agro-text); }
+.agro-theme .rounded-2xl { border-radius: 22px; }
+.agro-home-header { background: radial-gradient(ellipse at top right, #376b36 0, #17402a 45%, #0c2416 100%); border: 1px solid var(--agro-line); }
+.agro-bottom-nav { margin: 0 12px max(12px, env(safe-area-inset-bottom)); border: 1px solid var(--agro-line); border-radius: 30px; background: rgba(8,28,16,.94); padding: 6px; box-shadow: 0 12px 40px #0005; }
+.agro-bottom-nav button[aria-current="page"], .agro-side-nav button[aria-current="page"] { background: var(--agro-accent); color: #10300f; border-radius: 22px; }
+.agro-bottom-nav button[aria-current="page"] *, .agro-side-nav button[aria-current="page"] * { color: #10300f; background: transparent; }
+.agro-side-nav { background: #0a1e12; }
+.agro-theme .recharts-cartesian-axis-tick-value { fill: var(--agro-muted); }
+.agro-theme .recharts-default-tooltip { background: #f2f8ec !important; color: #10300f !important; border-radius: 12px; }
+@media (prefers-reduced-motion: reduce) { .agro-theme * { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+
+.agro-theme .agro-primary { background: var(--agro-accent); color: #10300f; font-weight: 800; border-radius: 18px; }
+.agro-theme .agro-primary:hover:not(:disabled) { background: #b1ef69; }
+.agro-theme .agro-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+:root { --agro-accent: #9be04a; --agro-nav: rgba(8,28,16,.94); --agro-sidebar: #0a1e12; }
+:root[data-theme="light"] {
+  --agro-canvas: #edf3e7;
+  --agro-surface: #ffffff;
+  --agro-surface-soft: #e5efdc;
+  --agro-text: #0f2a19;
+  --agro-muted: #4b6550;
+  --agro-line: #c3d4bc;
+  --agro-lime: #296b30;
+  --agro-selected: #dcefc9;
+  --agro-nav: rgba(248,252,243,.96);
+  --agro-sidebar: #e3eddc;
+}
+.agro-bottom-nav { background: var(--agro-nav); }
+.agro-side-nav { background: var(--agro-sidebar); }
+/* Keep the forest hero legible in both themes. */
+.agro-home-header {
+  --agro-surface: #1b3726; --agro-text: #f2f8ec; --agro-muted: #b7cdb4;
+  --agro-lime: #9be04a; --agro-line: #405c47; --agro-selected: #294b2d;
+}
+.theme-toolbar { display: flex; justify-content: flex-end; padding: 10px 16px; }
+.theme-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 8px 14px; border: 1px solid var(--agro-line); border-radius: 999px; background: var(--agro-surface); color: var(--agro-text); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.theme-toggle:hover { background: var(--agro-selected); }
+.theme-toggle:focus-visible { outline: 2px solid var(--agro-lime); outline-offset: 3px; }

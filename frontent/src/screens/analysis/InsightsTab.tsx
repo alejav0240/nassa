@@ -34,27 +34,27 @@ export function InsightsTab({ parcel }: InsightsTabProps) {
         {insights.map((item) => (
           <article
             key={item.id}
-            className="bg-white rounded-2xl p-4 border border-slate-200/90 space-y-2.5"
+            className="bg-[var(--agro-surface)] rounded-2xl p-4 border border-[var(--agro-line)]/90 space-y-2.5"
           >
             <div className="flex items-center justify-between gap-2 flex-wrap">
-              <h3 className="text-sm font-bold text-slate-900">{item.title}</h3>
+              <h3 className="text-sm font-bold text-[var(--agro-text)]">{item.title}</h3>
               <QualityIndicator quality={item.quality} />
             </div>
 
-            <p className="text-sm text-slate-700 leading-relaxed">{item.message}</p>
+            <p className="text-sm text-[var(--agro-text)] leading-relaxed">{item.message}</p>
 
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 text-[11px] text-slate-500 flex-wrap">
+            <div className="pt-2 border-t border-[var(--agro-line)] flex items-center justify-between gap-2 text-[11px] text-[var(--agro-muted)] flex-wrap">
               <span>
                 {item.sourceSummary} · {item.referenceDate}
               </span>
-              <span className="font-semibold text-[#B45309]">{item.validationState}</span>
+              <span className="font-semibold text-[#f0c86c]">{item.validationState}</span>
             </div>
           </article>
         ))}
       </div>
 
-      <div className="bg-slate-100 rounded-2xl p-3.5 flex items-start gap-2.5 text-xs text-slate-600">
-        <ShieldCheck className="w-4 h-4 text-[#166534] shrink-0 mt-0.5" />
+      <div className="bg-[var(--agro-surface-soft)] rounded-2xl p-3.5 flex items-start gap-2.5 text-xs text-[var(--agro-muted)]">
+        <ShieldCheck className="w-4 h-4 text-[var(--agro-lime)] shrink-0 mt-0.5" />
         <p className="leading-relaxed">
           Criterio de prudencia científica: estos textos ilustran salidas narrativas para
           demostración y requieren calibración con datos locales y criterio agronómico antes de

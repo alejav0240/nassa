@@ -1,5 +1,5 @@
 from datetime import date, datetime, timezone
-from sqlalchemy import ForeignKey, String, Float, Integer, DateTime, JSON, Date, UniqueConstraint
+from sqlalchemy import ForeignKey, String, Float, Integer, DateTime, JSON, Date, UniqueConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .database import Base
 
@@ -60,3 +60,10 @@ class Plan(Base):
     snapshot: Mapped[dict] = mapped_column(JSON)
     checklist: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+# Explicit creation at startup also upgrades pre-existing databases.
+PERFORMANCE_INDEXES = (
+    Index('ix_analyses_field_id_id', Analysis.field_id, Analysis.id),
+    Index('ix_campaigns_field_start', Campaign.field_id, Campaign.start_date),
+    Index('ix_plans_field_id_id', Plan.field_id, Plan.id),
+)

@@ -59,17 +59,17 @@ export function FusionTab({ parcel }: FusionTabProps) {
   return (
     <div className="space-y-5">
       {/* Data Fusion Pipeline Flow */}
-      <section className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs space-y-3">
+      <section className="bg-[var(--agro-surface)] rounded-2xl p-4 border border-[var(--agro-line)]/90 shadow-xs space-y-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-[#DCFCE7] text-[#166534] flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-[var(--agro-selected)] text-[var(--agro-lime)] flex items-center justify-center shrink-0">
               <Layers className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-900">
+              <h2 className="text-sm font-bold text-[var(--agro-text)]">
                 Arquitectura de fusión de datos
               </h2>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-[var(--agro-muted)]">
                 Flujo conceptual multisensor · Datos demostrativos
               </p>
             </div>
@@ -85,26 +85,26 @@ export function FusionTab({ parcel }: FusionTabProps) {
                     ? 'bg-emerald-50/80 border-emerald-200'
                     : index === PIPELINE_STEPS.length - 1
                     ? 'bg-[#166534] text-white border-[#166534]'
-                    : 'bg-slate-50 border-slate-200/80'
+                    : 'bg-[var(--agro-surface-soft)] border-[var(--agro-line)]/80'
                 }`}
               >
                 <p
                   className={`text-xs font-bold ${
-                    index === PIPELINE_STEPS.length - 1 ? 'text-white' : 'text-slate-900'
+                    index === PIPELINE_STEPS.length - 1 ? 'text-white' : 'text-[var(--agro-text)]'
                   }`}
                 >
                   {step.title}
                 </p>
                 <p
                   className={`text-[11px] mt-0.5 ${
-                    index === PIPELINE_STEPS.length - 1 ? 'text-emerald-100' : 'text-slate-600'
+                    index === PIPELINE_STEPS.length - 1 ? 'text-emerald-100' : 'text-[var(--agro-muted)]'
                   }`}
                 >
                   {step.detail}
                 </p>
               </div>
               {index < PIPELINE_STEPS.length - 1 && (
-                <div className="flex justify-center py-0.5 text-[#16A34A]">
+                <div className="flex justify-center py-0.5 text-[var(--agro-lime)]">
                   <ArrowDown className="w-3.5 h-3.5" />
                 </div>
               )}
@@ -114,11 +114,11 @@ export function FusionTab({ parcel }: FusionTabProps) {
       </section>
 
       {/* Preset Comparison Selector + Clear Dual-Axis Chart */}
-      <section className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs space-y-3">
+      <section className="bg-[var(--agro-surface)] rounded-2xl p-4 border border-[var(--agro-line)]/90 shadow-xs space-y-3">
         <div>
-          <h3 className="text-sm font-bold text-slate-900">Comparador multivariable armonizado</h3>
-          <p className="text-xs text-slate-500">
-            Parcela analizada: <strong className="text-slate-700">{parcel.name}</strong> ({parcel.areaHa} ha)
+          <h3 className="text-sm font-bold text-[var(--agro-text)]">Comparador multivariable armonizado</h3>
+          <p className="text-xs text-[var(--agro-muted)]">
+            Parcela analizada: <strong className="text-[var(--agro-text)]">{parcel.name}</strong> ({parcel.areaHa} ha)
           </p>
         </div>
 
@@ -130,8 +130,8 @@ export function FusionTab({ parcel }: FusionTabProps) {
               onClick={() => setSelectedPresetId(preset.id)}
               className={`min-h-[44px] px-3.5 py-2 rounded-xl text-left border text-xs font-semibold transition-colors flex items-center justify-between gap-2 ${
                 selectedPresetId === preset.id
-                  ? 'bg-[#DCFCE7] border-[#16A34A] text-[#166534]'
-                  : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                  ? 'bg-[var(--agro-selected)] border-[#16A34A] text-[var(--agro-lime)]'
+                  : 'bg-[var(--agro-surface-soft)] border-[var(--agro-line)] text-[var(--agro-text)] hover:bg-[var(--agro-surface-soft)]'
               }`}
             >
               <span>{preset.label}</span>
@@ -190,44 +190,44 @@ export function FusionTab({ parcel }: FusionTabProps) {
           </ResponsiveContainer>
         </div>
 
-        <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl">
+        <p className="text-xs text-[var(--agro-muted)] leading-relaxed bg-[var(--agro-surface-soft)] p-3 rounded-xl">
           {activePreset.explanation}
         </p>
       </section>
 
       {/* Key Metadata */}
-      <section className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs space-y-2.5">
-        <h4 className="text-xs font-bold text-slate-900">
+      <section className="bg-[var(--agro-surface)] rounded-2xl p-4 border border-[var(--agro-line)]/90 shadow-xs space-y-2.5">
+        <h4 className="text-xs font-bold text-[var(--agro-text)]">
           Metadatos clave de la combinación seleccionada
         </h4>
         <div className="grid grid-cols-2 gap-2.5 text-xs">
-          <div className="p-2.5 rounded-xl bg-slate-50">
-            <p className="text-[11px] text-slate-500">Resolución espacial</p>
-            <p className="font-semibold text-slate-900 font-mono">
+          <div className="p-2.5 rounded-xl bg-[var(--agro-surface-soft)]">
+            <p className="text-[11px] text-[var(--agro-muted)]">Resolución espacial</p>
+            <p className="font-semibold text-[var(--agro-text)] font-mono">
               {representativeness.map((r) => r.source.spatialResolution).join(' / ')}
             </p>
           </div>
-          <div className="p-2.5 rounded-xl bg-slate-50">
-            <p className="text-[11px] text-slate-500">Resolución temporal</p>
-            <p className="font-semibold text-slate-900">
+          <div className="p-2.5 rounded-xl bg-[var(--agro-surface-soft)]">
+            <p className="text-[11px] text-[var(--agro-muted)]">Resolución temporal</p>
+            <p className="font-semibold text-[var(--agro-text)]">
               {representativeness.map((r) => r.source.temporalResolution).join(' · ')}
             </p>
           </div>
-          <div className="p-2.5 rounded-xl bg-slate-50">
-            <p className="text-[11px] text-slate-500">Unidad de medida</p>
-            <p className="font-semibold text-slate-900 font-mono">
+          <div className="p-2.5 rounded-xl bg-[var(--agro-surface-soft)]">
+            <p className="text-[11px] text-[var(--agro-muted)]">Unidad de medida</p>
+            <p className="font-semibold text-[var(--agro-text)] font-mono">
               {activePreset.primaryUnit} · {activePreset.secondaryUnit}
             </p>
           </div>
-          <div className="p-2.5 rounded-xl bg-slate-50">
-            <p className="text-[11px] text-slate-500">Calidad de dato</p>
-            <p className="font-semibold text-slate-900 font-mono tabular-nums">
+          <div className="p-2.5 rounded-xl bg-[var(--agro-surface-soft)]">
+            <p className="text-[11px] text-[var(--agro-muted)]">Calidad de dato</p>
+            <p className="font-semibold text-[var(--agro-text)] font-mono tabular-nums">
               {missingPointsCount} período(s) parcial(es)
             </p>
           </div>
-          <div className="p-2.5 rounded-xl bg-slate-50 col-span-2">
-            <p className="text-[11px] text-slate-500">Representatividad</p>
-            <p className="font-semibold text-slate-900">
+          <div className="p-2.5 rounded-xl bg-[var(--agro-surface-soft)] col-span-2">
+            <p className="text-[11px] text-[var(--agro-muted)]">Representatividad</p>
+            <p className="font-semibold text-[var(--agro-text)]">
               {insufficientSources.length > 0
                 ? `Escala mixta: ${parcel.areaHa} ha frente a píxel regional de ${insufficientSources
                     .map((i) => i.source.spatialResolution)
@@ -240,9 +240,9 @@ export function FusionTab({ parcel }: FusionTabProps) {
 
       {/* Explainable Warnings */}
       <section className="space-y-2.5">
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-2">
+        <div className="bg-[#40351b] border border-amber-200 rounded-2xl p-4 space-y-2">
           <div className="flex items-start gap-2.5">
-            <ShieldAlert className="w-5 h-5 text-[#B45309] shrink-0 mt-0.5" />
+            <ShieldAlert className="w-5 h-5 text-[#f0c86c] shrink-0 mt-0.5" />
             <div className="space-y-1.5 text-xs text-amber-950">
               <p className="font-bold">Advertencias metodológicas y de escala</p>
               <ul className="list-disc pl-4 space-y-1 text-amber-900 leading-relaxed">
@@ -255,13 +255,13 @@ export function FusionTab({ parcel }: FusionTabProps) {
         </div>
 
         {insufficientSources.length > 0 && (
-          <div className="bg-white border border-amber-200 rounded-2xl p-3.5 space-y-1.5">
-            <p className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+          <div className="bg-[var(--agro-surface)] border border-amber-200 rounded-2xl p-3.5 space-y-1.5">
+            <p className="text-xs font-bold text-[var(--agro-text)] flex items-center gap-1.5">
               <AlertTriangle className="w-4 h-4 text-[#F59E0B]" />
               Detalle por sensor para {parcel.name} ({parcel.areaHa} ha)
             </p>
             {insufficientSources.map(({ source, check }) => (
-              <p key={source.id} className="text-xs text-slate-700 leading-relaxed">
+              <p key={source.id} className="text-xs text-[var(--agro-text)] leading-relaxed">
                 <strong>{source.name}:</strong> {check.explanation}
               </p>
             ))}

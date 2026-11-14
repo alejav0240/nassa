@@ -4,7 +4,7 @@ import secrets
 from fastapi import FastAPI, Depends, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select, delete, text
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from .config import settings
 from .database import Base, engine, get_db
@@ -12,11 +12,15 @@ from .models import Field, ClimateCache, Analysis, Campaign, Plan
 from .schemas import FieldCreate, FieldRead, AnalyzeRequest, CampaignCreate, CampaignRead, PlanCreate, PlanRead, PlanUpdate
 from .schemas import CropsResponse, ErrorResponse, HealthResponse
 from .services.nasa import fetch_power
+from .services.climate_cache import get_climate
 from .services.rotation import CROPS, CROP_METADATA, evaluate
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    from .models import PERFORMANCE_INDEXES
+    for index in PERFORMANCE_INDEXES:
+        index.create(bind=engine, checkfirst=True)
     yield
 
 tags_metadata = [
@@ -139,7 +143,7 @@ def get_field(field_id: int, db: Session = Depends(get_db)):
         503: {'model': ErrorResponse, 'description': 'NASA POWER no está disponible o devolvió una respuesta inválida.'},
     },
 )
-async def analyze(payload: AnalyzeRequest, db: Session = Depends(get_db)):
+def analyze(payload: AnalyzeRequest, db: Session = Depends(get_db)):
     """Genera y almacena un análisis de rotación para una parcela."""
     field = db.get(Field, payload.field_id)
     if not field:
@@ -148,31 +152,12 @@ async def analyze(payload: AnalyzeRequest, db: Session = Depends(get_db)):
     # This is a cache grouping approximation, NOT a claim of precise cell geolocation.
     grid_lat = round(field.latitude * 2) / 2
     grid_lon = round(field.longitude * 2) / 2
-    cache = db.scalar(select(ClimateCache).where(
-        ClimateCache.grid_lat == grid_lat, ClimateCache.grid_lon == grid_lon,
-        ClimateCache.start_year == settings.climate_start_year,
-        ClimateCache.end_year == settings.climate_end_year))
-    if cache and cache.payload.get("summary_version") == 2:
-        climate = deepcopy(cache.payload)
-    else:
-        climate = await fetch_power(grid_lat, grid_lon, settings.climate_start_year, settings.climate_end_year, settings.nasa_timeout_seconds)
-        if cache:
-            cache.payload = climate
-        else:
-            cache = ClimateCache(grid_lat=grid_lat, grid_lon=grid_lon, start_year=settings.climate_start_year, end_year=settings.climate_end_year, payload=climate)
-            db.add(cache)
-        try:
-            db.commit()
-        except IntegrityError:
-            # Another request may have inserted the same cache key while NASA was responding.
-            db.rollback()
-            cache = db.scalar(select(ClimateCache).where(
-                ClimateCache.grid_lat == grid_lat, ClimateCache.grid_lon == grid_lon,
-                ClimateCache.start_year == settings.climate_start_year,
-                ClimateCache.end_year == settings.climate_end_year))
-            if cache is None:
-                raise
-            climate = deepcopy(cache.payload)
+    # FastAPI executes this synchronous endpoint in a worker thread. Database
+    # calls and climate summarization must not block the ASGI event loop.
+    db.expunge(field)
+    db.commit()
+    climate = get_climate(db, grid_lat, grid_lon, settings.climate_start_year,
+                          settings.climate_end_year, settings.nasa_timeout_seconds, fetch_power)
     result = evaluate(field, climate, payload.priorities.model_dump())
     campaigns = db.scalars(select(Campaign).where(Campaign.field_id == field.id).order_by(Campaign.start_date)).all()
     result['history'] = [CampaignRead.model_validate(c).model_dump(mode='json') for c in campaigns]
@@ -234,7 +219,9 @@ def delete_field(field_id: int, db: Session = Depends(get_db)):
     field = get_field(field_id, db)
     db.execute(delete(Plan).where(Plan.field_id == field_id))
     db.execute(delete(Campaign).where(Campaign.field_id == field_id))
-    db.delete(field)
+    # Bulk delete avoids loading every historical JSON analysis into memory.
+    db.execute(delete(Analysis).where(Analysis.field_id == field_id))
+    db.execute(delete(Field).where(Field.id == field_id))
     db.commit()
     return Response(status_code=204)
 

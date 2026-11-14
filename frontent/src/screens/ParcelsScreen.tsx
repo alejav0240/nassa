@@ -63,8 +63,8 @@ export function ParcelsScreen({
       {/* Screen Header */}
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Mis parcelas</h1>
-          <p className="text-xs text-slate-500">
+          <h1 className="text-xl font-bold text-[var(--agro-text)]">Mis parcelas</h1>
+          <p className="text-xs text-[var(--agro-muted)]">
             {parcels.length} parcelas registradas · Almacenamiento local
           </p>
         </div>
@@ -74,7 +74,7 @@ export function ParcelsScreen({
             setEditingParcel(null);
             setModalOpen(true);
           }}
-          className="min-h-[44px] px-4 rounded-xl bg-[#16A34A] hover:bg-[#166534] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0"
+          className="min-h-[44px] px-4 rounded-xl agro-primary hover:bg-[#166534] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0"
         >
           <Plus className="w-4 h-4" />
           Registrar parcela
@@ -84,13 +84,13 @@ export function ParcelsScreen({
       {/* Search & Crop Filter */}
       <div className="space-y-2.5">
         <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[var(--agro-muted)] absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por nombre, cultivo o ubicación..."
-            className="w-full h-11 pl-10 pr-4 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+            className="w-full h-11 pl-10 pr-4 rounded-xl bg-[var(--agro-surface)] border border-[var(--agro-line)] text-sm text-[var(--agro-text)] placeholder:text-[var(--agro-muted)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
           />
         </div>
 
@@ -103,7 +103,7 @@ export function ParcelsScreen({
               className={`min-h-[36px] px-3.5 rounded-lg text-xs font-medium whitespace-nowrap shrink-0 transition-colors ${
                 cropFilter === crop
                   ? 'bg-[#166534] text-white'
-                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  : 'bg-[var(--agro-surface)] border border-[var(--agro-line)] text-[var(--agro-muted)] hover:bg-[var(--agro-surface-soft)]'
               }`}
             >
               {crop}
@@ -114,11 +114,11 @@ export function ParcelsScreen({
 
       {/* Parcel Cards Grid */}
       {filtered.length === 0 ? (
-        <div className="bg-white rounded-2xl p-8 border border-slate-200 text-center space-y-2">
-          <p className="text-sm font-semibold text-slate-800">
+        <div className="bg-[var(--agro-surface)] rounded-2xl p-8 border border-[var(--agro-line)] text-center space-y-2">
+          <p className="text-sm font-semibold text-[var(--agro-text)]">
             No se encontraron parcelas con esos criterios
           </p>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[var(--agro-muted)]">
             Ajusta el filtro o registra una nueva parcela agrícola.
           </p>
         </div>
@@ -129,12 +129,12 @@ export function ParcelsScreen({
             return (
               <article
                 key={parcel.id}
-                className={`bg-white rounded-2xl p-4 border transition-shadow space-y-3.5 ${
-                  isActive ? 'border-[#16A34A] shadow-sm' : 'border-slate-200/90'
+                className={`bg-[var(--agro-surface)] rounded-2xl p-4 border transition-shadow space-y-3.5 ${
+                  isActive ? 'border-[#16A34A] shadow-sm' : 'border-[var(--agro-line)]/90'
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-emerald-50 shrink-0 flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-[var(--agro-selected)] shrink-0 flex items-center justify-center">
                     {parcel.imageUrl ? (
                       <img
                         src={parcel.imageUrl}
@@ -143,46 +143,46 @@ export function ParcelsScreen({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <MapPin className="w-6 h-6 text-[#166534]" />
+                      <MapPin className="w-6 h-6 text-[var(--agro-lime)]" />
                     )}
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <h2 className="text-base font-bold text-slate-900 truncate">{parcel.name}</h2>
+                      <h2 className="text-base font-bold text-[var(--agro-text)] truncate">{parcel.name}</h2>
                       <span
                         className={`text-xs font-semibold whitespace-nowrap ${
                           parcel.monitoringStatus === 'Disponible'
-                            ? 'text-[#166534]'
+                            ? 'text-[var(--agro-lime)]'
                             : parcel.monitoringStatus === 'Parcial'
-                            ? 'text-[#B45309]'
-                            : 'text-[#0284C7]'
+                            ? 'text-[#f0c86c]'
+                            : 'text-[#8dd4ef]'
                         }`}
                       >
                         {parcel.monitoringStatus}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 truncate mt-0.5">
+                    <p className="text-xs text-[var(--agro-muted)] truncate mt-0.5">
                       {parcel.department} · {parcel.location}
                     </p>
-                    <p className="text-xs text-slate-700 mt-1.5 font-mono tabular-nums">
+                    <p className="text-xs text-[var(--agro-text)] mt-1.5 font-mono tabular-nums">
                       {parcel.areaHa.toFixed(2)} ha · Cultivo: <span className="font-sans font-semibold">{parcel.crop}</span>
                     </p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
+                    <p className="text-[11px] text-[var(--agro-muted)] mt-0.5">
                       Registro: {parcel.registeredAt} · Siembra: {parcel.plantingDate}
                     </p>
                   </div>
                 </div>
 
                 {/* Action Row */}
-                <div className="pt-2.5 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                <div className="pt-2.5 border-t border-[var(--agro-line)] flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     onClick={() => onSelectParcel(parcel.id)}
                     className={`min-h-[38px] px-3 rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors ${
                       isActive
-                        ? 'bg-[#DCFCE7] text-[#166534]'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        ? 'bg-[var(--agro-selected)] text-[var(--agro-lime)]'
+                        : 'bg-[var(--agro-surface-soft)] text-[var(--agro-text)] hover:bg-[var(--agro-canvas)]'
                     }`}
                   >
                     {isActive && <Check className="w-3.5 h-3.5" />}
@@ -192,7 +192,7 @@ export function ParcelsScreen({
                   <button
                     type="button"
                     onClick={() => onOpenParcelDetail(parcel.id)}
-                    className="min-h-[38px] px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center gap-1"
+                    className="min-h-[38px] px-3 rounded-xl bg-[var(--agro-surface-soft)] hover:bg-[var(--agro-canvas)] text-[var(--agro-text)] text-xs font-semibold flex items-center gap-1"
                   >
                     <Eye className="w-3.5 h-3.5" />
                     Detalles
@@ -204,7 +204,7 @@ export function ParcelsScreen({
                       onSelectParcel(parcel.id);
                       onNavigate('analisis', 'satelital');
                     }}
-                    className="min-h-[38px] px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center gap-1"
+                    className="min-h-[38px] px-3 rounded-xl bg-[var(--agro-surface-soft)] hover:bg-[var(--agro-canvas)] text-[var(--agro-text)] text-xs font-semibold flex items-center gap-1"
                   >
                     <BarChart3 className="w-3.5 h-3.5" />
                     Análisis
@@ -218,7 +218,7 @@ export function ParcelsScreen({
                         setModalOpen(true);
                       }}
                       aria-label={`Editar ${parcel.name}`}
-                      className="min-h-[38px] min-w-[38px] rounded-xl text-slate-600 hover:bg-slate-100 flex items-center justify-center"
+                      className="min-h-[38px] min-w-[38px] rounded-xl text-[var(--agro-muted)] hover:bg-[var(--agro-surface-soft)] flex items-center justify-center"
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
@@ -226,7 +226,7 @@ export function ParcelsScreen({
                       type="button"
                       onClick={() => setDeletingParcel(parcel)}
                       aria-label={`Eliminar ${parcel.name}`}
-                      className="min-h-[38px] min-w-[38px] rounded-xl text-slate-500 hover:text-[#EF4444] hover:bg-red-50 flex items-center justify-center"
+                      className="min-h-[38px] min-w-[38px] rounded-xl text-[var(--agro-muted)] hover:text-[#EF4444] hover:bg-[#442821] flex items-center justify-center"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

@@ -156,17 +156,17 @@ export function ParcelFormModal({
       aria-modal="true"
       aria-labelledby="parcel-form-title"
     >
-      <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90dvh] flex flex-col shadow-xl overflow-hidden">
-        <div className="w-10 h-1.5 bg-slate-200 rounded-full mx-auto mt-3 sm:hidden" />
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-          <h2 id="parcel-form-title" className="text-base font-bold text-slate-900">
+      <div className="bg-[var(--agro-surface)] w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90dvh] flex flex-col shadow-xl overflow-hidden">
+        <div className="w-10 h-1.5 bg-[var(--agro-canvas)] rounded-full mx-auto mt-3 sm:hidden" />
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--agro-line)]">
+          <h2 id="parcel-form-title" className="text-base font-bold text-[var(--agro-text)]">
             {initialParcel ? 'Editar parcela' : 'Registrar nueva parcela'}
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar formulario"
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-[var(--agro-muted)] hover:bg-[var(--agro-surface-soft)]"
           >
             <X className="w-5 h-5" />
           </button>
@@ -174,13 +174,13 @@ export function ParcelFormModal({
 
         <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4">
           {error && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-medium">
+            <div className="p-3 rounded-xl bg-[#442821] border border-red-200 text-xs text-red-700 font-medium">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+            <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
               Nombre de la parcela
             </label>
             <input
@@ -188,20 +188,20 @@ export function ParcelFormModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ej. Parcela Altiplano Este"
-              className="w-full h-11 px-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+              className="w-full h-11 px-3.5 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
               required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Cultivo actual
               </label>
               <select
                 value={crop}
                 onChange={(e) => setCrop(e.target.value)}
-                className="w-full h-11 px-3 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full h-11 px-3 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] bg-[var(--agro-surface)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
               >
                 <option value="Papa">Papa</option>
                 <option value="Quinua">Quinua</option>
@@ -213,7 +213,7 @@ export function ParcelFormModal({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Superficie (ha)
               </label>
               <input
@@ -222,7 +222,7 @@ export function ParcelFormModal({
                 min="0.01"
                 value={areaHa}
                 onChange={(e) => setAreaHa(e.target.value)}
-                className="w-full h-11 px-3.5 rounded-xl border border-slate-200 text-sm font-mono tabular-nums text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full h-11 px-3.5 rounded-xl border border-[var(--agro-line)] text-sm font-mono tabular-nums text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
                 required
               />
             </div>
@@ -230,7 +230,7 @@ export function ParcelFormModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Ubicación
               </label>
               <input
@@ -238,11 +238,11 @@ export function ParcelFormModal({
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="La Paz, Bolivia"
-                className="w-full h-11 px-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full h-11 px-3.5 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Municipio / Zona
               </label>
               <input
@@ -250,39 +250,39 @@ export function ParcelFormModal({
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
                 placeholder="Viacha"
-                className="w-full h-11 px-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full h-11 px-3.5 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Fecha de siembra
               </label>
               <input
                 type="date"
                 value={plantingDate}
                 onChange={(e) => setPlantingDate(e.target.value)}
-                className="w-full h-11 px-3 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full h-11 px-3 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Cosecha estimada
               </label>
               <input
                 type="date"
                 value={estimatedHarvestDate}
                 onChange={(e) => setEstimatedHarvestDate(e.target.value)}
-                className="w-full h-11 px-3 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full h-11 px-3 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Latitud (centro)
               </label>
               <input
@@ -290,11 +290,11 @@ export function ParcelFormModal({
                 step="0.0001"
                 value={lat}
                 onChange={(e) => setLat(e.target.value)}
-                className="w-full h-11 px-3.5 rounded-xl border border-slate-200 text-sm font-mono tabular-nums text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full h-11 px-3.5 rounded-xl border border-[var(--agro-line)] text-sm font-mono tabular-nums text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Longitud (centro)
               </label>
               <input
@@ -302,19 +302,19 @@ export function ParcelFormModal({
                 step="0.0001"
                 value={lng}
                 onChange={(e) => setLng(e.target.value)}
-                className="w-full h-11 px-3.5 rounded-xl border border-slate-200 text-sm font-mono tabular-nums text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full h-11 px-3.5 rounded-xl border border-[var(--agro-line)] text-sm font-mono tabular-nums text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+            <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
               Estado de monitoreo
             </label>
             <select
               value={monitoringStatus}
               onChange={(e) => setMonitoringStatus(e.target.value as MonitoringStatus)}
-              className="w-full h-11 px-3 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
+              className="w-full h-11 px-3 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] bg-[var(--agro-surface)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
             >
               <option value="Disponible">Disponible</option>
               <option value="Parcial">Parcial</option>
@@ -326,13 +326,13 @@ export function ParcelFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 h-12 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className="flex-1 h-12 rounded-xl border border-[var(--agro-line)] text-sm font-semibold text-[var(--agro-text)] hover:bg-[var(--agro-surface-soft)]"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="flex-1 h-12 rounded-xl bg-[#16A34A] hover:bg-[#166534] text-white text-sm font-semibold transition-colors"
+              className="flex-1 h-12 rounded-xl agro-primary hover:bg-[#166534] text-white text-sm font-semibold transition-colors"
             >
               {initialParcel ? 'Guardar cambios' : 'Registrar parcela'}
             </button>
