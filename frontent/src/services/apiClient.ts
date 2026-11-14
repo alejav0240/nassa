@@ -8,7 +8,7 @@ export interface ApiRequestOptions {
 }
 
 export const API_CONFIG = {
-  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
+  baseUrl: import.meta.env.VITE_API_BASE_URL || '/api',
   mode: 'remote-rest' as 'demo-local' | 'remote-rest',
 };
 
@@ -48,14 +48,59 @@ export interface BackendFieldPayload {
 
 export interface BackendAnalysis {
   id: number;
+  field_id: number;
   created_at: string;
-  climate?: {
-    annual_rainfall_mm?: number;
-    mean_temperature_c?: number;
-    annual_frost_days?: number;
+  priorities: { water: number; soil: number; income: number };
+  climate: {
+    source: string;
+    source_url: string;
+    data_type: string;
+    summary_version: number;
+    data_quality: {
+      complete_years: number[];
+      excluded_years: number[];
+      policy: string;
+    };
+    years: number[];
+    annual_rainfall_mm: number;
+    annual_rainfall_by_year: Record<string, number>;
+    rainfall_variability_pct: number | null;
+    annual_frost_days: number;
+    mean_temperature_c: number;
+    monthly: Array<{
+      month: number;
+      precipitation_mm: number | null;
+      temperature_c: number | null;
+      frost_days_per_year: number;
+      heat_days_per_year: number;
+    }>;
+    limitations: string[];
+    query_coordinates: { latitude: number; longitude: number } | null;
+    requested_coordinates?: { latitude: number; longitude: number };
+    cache_grouping_note?: string;
   };
-  strategies?: Array<{ id: string; title: string; score: number; explanation: string }>;
-  methodology?: { scope?: string; limitations?: string[] };
+  strategies: Array<{
+    id: string;
+    title: string;
+    crops: Array<{ id: string; label: string }>;
+    score: number;
+    scores: { water: number; soil: number; income: number };
+    explanation: string;
+    benefits: string[];
+    risks: string[];
+    flagged_for_review: boolean;
+  }>;
+  methodology: {
+    method: string;
+    formula: string;
+    nasa_source: string;
+    crop_coefficients: Record<string, unknown>;
+    scope: string;
+    limitations: string[];
+  };
+  history?: Array<{ id: number; field_id: number; crop: string; start_date: string; end_date: string; notes: string }>;
+  field_snapshot?: BackendField;
+  history_note?: string;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -63,7 +108,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: {
       Accept: 'application/json',
-      ...(import.meta.env.VITE_API_KEY ? { 'X-API-Key': import.meta.env.VITE_API_KEY } : {}),
       ...(init?.headers || {}),
     },
   });

@@ -6,6 +6,7 @@ Last updated: 2026-11-14
 
 ## Sources scanned
 
+- skills
 - /home/javi/.agents/skills
 - /home/javi/.config/opencode/skills
 - /home/javi/.claude/skills
@@ -28,6 +29,10 @@ Last updated: 2026-11-14
 | --- | --- | --- | --- |
 | `academic-document-drafting` | Draft, restructure, and revise academic documents from an explicit outline, preserving evidence traceability, formal Spanish, and the required document syntax and structure. | user | `/home/javi/.codex/skills/academic-document-drafting/SKILL.md` |
 | `academic-document-review` | Review academic software-engineering documents against Pressman, Clean Code, architecture, testing, and evidence criteria without inventing compliance or implementation facts. | user | `/home/javi/.codex/skills/academic-document-review/SKILL.md` |
+| `agroshift-backend-integration` | Trigger: conectar frontend backend AgroShift, FastAPI, API fields, sincronización, CRUD, análisis. Integra React con contratos reales y fallback controlado. | project | `/home/proyectos/apps/agroshift-ai/skills/agroshift-backend-integration/SKILL.md` |
+| `agroshift-map-workflow` | Trigger: mapa AgroShift, dibujar parcela, seleccionar área, polígono, GeoJSON, captura de terreno. Implementa flujos geoespaciales seguros y comprensibles. | project | `/home/proyectos/apps/agroshift-ai/skills/agroshift-map-workflow/SKILL.md` |
+| `agroshift-scientific-data` | Trigger: NASA POWER, datos satelitales, indicadores, métricas agrícolas, heurísticas, incertidumbre. Comunica evidencia y límites sin fabricar resultados. | project | `/home/proyectos/apps/agroshift-ai/skills/agroshift-scientific-data/SKILL.md` |
+| `agroshift-ux-ui` | Trigger: UX/UI AgroShift, interfaz, dashboard, mapa visual, responsive, usabilidad. Mejora la experiencia sin romper los flujos existentes. | project | `/home/proyectos/apps/agroshift-ai/skills/agroshift-ux-ui/SKILL.md` |
 | `branch-pr` | Create Gentle AI pull requests with issue-first checks. Trigger: creating, opening, or preparing PRs for review. | user | `/home/javi/.config/opencode/skills/branch-pr/SKILL.md` |
 | `chained-pr` | Trigger: PRs over 400 lines, stacked PRs, review slices. Split oversized changes into chained PRs that protect review focus. | user | `/home/javi/.agents/skills/chained-pr/SKILL.md` |
 | `cognitive-doc-design` | Design docs that reduce cognitive load. Trigger: writing guides, READMEs, RFCs, onboarding, architecture, or review-facing docs. | user | `/home/javi/.agents/skills/cognitive-doc-design/SKILL.md` |

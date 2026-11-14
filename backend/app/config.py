@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     climate_end_year: int = 2024
     @model_validator(mode='after')
     def valid_period(self):
+        if self.api_key is not None:
+            self.api_key = self.api_key.strip() or None
         if not 1981 <= self.climate_start_year <= self.climate_end_year < date.today().year:
             raise ValueError('El período climático debe usar años completos desde 1981')
         if self.climate_end_year - self.climate_start_year > 20:

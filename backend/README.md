@@ -22,7 +22,7 @@ Documentación interactiva: http://localhost:8000/docs. Pruebas: `python -m pyte
 - `CORS_ORIGINS`: orígenes separados por coma; por defecto `http://localhost:3000`.
 - `CLIMATE_START_YEAR`, `CLIMATE_END_YEAR`: 2020 y 2024; años completos desde 1981, máximo 21 años.
 - `NASA_TIMEOUT_SECONDS`: 75, máximo 180 segundos.
-- `API_KEY`: opcional, al menos 24 caracteres. Al configurarla se exige `X-API-Key` en todas las rutas salvo salud y preflight. Es una credencial de equipo, NO autenticación multiusuario. Mantenerla del lado del servidor; el proxy actual del frontend necesita configurarse para inyectarla antes de activar esta opción. No guardarla en variables `NEXT_PUBLIC_*`.
+- `API_KEY`: opcional, al menos 24 caracteres. Al configurarla se exige `X-API-Key` en todas las rutas salvo salud y preflight. Es una credencial de equipo, NO autenticación multiusuario. En Compose, Nginx la inyecta desde el servidor al proxy `/api`; nunca se expone al navegador.
 
 No hay aislamiento entre agricultores/cuentas. Mantener el MVP en un entorno privado hasta implementar identidad, cuotas y controles de despliegue. Las escrituras locales no autentican usuarios si `API_KEY` está vacía/no definida.
 

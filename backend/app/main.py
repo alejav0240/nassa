@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from .config import settings
 from .database import Base, engine, get_db
 from .models import Field, ClimateCache, Analysis, Campaign, Plan
-from .schemas import FieldCreate, FieldRead, AnalyzeRequest, CampaignCreate, CampaignRead, PlanCreate, PlanRead, PlanUpdate
+from .schemas import FieldCreate, FieldRead, AnalyzeRequest, AnalysisRead, CampaignCreate, CampaignRead, PlanCreate, PlanRead, PlanUpdate
 from .schemas import CropsResponse, ErrorResponse, HealthResponse
 from .services.nasa import fetch_power
 from .services.climate_cache import get_climate
@@ -130,6 +130,7 @@ def get_field(field_id: int, db: Session = Depends(get_db)):
     '/api/analyze',
     tags=['Analyses'],
     status_code=200,
+    response_model=AnalysisRead,
     summary='Analizar estrategias de rotación',
     description=(
         'Consulta o reutiliza datos climáticos de NASA POWER, evalúa tres estrategias '
@@ -175,6 +176,7 @@ def analyze(payload: AnalyzeRequest, db: Session = Depends(get_db)):
 @app.get(
     '/api/analyses/{analysis_id}',
     tags=['Analyses'],
+    response_model=AnalysisRead,
     summary='Obtener un análisis',
     description='Recupera el resultado completo de un análisis previamente persistido.',
     response_description='Resultado del análisis solicitado.',
@@ -258,7 +260,7 @@ def delete_campaign(field_id: int, campaign_id: int, db: Session = Depends(get_d
     db.commit()
     return Response(status_code=204)
 
-@app.get('/api/fields/{field_id}/analyses')
+@app.get('/api/fields/{field_id}/analyses', response_model=list[AnalysisRead])
 def list_analyses(field_id: int, limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0), db: Session = Depends(get_db)):
     get_field(field_id, db)
     rows = db.scalars(select(Analysis).where(Analysis.field_id == field_id).order_by(Analysis.id.desc()).offset(offset).limit(limit)).all()

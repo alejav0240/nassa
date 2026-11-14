@@ -26,6 +26,7 @@ export function useAgroTerraState() {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [analysisStatus, setAnalysisStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [backendAnalysis, setBackendAnalysis] = useState<BackendAnalysis | null>(null);
+  const [analysisFingerprint, setAnalysisFingerprint] = useState<string | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [selectedParcelId, setSelectedParcelId] = useState<string>(() => {
     const initial = parcelService.getAll();
@@ -94,6 +95,9 @@ export function useAgroTerraState() {
   const selectedParcel = useMemo(() => {
     return parcels.find((p) => p.id === selectedParcelId) ?? parcels[0] ?? null;
   }, [parcels, selectedParcelId]);
+
+  const selectedParcelFingerprint = selectedParcel ? JSON.stringify(selectedParcel) : null;
+  const analysisIsStale = backendAnalysis !== null && analysisFingerprint !== selectedParcelFingerprint;
 
   const detailParcel = useMemo(() => {
     if (!detailParcelId) return null;
@@ -193,6 +197,7 @@ export function useAgroTerraState() {
     try {
       const result = await backendApi.analyzeField(parcel.backendId);
       setBackendAnalysis(result);
+      setAnalysisFingerprint(JSON.stringify(parcel));
       setAnalysisStatus('ready');
     } catch (error) {
       setAnalysisStatus('error');
@@ -268,6 +273,7 @@ export function useAgroTerraState() {
     syncStatus,
     analysisStatus,
     backendAnalysis,
+    analysisIsStale,
     analysisError,
     runBackendAnalysis,
   };

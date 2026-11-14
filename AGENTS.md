@@ -33,3 +33,12 @@ Use Conventional Commits, for example `feat: add crop comparison` or `fix: rejec
 ## Security & Configuration Tips
 
 Do not expose Postgres or the API publicly without authentication, rate limiting, backups, and HTTPS. NASA POWER failures must remain visible; do not substitute fabricated climate data.
+
+## Project Skills
+
+Load the relevant project skill before changing the associated area:
+
+- `skills/agroshift-ux-ui/SKILL.md` — UX/UI, responsive behavior, visual hierarchy, and accessibility.
+- `skills/agroshift-map-workflow/SKILL.md` — map selection, polygon capture, geometry validation, and GeoJSON.
+- `skills/agroshift-backend-integration/SKILL.md` — FastAPI contracts, CRUD synchronization, and API states.
+- `skills/agroshift-scientific-data/SKILL.md` — NASA/satellite provenance, heuristics, uncertainty, and missing data.

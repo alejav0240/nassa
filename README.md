@@ -32,12 +32,12 @@ uvicorn app.main:app --reload
 
 Frontend (otra terminal):
 ```bash
-cd frontend
+cd frontent
 npm install
 npm run dev
 ```
 
-Next.js reenvía `/api/*` al FastAPI local. API y Web se comunican en la red interna con Docker Compose.
+Vite usa `/api` como ruta base. En Docker, Nginx reenvía `/api/*` al FastAPI interno y puede inyectar `API_KEY` sin exponerla al navegador.
 
 ## Estructura
 
@@ -56,10 +56,10 @@ agroshift-ai/
 │   ├── tests/
 │   ├── Dockerfile
 │   └── requirements.txt
-├── frontend/
-│   ├── app/                    # Next.js App Router
-│   ├── components/             # MapLibre y Recharts
-│   ├── lib/api.ts              # tipos + cliente
+├── frontent/
+│   ├── src/                    # React + Vite
+│   ├── src/components/         # componentes y mapas
+│   ├── src/services/apiClient.ts # cliente REST y contratos
 │   └── Dockerfile
 ├── compose.yaml
 └── .env.example
@@ -94,7 +94,7 @@ curl -X POST http://localhost:8000/api/analyze \
 2. Se analiza **2020–2024** para tener una ventana anual completa y reproducible. El usuario puede cambiarlo por variables de entorno.
 3. La referencia actual repite el cultivo introducido para formar una comparación básica. Ahora se pueden registrar campañas históricas; se guardan como contexto del análisis, pero todavía no modifican la secuencia futura de referencia.
 4. Los umbrales de agua y heladas son *heurísticos demostrativos*. No son restricciones científicas validadas. El scoring no evalúa ventanas de siembra, plagas, precios, textura/pH ni balances hídricos mensuales.
-5. La DB usa PostgreSQL/PostGIS como imagen base, pero en este MVP las geometrías opcionales se guardan en JSON; el frontend usa un punto, sin editor de polígonos. Para posteriores fases: columna Geometry, GIST, dibujo de parcelas, zonificación espacial.
+5. La DB usa PostgreSQL/PostGIS como imagen base, pero en este MVP las geometrías opcionales se guardan en JSON; el flujo de parcelas ya permite trabajar con polígonos referenciales, sin afirmar que sean límites topográficos levantados.
 6. Hay una credencial de equipo opcional (`API_KEY`), pero no hay identidad ni aislamiento multiusuario. **No desplegar públicamente con datos personales o sensibles** sin seguridad, cuotas y controles.
 7. En el piloto no se consumen todavía SMAP, GPM, Landsat, SoilGrids ni FAO de forma automática. NASA POWER es la integración satelital/meteorológica real de esta entrega.
 8. Las solicitudes NASA se almacenan en caché sin caducidad para periodos históricos. Evita llamadas duplicadas; definir TTL o versionado si se analizan años recientes.
@@ -104,8 +104,8 @@ curl -X POST http://localhost:8000/api/analyze \
 1. Subir este repositorio a GitHub.
 2. En Coolify: **New Resource → Docker Compose**, seleccionar repositorio y `compose.yaml`.
 3. Establecer `POSTGRES_PASSWORD` como secreto de producción; crear DNS y asociar el dominio únicamente al servicio `web`, puerto 3000.
-4. En el servicio `web`, Next.js usa `INTERNAL_API_URL=http://api:8000` para proxy; el backend debe permanecer en la red privada de Compose.
-5. **Antes de exposición pública**: eliminar el binding publicado del puerto 8000 (`127.0.0.1:8000:8000`), agregar rate limiting y autenticación por equipo, configurar backups de Postgres y HTTPS.
+4. En el servicio `web`, Nginx usa `http://api:8000` para proxy; el backend debe permanecer en la red privada de Compose.
+5. **Antes de exposición pública**: eliminar el binding publicado del puerto 8000 (`127.0.0.1:8000:8000`), agregar rate limiting e identidad multiusuario, configurar backups de Postgres y HTTPS. Si se usa `API_KEY`, definirla para `api` y `web`; Nginx la inyecta al proxy sin enviarla al navegador.
 6. En algunas configuraciones de Coolify es necesario ajustar dominios/puertos proxy. No abrir Postgres públicamente.
 
 ## Pruebas
