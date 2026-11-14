@@ -9,6 +9,7 @@ import { MapScreen } from './screens/MapScreen';
 import { ParcelDetailScreen } from './screens/ParcelDetailScreen';
 import { ParcelsScreen } from './screens/ParcelsScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
+import { DesignSystemScreen } from './screens/DesignSystemScreen';
 
 export default function App() {
   const {
@@ -44,6 +45,10 @@ export default function App() {
   } = useAgroTerraState();
 
   const isSimulated = preferences.simulateDeviceFrame;
+
+  if (window.location.hash === '#design-system') {
+    return <DesignSystemScreen />;
+  }
 
   const renderScreen = () => {
     if (detailParcel) {
