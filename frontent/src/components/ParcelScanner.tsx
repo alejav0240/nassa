@@ -170,22 +170,22 @@ export function ParcelScanner({
       aria-modal="true"
       aria-labelledby="parcel-scanner-title"
     >
-      <div className="relative h-full w-full sm:max-w-5xl sm:mx-auto sm:h-full bg-white sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col">
+      <div className="relative h-full w-full sm:max-w-5xl sm:mx-auto sm:h-full bg-[var(--agro-surface)] sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col">
         <div className="absolute top-0 left-0 right-0 z-[500] p-3 sm:p-4 pointer-events-none">
-          <div className="pointer-events-auto bg-white/97 backdrop-blur-md rounded-2xl border border-slate-200/90 shadow-[0_10px_30px_rgba(15,23,42,0.16)] px-4 py-3 flex items-start justify-between gap-3">
+          <div className="pointer-events-auto bg-[var(--agro-surface)]/97 backdrop-blur-md rounded-2xl border border-[var(--agro-line)]/90 shadow-[0_10px_30px_rgba(15,23,42,0.16)] px-4 py-3 flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-xl bg-[#DCFCE7] text-[#166534] flex items-center justify-center shrink-0">
+                <span className="w-8 h-8 rounded-xl bg-[var(--agro-success-bg)] text-[var(--agro-success-text)] flex items-center justify-center shrink-0">
                   <Ruler className="w-4 h-4" />
                 </span>
                 <div className="min-w-0">
                   <h2
                     id="parcel-scanner-title"
-                    className="text-sm font-bold text-slate-900 truncate"
+                    className="text-sm font-bold text-[var(--agro-text)] truncate"
                   >
                     Escáner de superficie
                   </h2>
-                  <p className="text-[11px] text-slate-500 truncate">
+                  <p className="text-[11px] text-[var(--agro-muted)] truncate">
                     Toca el mapa para marcar el contorno de la parcela
                   </p>
                 </div>
@@ -195,7 +195,7 @@ export function ParcelScanner({
               type="button"
               onClick={onClose}
               aria-label="Cerrar escáner"
-              className="min-h-[44px] min-w-[44px] rounded-full text-slate-500 hover:bg-slate-100 flex items-center justify-center shrink-0"
+              className="min-h-[44px] min-w-[44px] rounded-full text-[var(--agro-muted)] hover:bg-[var(--agro-selected)] flex items-center justify-center shrink-0"
             >
               <X className="w-5 h-5" />
             </button>
@@ -262,7 +262,7 @@ export function ParcelScanner({
               disabled={points.length === 0}
               aria-label="Centrar en la medición"
               title="Centrar en la medición"
-              className="w-11 h-11 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-md flex items-center justify-center text-slate-700 hover:text-[#166534] hover:bg-emerald-50 disabled:opacity-40 transition-colors"
+              className="w-11 h-11 rounded-2xl bg-[var(--agro-surface)]/95 backdrop-blur-md border border-[var(--agro-line)]/80 shadow-md flex items-center justify-center text-[var(--agro-text)] hover:text-[var(--agro-lime)] hover:bg-[var(--agro-selected)] disabled:opacity-40 transition-colors"
             >
               <Crosshair className="w-5 h-5" />
             </button>
@@ -272,7 +272,7 @@ export function ParcelScanner({
               disabled={points.length === 0}
               aria-label="Deshacer último vértice"
               title="Deshacer"
-              className="w-11 h-11 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-md flex items-center justify-center text-slate-700 hover:text-[#166534] hover:bg-emerald-50 disabled:opacity-40 transition-colors"
+              className="w-11 h-11 rounded-2xl bg-[var(--agro-surface)]/95 backdrop-blur-md border border-[var(--agro-line)]/80 shadow-md flex items-center justify-center text-[var(--agro-text)] hover:text-[var(--agro-lime)] hover:bg-[var(--agro-selected)] disabled:opacity-40 transition-colors"
             >
               <Undo2 className="w-5 h-5" />
             </button>
@@ -282,36 +282,36 @@ export function ParcelScanner({
               disabled={points.length === 0}
               aria-label="Limpiar contorno"
               title="Limpiar"
-              className="w-11 h-11 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-md flex items-center justify-center text-slate-700 hover:text-[#DC2626] hover:bg-red-50 disabled:opacity-40 transition-colors"
+              className="w-11 h-11 rounded-2xl bg-[var(--agro-surface)]/95 backdrop-blur-md border border-[var(--agro-line)]/80 shadow-md flex items-center justify-center text-[var(--agro-text)] hover:text-[var(--agro-danger-text)] hover:bg-[var(--agro-danger-bg)] disabled:opacity-40 transition-colors"
             >
               <Trash2 className="w-5 h-5" />
             </button>
           </div>
 
           <div className="absolute bottom-0 left-0 right-0 z-[500] p-3 sm:p-4 pointer-events-none">
-            <div className="pointer-events-auto bg-white/98 backdrop-blur-md rounded-3xl border border-slate-200/90 shadow-[0_14px_36px_rgba(15,23,42,0.18)] p-4 space-y-3">
+            <div className="pointer-events-auto bg-[var(--agro-surface)]/98 backdrop-blur-md rounded-3xl border border-[var(--agro-line)]/90 shadow-[0_14px_36px_rgba(15,23,42,0.18)] p-4 space-y-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--agro-muted)]">
                     Superficie medida
                   </p>
-                  <p className="text-2xl font-bold text-slate-900 font-mono tabular-nums leading-tight mt-0.5">
+                  <p className="text-2xl font-bold text-[var(--agro-text)] font-mono tabular-nums leading-tight mt-0.5">
                     {measurement ? formatAreaHa(measurement.areaHa) : '0,00 ha'}
                   </p>
-                  <p className="text-xs text-slate-500 font-mono tabular-nums">
+                  <p className="text-xs text-[var(--agro-muted)] font-mono tabular-nums">
                     {measurement
                       ? formatSquareMeters(measurement.areaM2)
                       : 'Sin contorno todavía'}
                   </p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-[11px] text-slate-500">Perímetro</p>
-                  <p className="text-sm font-bold text-slate-900 font-mono tabular-nums">
+                  <p className="text-[11px] text-[var(--agro-muted)]">Perímetro</p>
+                  <p className="text-sm font-bold text-[var(--agro-text)] font-mono tabular-nums">
                     {measurement ? formatPerimeter(measurement.perimeterM) : '—'}
                   </p>
-                  <p className="text-[11px] text-slate-500 mt-1">
+                  <p className="text-[11px] text-[var(--agro-muted)] mt-1">
                     Vértices:{' '}
-                    <strong className="text-slate-700">
+                    <strong className="text-[var(--agro-text)]">
                       {measurement?.vertexCount ?? points.length}
                     </strong>
                   </p>
@@ -319,8 +319,8 @@ export function ParcelScanner({
               </div>
 
               {points.length < 3 && (
-                <div className="flex items-start gap-2 text-[11px] text-slate-600 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                  <Info className="w-3.5 h-3.5 text-[#166534] shrink-0 mt-0.5" />
+                <div className="flex items-start gap-2 text-[11px] text-[var(--agro-info-text)] bg-[var(--agro-info-bg)] border border-[var(--agro-line)] rounded-xl px-3 py-2">
+                  <Info className="w-3.5 h-3.5 text-[var(--agro-info-text)] shrink-0 mt-0.5" />
                   <span>
                     Marca al menos 3 vértices. El polígono se cierra automáticamente al
                     calcular la superficie.
@@ -329,8 +329,8 @@ export function ParcelScanner({
               )}
 
               {validation.errors.length > 0 && (
-                <div className="flex items-start gap-2 text-[11px] text-red-800 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
-                  <AlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0 mt-0.5" />
+                <div className="flex items-start gap-2 text-[11px] text-[var(--agro-danger-text)] bg-[var(--agro-danger-bg)] border border-[var(--agro-danger-text)]/40 rounded-xl px-3 py-2">
+                  <AlertTriangle className="w-3.5 h-3.5 text-[var(--agro-danger-text)] shrink-0 mt-0.5" />
                   <div className="space-y-0.5">
                     {validation.errors.slice(0, 3).map((error) => (
                       <p key={error}>{error}</p>
@@ -340,8 +340,8 @@ export function ParcelScanner({
               )}
 
               {validation.valid && validation.warnings.length > 0 && (
-                <div className="flex items-start gap-2 text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
-                  <AlertTriangle className="w-3.5 h-3.5 text-[#B45309] shrink-0 mt-0.5" />
+                <div className="flex items-start gap-2 text-[11px] text-[var(--agro-warning-text)] bg-[var(--agro-warning-bg)] border border-[var(--agro-warning-text)]/40 rounded-xl px-3 py-2">
+                  <AlertTriangle className="w-3.5 h-3.5 text-[var(--agro-warning-text)] shrink-0 mt-0.5" />
                   <div className="space-y-0.5">
                     {validation.warnings.slice(0, 2).map((warning) => (
                       <p key={warning}>{warning}</p>
@@ -354,13 +354,13 @@ export function ParcelScanner({
                 type="button"
                 onClick={handleConfirm}
                 disabled={!measurement?.valid}
-                className="w-full h-11 rounded-xl bg-[#16A34A] hover:bg-[#166534] text-white text-xs font-semibold disabled:opacity-40 flex items-center justify-center gap-1.5 transition-colors"
+                className="w-full h-11 rounded-xl agro-primary text-white text-xs font-semibold disabled:opacity-40 flex items-center justify-center gap-1.5 transition-colors"
               >
                 <Check className="w-4 h-4" />
                 Usar superficie medida
               </button>
 
-              <p className="text-[10px] leading-relaxed text-slate-500">
+              <p className="text-[10px] leading-relaxed text-[var(--agro-muted)]">
                 Cálculo geodésico referencial sobre WGS84. No sustituye un levantamiento
                 topográfico, GNSS-RTK ni la delimitación catastral oficial.
               </p>

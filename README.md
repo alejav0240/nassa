@@ -67,6 +67,8 @@ agroshift-ai/
 
 ## API
 
+La documentación actualizada del backend, endpoints de campañas y planes, configuración y pruebas está en [backend/README.md](backend/README.md).
+
 - `GET /api/health`
 - `GET /api/crops`
 - `POST /api/fields`
@@ -90,10 +92,10 @@ curl -X POST http://localhost:8000/api/analyze \
 
 1. **POWER**: raster meteorológico de resolución gruesa; la caché redondea lat/lon a 0.5°. Se informa la coordenada efectivamente consultada. El dato NO equivale a una observación a escala de parcela.
 2. Se analiza **2020–2024** para tener una ventana anual completa y reproducible. El usuario puede cambiarlo por variables de entorno.
-3. La referencia actual repite el cultivo introducido para formar una comparación básica. Una rotación histórica real necesitaría una ficha de 3–5 campañas agrícolas.
+3. La referencia actual repite el cultivo introducido para formar una comparación básica. Ahora se pueden registrar campañas históricas; se guardan como contexto del análisis, pero todavía no modifican la secuencia futura de referencia.
 4. Los umbrales de agua y heladas son *heurísticos demostrativos*. No son restricciones científicas validadas. El scoring no evalúa ventanas de siembra, plagas, precios, textura/pH ni balances hídricos mensuales.
 5. La DB usa PostgreSQL/PostGIS como imagen base, pero en este MVP las geometrías opcionales se guardan en JSON; el frontend usa un punto, sin editor de polígonos. Para posteriores fases: columna Geometry, GIST, dibujo de parcelas, zonificación espacial.
-6. No hay autenticación ni aislamiento multiusuario. **No desplegar públicamente con datos personales o sensibles** sin seguridad, cuotas y controles.
+6. Hay una credencial de equipo opcional (`API_KEY`), pero no hay identidad ni aislamiento multiusuario. **No desplegar públicamente con datos personales o sensibles** sin seguridad, cuotas y controles.
 7. En el piloto no se consumen todavía SMAP, GPM, Landsat, SoilGrids ni FAO de forma automática. NASA POWER es la integración satelital/meteorológica real de esta entrega.
 8. Las solicitudes NASA se almacenan en caché sin caducidad para periodos históricos. Evita llamadas duplicadas; definir TTL o versionado si se analizan años recientes.
 

@@ -186,17 +186,17 @@ export function ParcelFormModal({
       aria-modal="true"
       aria-labelledby="parcel-form-title"
     >
-      <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90dvh] flex flex-col shadow-xl overflow-hidden">
-        <div className="w-10 h-1.5 bg-slate-200 rounded-full mx-auto mt-3 sm:hidden" />
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-          <h2 id="parcel-form-title" className="text-base font-bold text-slate-900">
+      <div className="bg-[var(--agro-surface)] w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90dvh] flex flex-col shadow-xl overflow-hidden">
+        <div className="w-10 h-1.5 bg-[var(--agro-canvas)] rounded-full mx-auto mt-3 sm:hidden" />
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--agro-line)]">
+          <h2 id="parcel-form-title" className="text-base font-bold text-[var(--agro-text)]">
             {initialParcel ? 'Editar parcela' : 'Registrar nueva parcela'}
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar formulario"
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-[var(--agro-muted)] hover:bg-[var(--agro-surface-soft)]"
           >
             <X className="w-5 h-5" />
           </button>
@@ -204,13 +204,13 @@ export function ParcelFormModal({
 
         <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4">
           {error && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-medium">
+            <div className="p-3 rounded-xl bg-[var(--agro-danger-bg)] border border-red-200 text-xs text-[var(--agro-danger-text)] font-medium">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+            <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
               Nombre de la parcela
             </label>
             <input
@@ -218,20 +218,20 @@ export function ParcelFormModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ej. Parcela Altiplano Este"
-              className="w-full h-11 px-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+              className="w-full h-11 px-3.5 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
               required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Cultivo actual
               </label>
               <select
                 value={crop}
                 onChange={(e) => setCrop(e.target.value)}
-                className="w-full h-11 px-3 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full h-11 px-3 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] bg-[var(--agro-surface)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
               >
                 <option value="Papa">Papa</option>
                 <option value="Quinua">Quinua</option>
@@ -243,7 +243,7 @@ export function ParcelFormModal({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 {measurement ? 'Superficie medida (ha)' : 'Superficie declarada (ha)'}
               </label>
               <input
@@ -253,10 +253,10 @@ export function ParcelFormModal({
                 value={areaHa}
                 onChange={(e) => setAreaHa(e.target.value)}
                 readOnly={Boolean(measurement)}
-                className={`w-full h-11 px-3.5 rounded-xl border text-sm font-mono tabular-nums text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 ${
+                className={`w-full h-11 px-3.5 rounded-xl border text-sm font-mono tabular-nums text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600 ${
                   measurement
                     ? 'border-emerald-200 bg-emerald-50/70 font-semibold text-[#166534]'
-                    : 'border-slate-200'
+                    : 'border-[var(--agro-line)]'
                 }`}
                 required
               />
@@ -279,7 +279,7 @@ export function ParcelFormModal({
                   onClick={() => {
                     setMeasurement(null);
                   }}
-                  className="min-h-[42px] px-3.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  className="min-h-[42px] px-3.5 rounded-xl border border-[var(--agro-line)] text-xs font-semibold text-[var(--agro-text)] hover:bg-[var(--agro-soft)]"
                 >
                   Usar superficie declarada
                 </button>
@@ -291,10 +291,10 @@ export function ParcelFormModal({
                 <p className="text-[11px] font-bold text-[#166534] uppercase tracking-wide">
                   Medición del polígono
                 </p>
-                <p className="text-xs font-semibold text-slate-900 font-mono tabular-nums">
+                <p className="text-xs font-semibold text-[var(--agro-text)] font-mono tabular-nums">
                   {formatAreaHa(measurement.areaHa)} · {formatSquareMeters(measurement.areaM2)}
                 </p>
-                <p className="text-[11px] text-slate-600">
+                <p className="text-[11px] text-[var(--agro-muted)]">
                   Perímetro {formatPerimeter(measurement.perimeterM)} ·{' '}
                   {measurement.vertexCount} vértices · Superficie usada en todos los
                   cálculos.
@@ -306,7 +306,7 @@ export function ParcelFormModal({
                 ))}
               </div>
             ) : (
-              <p className="text-[11px] text-slate-500 leading-relaxed">
+              <p className="text-[11px] text-[var(--agro-muted)] leading-relaxed">
                 La superficie declarada no es una medición. Usa el escáner para calcular
                 área y perímetro desde el contorno real del terreno.
               </p>
@@ -315,7 +315,7 @@ export function ParcelFormModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Ubicación
               </label>
               <input
@@ -323,11 +323,11 @@ export function ParcelFormModal({
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="La Paz, Bolivia"
-                className="w-full h-11 px-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full h-11 px-3.5 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Municipio / Zona
               </label>
               <input
@@ -335,39 +335,39 @@ export function ParcelFormModal({
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
                 placeholder="Viacha"
-                className="w-full h-11 px-3.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full h-11 px-3.5 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Fecha de siembra
               </label>
               <input
                 type="date"
                 value={plantingDate}
                 onChange={(e) => setPlantingDate(e.target.value)}
-                className="w-full h-11 px-3 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full h-11 px-3 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Cosecha estimada
               </label>
               <input
                 type="date"
                 value={estimatedHarvestDate}
                 onChange={(e) => setEstimatedHarvestDate(e.target.value)}
-                className="w-full h-11 px-3 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full h-11 px-3 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Latitud (centro)
               </label>
               <input
@@ -376,15 +376,15 @@ export function ParcelFormModal({
                 value={lat}
                 onChange={(e) => setLat(e.target.value)}
                 readOnly={Boolean(measurement)}
-                className={`w-full h-11 px-3.5 rounded-xl border text-sm font-mono tabular-nums text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 ${
+                className={`w-full h-11 px-3.5 rounded-xl border text-sm font-mono tabular-nums text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600 ${
                   measurement
                     ? 'border-emerald-200 bg-emerald-50/70 text-[#166534]'
-                    : 'border-slate-200'
+                    : 'border-[var(--agro-line)]'
                 }`}
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Longitud (centro)
               </label>
               <input
@@ -393,29 +393,29 @@ export function ParcelFormModal({
                 value={lng}
                 onChange={(e) => setLng(e.target.value)}
                 readOnly={Boolean(measurement)}
-                className={`w-full h-11 px-3.5 rounded-xl border text-sm font-mono tabular-nums text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 ${
+                className={`w-full h-11 px-3.5 rounded-xl border text-sm font-mono tabular-nums text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600 ${
                   measurement
                     ? 'border-emerald-200 bg-emerald-50/70 text-[#166534]'
-                    : 'border-slate-200'
+                    : 'border-[var(--agro-line)]'
                 }`}
               />
             </div>
           </div>
           {measurement && (
-            <p className="text-[11px] text-slate-500 leading-relaxed">
+            <p className="text-[11px] text-[var(--agro-muted)] leading-relaxed">
               El centro y la superficie provienen del contorno escaneado. Para editarlos
               manualmente, elige “Usar superficie declarada”.
             </p>
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+            <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
               Estado de monitoreo
             </label>
             <select
               value={monitoringStatus}
               onChange={(e) => setMonitoringStatus(e.target.value as MonitoringStatus)}
-              className="w-full h-11 px-3 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
+              className="w-full h-11 px-3 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] bg-[var(--agro-surface)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
             >
               <option value="Disponible">Disponible</option>
               <option value="Parcial">Parcial</option>
@@ -427,13 +427,13 @@ export function ParcelFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 h-12 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className="flex-1 h-12 rounded-xl border border-[var(--agro-line)] text-sm font-semibold text-[var(--agro-text)] hover:bg-[var(--agro-surface-soft)]"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="flex-1 h-12 rounded-xl bg-[#16A34A] hover:bg-[#166534] text-white text-sm font-semibold transition-colors"
+              className="flex-1 h-12 rounded-xl agro-primary hover:bg-[#166534] text-white text-sm font-semibold transition-colors"
             >
               {initialParcel ? 'Guardar cambios' : 'Registrar parcela'}
             </button>

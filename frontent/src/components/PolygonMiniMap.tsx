@@ -11,7 +11,7 @@ export function PolygonMiniMap({ parcel, heightClass = 'h-44' }: PolygonMiniMapP
   const center = parcel.measurement?.centroid ?? parcel.centroid;
 
   return (
-    <div className={`w-full ${heightClass} rounded-2xl overflow-hidden border border-slate-200 relative z-0`}>
+    <div className={`w-full ${heightClass} rounded-2xl overflow-hidden border border-[var(--agro-line)] relative z-0`}>
       <MapContainer
         key={parcel.id}
         center={[center.lat, center.lng]}
@@ -38,7 +38,7 @@ export function PolygonMiniMap({ parcel, heightClass = 'h-44' }: PolygonMiniMapP
           />
         )}
       </MapContainer>
-      <div className="absolute bottom-2 left-2 z-[400] bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg text-[11px] font-medium text-slate-700 border border-slate-200/80">
+      <div className="absolute bottom-2 left-2 z-[400] bg-[var(--agro-surface)] backdrop-blur-sm px-2.5 py-1 rounded-lg text-[11px] font-medium text-[var(--agro-text)] border border-[var(--agro-line)]/80">
         {parcel.measurement
           ? `Contorno medido · ${parcel.measurement.vertexCount} vértices`
           : 'Mapa base OSM · Polígono referencial'}

@@ -1,14 +1,17 @@
+import { lazy, Suspense } from 'react';
+import { ThemeToggle } from './components/ThemeToggle';
 import { AnimatePresence, motion } from 'motion/react';
 import { Smartphone, Monitor } from 'lucide-react';
 import { AlertsDrawer } from './components/AlertsDrawer';
 import { BottomNav, SideNavRail } from './components/BottomNav';
 import { useAgroTerraState } from './hooks/useAgroTerraState';
-import { AnalysisScreen } from './screens/AnalysisScreen';
+const AnalysisScreen = lazy(() => import('./screens/AnalysisScreen').then(m => ({ default: m.AnalysisScreen })));
 import { HomeScreen } from './screens/HomeScreen';
-import { MapScreen } from './screens/MapScreen';
-import { ParcelDetailScreen } from './screens/ParcelDetailScreen';
-import { ParcelsScreen } from './screens/ParcelsScreen';
-import { ProfileScreen } from './screens/ProfileScreen';
+const MapScreen = lazy(() => import('./screens/MapScreen').then(m => ({ default: m.MapScreen })));
+const ParcelDetailScreen = lazy(() => import('./screens/ParcelDetailScreen').then(m => ({ default: m.ParcelDetailScreen })));
+const ParcelsScreen = lazy(() => import('./screens/ParcelsScreen').then(m => ({ default: m.ParcelsScreen })));
+const ProfileScreen = lazy(() => import('./screens/ProfileScreen').then(m => ({ default: m.ProfileScreen })));
+const DesignSystemScreen = lazy(() => import('./screens/DesignSystemScreen').then(m => ({ default: m.DesignSystemScreen })));
 
 export default function App() {
   const {
@@ -41,9 +44,19 @@ export default function App() {
     userProfile,
     setUserProfile,
     resetAllDemoData,
+    backendStatus,
+    syncStatus,
+    analysisStatus,
+    backendAnalysis,
+    analysisError,
+    runBackendAnalysis,
   } = useAgroTerraState();
 
   const isSimulated = preferences.simulateDeviceFrame;
+
+  if (window.location.hash === '#design-system') {
+    return <Suspense fallback={<p role="status">Cargando…</p>}><DesignSystemScreen /></Suspense>;
+  }
 
   const renderScreen = () => {
     if (detailParcel) {
@@ -71,6 +84,8 @@ export default function App() {
             selectedParcel={selectedParcel}
             unreadAlertsCount={unreadAlertsCount}
             preferences={preferences}
+            backendStatus={backendStatus}
+            syncStatus={syncStatus}
             onSelectParcel={setSelectedParcelId}
             onOpenParcelDetail={openParcelDetail}
             onNavigate={navigateTo}
@@ -84,12 +99,14 @@ export default function App() {
             selectedParcel={selectedParcel}
             preferences={preferences}
             isSimulatedFrame={isSimulated}
+            syncStatus={syncStatus}
             onSelectParcel={setSelectedParcelId}
             onCreateParcel={createParcel}
             onUpdateParcel={updateParcel}
             onOpenParcelDetail={openParcelDetail}
             onAnalyzeParcel={(id) => {
               setSelectedParcelId(id);
+              void runBackendAnalysis(id);
               navigateTo('analisis', 'satelital');
             }}
             onOpenParcelHistory={(id) => {
@@ -122,6 +139,9 @@ export default function App() {
             historyRecords={historyRecords}
             onAddHistory={addHistoryRecord}
             preferences={preferences}
+            analysisStatus={analysisStatus}
+            backendAnalysis={backendAnalysis}
+            analysisError={analysisError}
           />
         );
       case 'perfil':
@@ -143,21 +163,22 @@ export default function App() {
 
   if (isSimulated) {
     return (
-      <div className="min-h-screen bg-slate-200/80 flex flex-col items-center justify-center p-4 gap-3">
-        <div className="hidden lg:flex items-center gap-2 bg-white px-3.5 py-1.5 rounded-full border border-slate-300 shadow-xs text-xs">
-          <Smartphone className="w-3.5 h-3.5 text-[#166534]" />
-          <span className="font-semibold text-slate-800">Vista Móvil (390 × 844 px)</span>
+      <div className="agro-theme min-h-screen bg-[var(--agro-canvas)] flex flex-col items-center justify-center p-4 gap-3">
+        <div className="hidden lg:flex items-center gap-2 bg-[var(--agro-surface)] px-3.5 py-1.5 rounded-full border border-[var(--agro-line)] shadow-xs text-xs">
+          <Smartphone className="w-3.5 h-3.5 text-[var(--agro-lime)]" />
+          <span className="font-semibold text-[var(--agro-text)]">Vista Móvil (390 × 844 px)</span>
           <button
             type="button"
             onClick={() => setPreferences({ ...preferences, simulateDeviceFrame: false })}
-            className="ml-2 text-[#16A34A] hover:underline font-semibold inline-flex items-center gap-1"
+            className="ml-2 text-[var(--agro-lime)] hover:underline font-semibold inline-flex items-center gap-1"
           >
             <Monitor className="w-3.5 h-3.5" /> Cambiar a adaptable
           </button>
         </div>
 
-        <div className="w-[390px] max-w-full h-[844px] max-h-[88vh] bg-[#F8FAFC] rounded-[36px] border-[8px] border-slate-900 shadow-2xl overflow-hidden flex flex-col relative">
+        <div className="w-[390px] max-w-full h-[844px] max-h-[88vh] bg-[var(--agro-canvas)] rounded-[36px] border-[8px] border-slate-900 shadow-2xl overflow-hidden flex flex-col relative">
           <div className="flex-1 overflow-y-auto no-scrollbar">
+            <ThemeToggle />
             <AnimatePresence mode="wait">
               <motion.div
                 key={screenKey}
@@ -166,7 +187,7 @@ export default function App() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.14 }}
               >
-                {renderScreen()}
+                <Suspense fallback={<p role="status" className="p-6">Cargando…</p>}>{renderScreen()}</Suspense>
               </motion.div>
             </AnimatePresence>
           </div>
@@ -191,12 +212,13 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex">
+    <div className="agro-theme min-h-screen bg-[var(--agro-canvas)] text-[var(--agro-text)] flex">
       <SideNavRail activeTab={activeTab} onSelect={(tab) => navigateTo(tab)} />
 
       <main className="flex-1 min-w-0 pb-20 lg:pb-6 lg:p-5">
         <div className="max-w-5xl mx-auto">
-          <AnimatePresence mode="wait">
+          <ThemeToggle />
+            <AnimatePresence mode="wait">
             <motion.div
               key={screenKey}
               initial={{ opacity: 0, y: 6 }}
@@ -204,7 +226,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.14 }}
             >
-              {renderScreen()}
+              <Suspense fallback={<p role="status" className="p-6">Cargando…</p>}>{renderScreen()}</Suspense>
             </motion.div>
           </AnimatePresence>
         </div>

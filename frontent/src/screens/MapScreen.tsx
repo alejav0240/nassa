@@ -60,6 +60,7 @@ interface MapScreenProps {
   onOpenParcelDetail: (id: string) => void;
   onAnalyzeParcel: (id: string) => void;
   onOpenParcelHistory: (id: string) => void;
+  syncStatus: 'idle' | 'saving' | 'saved' | 'error';
 }
 
 interface LayerDef {
@@ -217,6 +218,7 @@ export function MapScreen({
   onOpenParcelDetail,
   onAnalyzeParcel,
   onOpenParcelHistory,
+  syncStatus,
 }: MapScreenProps) {
   const initialLat = selectedParcel?.centroid.lat ?? -16.6524;
   const initialLng = selectedParcel?.centroid.lng ?? -68.2958;
@@ -294,6 +296,7 @@ export function MapScreen({
     setMapCenter([center.lat, center.lng]);
     setMapZoom(16);
     setSheetCollapsed(false);
+    onOpenParcelDetail(parcel.id);
   };
 
   const handleGeolocate = () => {
@@ -380,6 +383,7 @@ export function MapScreen({
       observations: [],
     };
     onCreateParcel(created);
+    onOpenParcelDetail(created.id);
     setShowSaveModal(false);
     setPendingScan(null);
     setScannerInitialPolygon(undefined);
@@ -395,10 +399,10 @@ export function MapScreen({
 
   return (
     <div
-      className={`relative w-full overflow-hidden bg-slate-100 select-none ${
+      className={`relative w-full overflow-hidden bg-[var(--agro-surface-soft)] select-none ${
         isSimulatedFrame
           ? 'h-[748px]'
-          : 'h-[calc(100dvh-64px)] lg:h-[calc(100vh-32px)] lg:rounded-3xl border border-slate-200/90 shadow-xs'
+          : 'h-[calc(100dvh-64px)] lg:h-[calc(100vh-32px)] lg:rounded-3xl border border-[var(--agro-line)]/90 shadow-xs'
       }`}
     >
       {/* Full-bleed Interactive OpenStreetMap */}
@@ -407,6 +411,7 @@ export function MapScreen({
         zoom={mapZoom}
         zoomControl={false}
         className="w-full h-full z-0"
+        aria-label="Mapa interactivo de parcelas agrícolas"
       >
         <TileLayer
           attribution="&copy; OpenStreetMap contributors"
@@ -522,8 +527,8 @@ export function MapScreen({
       {/* Top Rounded Search Bar & Quick Parcel Switcher */}
       <div className="absolute top-3.5 left-3.5 right-3.5 z-[450] flex flex-col gap-2 pointer-events-none">
         <div className="pointer-events-auto max-w-md w-full relative">
-          <div className="flex items-center h-12 rounded-full bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-[0_8px_24px_rgba(15,23,42,0.08)] px-2 gap-2 focus-within:ring-2 focus-within:ring-[#16A34A] transition-shadow">
-            <div className="w-8 h-8 rounded-full bg-[#DCFCE7] text-[#166534] flex items-center justify-center shrink-0">
+          <div className="flex items-center h-12 rounded-full bg-[var(--agro-surface)] backdrop-blur-md border border-[var(--agro-line)]/80 shadow-[0_8px_24px_rgba(15,23,42,0.08)] px-2 gap-2 focus-within:ring-2 focus-within:ring-[#16A34A] transition-shadow">
+            <div className="w-8 h-8 rounded-full bg-[var(--agro-selected)] text-[var(--agro-lime)] flex items-center justify-center shrink-0">
               <Search className="w-4 h-4" />
             </div>
             <input
@@ -535,24 +540,44 @@ export function MapScreen({
                 setSearchOpen(true);
               }}
               placeholder="Buscar parcela o zona agrícola..."
-              className="flex-1 bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none min-w-0"
+              className="flex-1 bg-transparent text-sm text-[var(--agro-text)] placeholder:text-[var(--agro-muted)] focus:outline-none min-w-0"
             />
             {searchQuery ? (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
                 aria-label="Limpiar búsqueda"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 shrink-0"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--agro-muted)] hover:text-[var(--agro-text)] hover:bg-[var(--agro-surface-soft)] shrink-0"
               >
                 <X className="w-4 h-4" />
               </button>
             ) : (
-              <span className="text-[10px] font-semibold text-slate-500 pr-2.5 whitespace-nowrap">
+              <span className="text-[10px] font-semibold text-[var(--agro-muted)] pr-2.5 whitespace-nowrap">
                 OSM
               </span>
             )}
           </div>
         </div>
+
+        {!searchOpen && (
+          <div className="pointer-events-auto max-w-md bg-[var(--agro-surface)] backdrop-blur-md rounded-2xl border border-[var(--agro-line)]/80 shadow-sm px-3.5 py-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-[var(--agro-text)]">Mapa de parcelas</p>
+                <p className="text-[11px] text-[var(--agro-muted)] mt-0.5 truncate">
+                  {parcels.length} {parcels.length === 1 ? 'área registrada' : 'áreas registradas'} · {currentLayerInfo.name}
+                </p>
+              </div>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--agro-selected)] text-[var(--agro-lime)] px-2 py-1 text-[10px] font-bold whitespace-nowrap">
+                <MapPin className="w-3 h-3" />
+                {selectedParcel ? 'Área activa' : 'Sin selección'}
+              </span>
+            </div>
+            <p className="text-[11px] text-[var(--agro-muted)] mt-2 leading-4">
+              Tocá una parcela para abrir su ficha 3D o usá <strong>Dibujar</strong> para registrar una nueva.
+            </p>
+          </div>
+        )}
 
         {/* Sleek Parcel Switcher Chips */}
         {parcels.length > 0 && !searchOpen && (
@@ -568,11 +593,11 @@ export function MapScreen({
                   className={`min-h-[34px] px-3.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all border ${
                     active
                       ? 'bg-[#166534] text-white border-[#166534] shadow-md shadow-emerald-900/15'
-                      : 'bg-white/92 backdrop-blur-md text-slate-700 border-slate-200/80 shadow-xs hover:bg-white'
+                      : 'bg-[var(--agro-surface)] backdrop-blur-md text-[var(--agro-text)] border-[var(--agro-line)]/80 shadow-xs hover:bg-[var(--agro-surface)]'
                   }`}
                 >
                   {p.name}
-                  <span className={`ml-1.5 font-mono text-[11px] ${active ? 'text-emerald-200' : 'text-slate-400'}`}>
+                  <span className={`ml-1.5 font-mono text-[11px] ${active ? 'text-emerald-200' : 'text-[var(--agro-muted)]'}`}>
                     {getParcelAreaHa(p).toFixed(2)} ha
                   </span>
                 </motion.button>
@@ -589,14 +614,14 @@ export function MapScreen({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.14 }}
-              className="pointer-events-auto max-w-md bg-white/98 backdrop-blur-md rounded-3xl border border-slate-200/90 shadow-[0_12px_32px_rgba(15,23,42,0.12)] overflow-hidden"
+              className="pointer-events-auto max-w-md bg-[var(--agro-surface)] backdrop-blur-md rounded-3xl border border-[var(--agro-line)]/90 shadow-[0_12px_32px_rgba(15,23,42,0.12)] overflow-hidden"
             >
-              <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 text-[11px] font-semibold text-slate-500">
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--agro-line)] text-[11px] font-semibold text-[var(--agro-muted)]">
                 <span>Parcelas y ubicaciones en Bolivia</span>
                 <button
                   type="button"
                   onClick={() => setSearchOpen(false)}
-                  className="text-[#166534] hover:underline"
+                  className="text-[var(--agro-lime)] hover:underline"
                 >
                   Cerrar
                 </button>
@@ -610,18 +635,19 @@ export function MapScreen({
                       setMapCenter([hit.lat, hit.lng]);
                       setMapZoom(hit.zoom);
                       if (hit.parcelId) {
-                        onSelectParcel(hit.parcelId);
+                         onSelectParcel(hit.parcelId);
+                         onOpenParcelDetail(hit.parcelId);
                       }
                       setSearchOpen(false);
                     }}
-                    className="w-full px-4 py-3 text-left hover:bg-emerald-50/60 flex items-center gap-3 transition-colors"
+                    className="w-full px-4 py-3 text-left hover:bg-[var(--agro-success-bg)] flex items-center gap-3 transition-colors"
                   >
-                    <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#166534] flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-xl bg-[var(--agro-selected)] text-[var(--agro-lime)] flex items-center justify-center shrink-0">
                       <MapPin className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold text-slate-900 truncate">{hit.label}</p>
-                      <p className="text-[11px] text-slate-500 truncate">{hit.sub}</p>
+                      <p className="text-xs font-semibold text-[var(--agro-text)] truncate">{hit.label}</p>
+                      <p className="text-[11px] text-[var(--agro-muted)] truncate">{hit.sub}</p>
                     </div>
                   </button>
                 ))}
@@ -637,13 +663,13 @@ export function MapScreen({
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
-              className="pointer-events-auto max-w-md bg-white/95 backdrop-blur-md border border-amber-200 text-slate-800 rounded-2xl px-3.5 py-2.5 text-xs flex items-center justify-between gap-2 shadow-md"
+              className="pointer-events-auto max-w-md bg-[var(--agro-surface)] backdrop-blur-md border border-amber-200 text-[var(--agro-text)] rounded-2xl px-3.5 py-2.5 text-xs flex items-center justify-between gap-2 shadow-md"
             >
               <span>{locationNotice}</span>
               <button
                 type="button"
                 onClick={() => setLocationNotice(null)}
-                className="text-[#166534] font-semibold shrink-0"
+                className="text-[var(--agro-lime)] font-semibold shrink-0"
               >
                 OK
               </button>
@@ -653,14 +679,14 @@ export function MapScreen({
       </div>
 
       {/* Right Floating Action Buttons (4 clean tactile controls) */}
-      <div className="absolute right-3.5 top-1/2 -translate-y-1/2 z-[450] flex flex-col gap-2.5">
+       <div className="absolute right-3.5 top-1/2 -translate-y-1/2 z-[450] flex flex-col gap-2.5" role="toolbar" aria-label="Controles del mapa">
         <motion.button
           type="button"
           whileTap={{ scale: 0.92 }}
           onClick={handleGeolocate}
           title="Mi ubicación"
           aria-label="Mi ubicación"
-          className="w-11 h-11 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-[0_6px_18px_rgba(15,23,42,0.09)] flex items-center justify-center text-slate-700 hover:text-[#166534] hover:bg-emerald-50 transition-colors"
+          className="w-11 h-11 rounded-2xl bg-[var(--agro-surface)] backdrop-blur-md border border-[var(--agro-line)]/80 shadow-[0_6px_18px_rgba(15,23,42,0.09)] flex items-center justify-center text-[var(--agro-text)] hover:text-[var(--agro-lime)] hover:bg-[var(--agro-selected)] transition-colors"
         >
           <Crosshair className="w-5 h-5" />
         </motion.button>
@@ -674,7 +700,7 @@ export function MapScreen({
           className={`w-11 h-11 rounded-2xl border shadow-[0_6px_18px_rgba(15,23,42,0.09)] flex items-center justify-center transition-colors ${
             layersOpen || activeLayer !== 'osm'
               ? 'bg-[#166534] border-[#166534] text-white'
-              : 'bg-white/95 backdrop-blur-md border-slate-200/80 text-slate-700 hover:text-[#166534] hover:bg-emerald-50'
+              : 'bg-[var(--agro-surface)] backdrop-blur-md border-[var(--agro-line)]/80 text-[var(--agro-text)] hover:text-[var(--agro-lime)] hover:bg-[var(--agro-selected)]'
           }`}
         >
           <Layers className="w-5 h-5" />
@@ -686,7 +712,7 @@ export function MapScreen({
           onClick={() => openScanner()}
           title="Escanear parcela"
           aria-label="Escanear parcela"
-          className="w-11 h-11 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-[0_6px_18px_rgba(15,23,42,0.09)] flex items-center justify-center text-slate-700 hover:text-[#166534] hover:bg-emerald-50 transition-colors"
+          className="w-11 h-11 rounded-2xl bg-[var(--agro-surface)] backdrop-blur-md border border-[var(--agro-line)]/80 shadow-[0_6px_18px_rgba(15,23,42,0.09)] flex items-center justify-center text-[var(--agro-text)] hover:text-[var(--agro-lime)] hover:bg-[var(--agro-selected)] transition-colors"
         >
           <PenTool className="w-5 h-5" />
         </motion.button>
@@ -697,7 +723,7 @@ export function MapScreen({
           onClick={handleCenterOnParcel}
           title="Centrar mapa"
           aria-label="Centrar mapa"
-          className="w-11 h-11 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-[0_6px_18px_rgba(15,23,42,0.09)] flex items-center justify-center text-slate-700 hover:text-[#166534] hover:bg-emerald-50 transition-colors"
+          className="w-11 h-11 rounded-2xl bg-[var(--agro-surface)] backdrop-blur-md border border-[var(--agro-line)]/80 shadow-[0_6px_18px_rgba(15,23,42,0.09)] flex items-center justify-center text-[var(--agro-text)] hover:text-[var(--agro-lime)] hover:bg-[var(--agro-selected)] transition-colors"
         >
           <Compass className="w-5 h-5" />
         </motion.button>
@@ -711,18 +737,18 @@ export function MapScreen({
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: 14, scale: 0.96 }}
             transition={{ duration: 0.16 }}
-            className="absolute right-16 top-28 z-[460] w-72 max-w-[calc(100vw-88px)] bg-white/98 backdrop-blur-md rounded-3xl border border-slate-200/90 shadow-[0_14px_34px_rgba(15,23,42,0.14)] p-4 space-y-3"
+            className="absolute right-16 top-28 z-[460] w-72 max-w-[calc(100vw-88px)] bg-[var(--agro-surface)] backdrop-blur-md rounded-3xl border border-[var(--agro-line)]/90 shadow-[0_14px_34px_rgba(15,23,42,0.14)] p-4 space-y-3"
           >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xs font-bold text-slate-900">Capas cartográficas</h3>
-                <p className="text-[10px] text-slate-500">Base: OpenStreetMap · Capas DEMO</p>
+                <h3 className="text-xs font-bold text-[var(--agro-text)]">Capas cartográficas</h3>
+                <p className="text-[10px] text-[var(--agro-muted)]">Base: OpenStreetMap · Capas DEMO</p>
               </div>
               <button
                 type="button"
                 onClick={() => setLayersOpen(false)}
                 aria-label="Cerrar capas"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--agro-muted)] hover:bg-[var(--agro-surface-soft)] hover:text-[var(--agro-text)]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -741,14 +767,14 @@ export function MapScreen({
                     onClick={() => setActiveLayer(isOn && layer.id !== 'osm' ? 'osm' : layer.id)}
                     className={`w-full px-2.5 py-2 rounded-2xl text-left transition-colors flex items-center justify-between gap-2.5 ${
                       isOn
-                        ? 'bg-[#DCFCE7]/80 text-[#166534]'
-                        : 'hover:bg-slate-50 text-slate-700'
+                        ? 'bg-[#DCFCE7]/80 text-[var(--agro-lime)]'
+                        : 'hover:bg-[var(--agro-surface-soft)] text-[var(--agro-text)]'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div
                         className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                          isOn ? 'bg-white text-[#166534] shadow-2xs' : 'bg-slate-100 text-slate-500'
+                          isOn ? 'bg-[var(--agro-surface)] text-[var(--agro-lime)] shadow-2xs' : 'bg-[var(--agro-surface-soft)] text-[var(--agro-muted)]'
                         }`}
                       >
                         <LayerIcon className="w-4 h-4" />
@@ -761,10 +787,10 @@ export function MapScreen({
 
                     <div
                       className={`w-9 h-5 rounded-full p-0.5 transition-colors shrink-0 flex items-center ${
-                        isOn ? 'bg-[#16A34A] justify-end' : 'bg-slate-300 justify-start'
+                        isOn ? 'agro-primary justify-end' : 'bg-slate-300 justify-start'
                       }`}
                     >
-                      <span className="w-4 h-4 rounded-full bg-white shadow-xs" />
+                      <span className="w-4 h-4 rounded-full bg-[var(--agro-surface)] shadow-xs" />
                     </div>
                   </button>
                 );
@@ -784,29 +810,29 @@ export function MapScreen({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 8 }}
               transition={{ duration: 0.16 }}
-              className="pointer-events-auto w-full max-w-md bg-white/95 backdrop-blur-md rounded-2xl px-3.5 py-2.5 border border-slate-200/80 shadow-md space-y-1.5"
+              className="pointer-events-auto w-full max-w-md bg-[var(--agro-surface)] backdrop-blur-md rounded-2xl px-3.5 py-2.5 border border-[var(--agro-line)]/80 shadow-md space-y-1.5"
             >
               <div className="flex items-center justify-between gap-2 text-xs">
-                <span className="font-bold text-slate-900">{currentLayerInfo.name}</span>
-                <span className="text-[10px] font-semibold text-[#B45309]">
+                <span className="font-bold text-[var(--agro-text)]">{currentLayerInfo.name}</span>
+                <span className="text-[10px] font-semibold text-[var(--agro-warning-text)]">
                   {currentLayerInfo.source}
                 </span>
               </div>
               {currentLayerInfo.gradient && (
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono text-slate-500 shrink-0">
+                  <span className="text-[10px] font-mono text-[var(--agro-muted)] shrink-0">
                     {currentLayerInfo.scaleMin}
                   </span>
                   <div
                     className={`flex-1 h-2 rounded-full bg-gradient-to-r ${currentLayerInfo.gradient}`}
                   />
-                  <span className="text-[10px] font-mono text-slate-500 shrink-0">
+                  <span className="text-[10px] font-mono text-[var(--agro-muted)] shrink-0">
                     {currentLayerInfo.scaleMax}
                   </span>
                 </div>
               )}
               {isSmallParcelForLayer && (
-                <div className="flex items-center gap-1.5 text-[11px] text-amber-900 bg-amber-50/90 px-2.5 py-1 rounded-xl">
+                <div className="flex items-center gap-1.5 text-[11px] text-[var(--agro-warning-text)] bg-[var(--agro-warning-bg)] px-2.5 py-1 rounded-xl">
                   <AlertTriangle className="w-3.5 h-3.5 text-[#F59E0B] shrink-0" />
                   <span className="leading-snug">
                     La resolución de esta fuente puede no representar con precisión una parcela pequeña.
@@ -818,17 +844,17 @@ export function MapScreen({
         </AnimatePresence>
 
         {/* Empty State / Selected Parcel Bottom Sheet */}
-        <div className="pointer-events-auto w-full max-w-md">
+        <div className="pointer-events-auto w-full max-w-md lg:max-w-xl">
           {parcels.length === 0 ? (
-            <div className="bg-white/98 backdrop-blur-md rounded-3xl p-4 border border-slate-200 shadow-xl text-center space-y-2.5">
-              <p className="text-sm font-bold text-slate-900">
+            <div className="bg-[var(--agro-surface)] backdrop-blur-md rounded-3xl p-4 border border-[var(--agro-line)] shadow-xl text-center space-y-2.5">
+              <p className="text-sm font-bold text-[var(--agro-text)]">
                 Escanea o registra una parcela para comenzar el monitoreo
               </p>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => openScanner()}
-                  className="flex-1 h-10 rounded-xl bg-[#16A34A] text-white text-xs font-semibold"
+                  className="flex-1 h-10 rounded-xl agro-primary text-white text-xs font-semibold"
                 >
                   Escanear en mapa
                 </button>
@@ -838,7 +864,7 @@ export function MapScreen({
                     setEditingParcel(null);
                     setParcelFormOpen(true);
                   }}
-                  className="flex-1 h-10 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800"
+                  className="flex-1 h-10 rounded-xl border border-[var(--agro-line)] text-xs font-semibold text-[var(--agro-text)]"
                 >
                   Registrar
                 </button>
@@ -852,7 +878,7 @@ export function MapScreen({
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.18 }}
-                className="bg-white/98 backdrop-blur-md rounded-3xl px-4 pt-2.5 pb-4 border border-slate-200/90 shadow-[0_12px_36px_rgba(15,23,42,0.14)] space-y-3"
+                className="bg-[var(--agro-surface)] backdrop-blur-md rounded-3xl px-4 pt-2.5 pb-4 border border-[var(--agro-line)]/90 shadow-[0_12px_36px_rgba(15,23,42,0.14)] space-y-3"
               >
                 {/* Drag Handle Affordance */}
                 <button
@@ -868,17 +894,17 @@ export function MapScreen({
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="text-base font-bold text-slate-900 truncate">
+                      <h2 className="text-base font-bold text-[var(--agro-text)] truncate">
                         {selectedParcel.name}
                       </h2>
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#166534]">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--agro-lime)]">
                         <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                         {selectedParcel.monitoringStatus}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5 truncate">
+                    <p className="text-xs text-[var(--agro-muted)] mt-0.5 truncate">
                       {selectedParcel.crop} ·{' '}
-                      <span className="font-mono font-semibold text-slate-700 tabular-nums">
+                      <span className="font-mono font-semibold text-[var(--agro-text)] tabular-nums">
                         {formatAreaHa(getParcelAreaHa(selectedParcel))}
                       </span>{' '}
                       · {selectedParcel.location}
@@ -889,7 +915,7 @@ export function MapScreen({
                     type="button"
                     onClick={() => setSheetCollapsed((v) => !v)}
                     aria-label={sheetCollapsed ? 'Mostrar más' : 'Mostrar menos'}
-                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center shrink-0 transition-colors"
+                    className="w-8 h-8 rounded-full bg-[var(--agro-surface-soft)] hover:bg-[var(--agro-canvas)] text-[var(--agro-muted)] flex items-center justify-center shrink-0 transition-colors"
                   >
                     {sheetCollapsed ? (
                       <ChevronUp className="w-4 h-4" />
@@ -908,27 +934,27 @@ export function MapScreen({
                   >
                     {/* Clean Mini Indicators Strip */}
                     <div className="grid grid-cols-4 gap-2">
-                      <div className="bg-slate-50 rounded-2xl px-2 py-2 text-center border border-slate-100">
-                        <p className="text-[10px] text-slate-500">Humedad</p>
-                        <p className="text-xs font-bold text-slate-900 font-mono tabular-nums mt-0.5">
+                      <div className="bg-[var(--agro-surface-soft)] rounded-2xl px-2 py-2 text-center border border-[var(--agro-line)]">
+                        <p className="text-[10px] text-[var(--agro-muted)]">Humedad</p>
+                        <p className="text-xs font-bold text-[var(--agro-text)] font-mono tabular-nums mt-0.5">
                           {moistureValue}
                         </p>
                       </div>
-                      <div className="bg-slate-50 rounded-2xl px-2 py-2 text-center border border-slate-100">
-                        <p className="text-[10px] text-slate-500">Temp.</p>
-                        <p className="text-xs font-bold text-slate-900 font-mono tabular-nums mt-0.5">
+                      <div className="bg-[var(--agro-surface-soft)] rounded-2xl px-2 py-2 text-center border border-[var(--agro-line)]">
+                        <p className="text-[10px] text-[var(--agro-muted)]">Temp.</p>
+                        <p className="text-xs font-bold text-[var(--agro-text)] font-mono tabular-nums mt-0.5">
                           {selectedParcel.indicators.temperatureC.toFixed(1)}°C
                         </p>
                       </div>
-                      <div className="bg-slate-50 rounded-2xl px-2 py-2 text-center border border-slate-100">
-                        <p className="text-[10px] text-slate-500">Lluvia</p>
-                        <p className="text-xs font-bold text-slate-900 font-mono tabular-nums mt-0.5">
+                      <div className="bg-[var(--agro-surface-soft)] rounded-2xl px-2 py-2 text-center border border-[var(--agro-line)]">
+                        <p className="text-[10px] text-[var(--agro-muted)]">Lluvia</p>
+                        <p className="text-xs font-bold text-[var(--agro-text)] font-mono tabular-nums mt-0.5">
                           {selectedParcel.indicators.precipitationMm.toFixed(0)} mm
                         </p>
                       </div>
-                      <div className="bg-[#DCFCE7]/55 rounded-2xl px-2 py-2 text-center border border-emerald-100">
-                        <p className="text-[10px] text-[#166534]">NDVI</p>
-                        <p className="text-xs font-bold text-[#166534] font-mono tabular-nums mt-0.5">
+                      <div className="bg-[#DCFCE7]/55 rounded-2xl px-2 py-2 text-center border border-[var(--agro-line)]">
+                        <p className="text-[10px] text-[var(--agro-lime)]">NDVI</p>
+                        <p className="text-xs font-bold text-[var(--agro-lime)] font-mono tabular-nums mt-0.5">
                           {selectedParcel.indicators.ndvi.toFixed(2)}
                         </p>
                       </div>
@@ -950,7 +976,7 @@ export function MapScreen({
                         type="button"
                         whileTap={{ scale: 0.97 }}
                         onClick={() => onAnalyzeParcel(selectedParcel.id)}
-                        className="flex-1 min-h-[42px] px-2.5 rounded-2xl bg-[#DCFCE7] hover:bg-emerald-200/80 text-[#166534] text-xs font-semibold flex items-center justify-center gap-1 transition-colors"
+                        className="flex-1 min-h-[42px] px-2.5 rounded-2xl bg-[var(--agro-selected)] hover:bg-[var(--agro-success-bg)] text-[var(--agro-lime)] text-xs font-semibold flex items-center justify-center gap-1 transition-colors"
                       >
                         <BarChart3 className="w-3.5 h-3.5 shrink-0" />
                         <span>Analizar</span>
@@ -965,7 +991,7 @@ export function MapScreen({
                         }}
                         aria-label="Editar parcela"
                         title="Editar"
-                        className="w-[42px] h-[42px] rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center shrink-0 transition-colors"
+                        className="w-[42px] h-[42px] rounded-2xl bg-[var(--agro-surface-soft)] hover:bg-[var(--agro-canvas)] text-[var(--agro-text)] flex items-center justify-center shrink-0 transition-colors"
                       >
                         <Edit3 className="w-4 h-4" />
                       </motion.button>
@@ -976,7 +1002,7 @@ export function MapScreen({
                         onClick={() => onOpenParcelHistory(selectedParcel.id)}
                         aria-label="Historial de parcela"
                         title="Historial"
-                        className="w-[42px] h-[42px] rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center shrink-0 transition-colors"
+                        className="w-[42px] h-[42px] rounded-2xl bg-[var(--agro-surface-soft)] hover:bg-[var(--agro-canvas)] text-[var(--agro-text)] flex items-center justify-center shrink-0 transition-colors"
                       >
                         <History className="w-4 h-4" />
                       </motion.button>
@@ -998,27 +1024,27 @@ export function MapScreen({
         >
           <form
             onSubmit={handleSaveDrawnParcel}
-            className="bg-white w-full max-w-sm rounded-3xl p-5 shadow-xl space-y-4"
+            className="bg-[var(--agro-surface)] w-full max-w-sm rounded-3xl p-5 shadow-xl space-y-4"
           >
             <div>
-              <h3 className="text-base font-bold text-slate-900">Guardar parcela escaneada</h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <h3 className="text-base font-bold text-[var(--agro-text)]">Guardar parcela escaneada</h3>
+              <p className="text-xs text-[var(--agro-muted)] mt-0.5">
                 Superficie medida:{' '}
-                <strong className="font-mono text-[#166534]">
+                <strong className="font-mono text-[var(--agro-lime)]">
                   {formatAreaHa(pendingScan.measurement.areaHa)}
                 </strong>
               </p>
-              <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+              <p className="text-[11px] text-[var(--agro-muted)] font-mono mt-0.5">
                 Perímetro {formatPerimeter(pendingScan.measurement.perimeterM)} ·{' '}
                 {pendingScan.measurement.vertexCount} vértices
               </p>
-              <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+              <p className="text-[11px] text-[var(--agro-muted)] font-mono mt-0.5">
                 Centroide: {formatCoordinates(pendingScan.measurement.centroid)}
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1">
                 Nombre de la parcela
               </label>
               <input
@@ -1026,17 +1052,17 @@ export function MapScreen({
                 value={newParcelName}
                 onChange={(e) => setNewParcelName(e.target.value)}
                 required
-                className="w-full h-11 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full h-11 px-3 rounded-xl border border-[var(--agro-line)] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Cultivo</label>
+                <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1">Cultivo</label>
                 <select
                   value={newParcelCrop}
                   onChange={(e) => setNewParcelCrop(e.target.value)}
-                  className="w-full h-11 px-2.5 rounded-xl border border-slate-200 text-sm bg-white"
+                  className="w-full h-11 px-2.5 rounded-xl border border-[var(--agro-line)] text-sm bg-[var(--agro-surface)]"
                 >
                   <option value="Papa">Papa</option>
                   <option value="Quinua">Quinua</option>
@@ -1046,17 +1072,17 @@ export function MapScreen({
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Zona</label>
+                <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1">Zona</label>
                 <input
                   type="text"
                   value={newParcelLocation}
                   onChange={(e) => setNewParcelLocation(e.target.value)}
-                  className="w-full h-11 px-3 rounded-xl border border-slate-200 text-sm"
+                  className="w-full h-11 px-3 rounded-xl border border-[var(--agro-line)] text-sm"
                 />
               </div>
             </div>
 
-            <div className="text-[11px] text-slate-500 bg-slate-50 rounded-xl p-2.5 max-h-24 overflow-y-auto font-mono">
+            <div className="text-[11px] text-[var(--agro-muted)] bg-[var(--agro-surface-soft)] rounded-xl p-2.5 max-h-24 overflow-y-auto font-mono">
               Coordenadas ({pendingScan.points.length} vértices):{' '}
               {pendingScan.points
                 .map((p) => `[${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}]`)
@@ -1070,13 +1096,13 @@ export function MapScreen({
                   setShowSaveModal(false);
                   setPendingScan(null);
                 }}
-                className="flex-1 h-11 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700"
+                className="flex-1 h-11 rounded-xl border border-[var(--agro-line)] text-xs font-semibold text-[var(--agro-text)]"
               >
                 Seguir editando
               </button>
               <button
                 type="submit"
-                className="flex-1 h-11 rounded-xl bg-[#16A34A] text-white text-xs font-semibold"
+                className="flex-1 h-11 rounded-xl agro-primary text-white text-xs font-semibold"
               >
                 Guardar parcela
               </button>

@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
-from sqlalchemy import ForeignKey, String, Float, Integer, DateTime, JSON, UniqueConstraint
+from datetime import date, datetime, timezone
+from sqlalchemy import ForeignKey, String, Float, Integer, DateTime, JSON, Date, UniqueConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .database import Base
 
@@ -40,3 +40,30 @@ class Analysis(Base):
     result: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     field: Mapped[Field] = relationship(back_populates='analyses')
+
+class Campaign(Base):
+    __tablename__ = 'campaigns'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    field_id: Mapped[int] = mapped_column(ForeignKey('fields.id'), index=True)
+    crop: Mapped[str] = mapped_column(String(50))
+    start_date: Mapped[date] = mapped_column(Date)
+    end_date: Mapped[date] = mapped_column(Date)
+    notes: Mapped[str] = mapped_column(String(2000), default='')
+
+class Plan(Base):
+    __tablename__ = 'plans'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    field_id: Mapped[int] = mapped_column(ForeignKey('fields.id'), index=True)
+    analysis_id: Mapped[int] = mapped_column(ForeignKey('analyses.id'), index=True)
+    strategy_id: Mapped[str] = mapped_column(String(30))
+    notes: Mapped[str] = mapped_column(String(2000), default='')
+    snapshot: Mapped[dict] = mapped_column(JSON)
+    checklist: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+# Explicit creation at startup also upgrades pre-existing databases.
+PERFORMANCE_INDEXES = (
+    Index('ix_analyses_field_id_id', Analysis.field_id, Analysis.id),
+    Index('ix_campaigns_field_start', Campaign.field_id, Campaign.start_date),
+    Index('ix_plans_field_id_id', Plan.field_id, Plan.id),
+)

@@ -29,7 +29,7 @@ services:
     networks: [internal]
 
   web:
-    build: ./frontend
+    build: ./frontend--resp
     restart: unless-stopped
     depends_on: [api]
     environment:

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   BarChart3,
@@ -17,7 +17,7 @@ import {
   ExternalLink,
   Info,
 } from "lucide-react";
-import { ClimateChart } from "@/components/ClimateChart";
+const ClimateChart = dynamic(() => import("@/components/ClimateChart").then((m) => m.ClimateChart));
 import { api, type Analysis, type Crop, type FieldInput } from "@/lib/api";
 const FarmMap = dynamic(
   () => import("@/components/FarmMap").then((m) => m.FarmMap),
@@ -55,6 +55,8 @@ export default function Home() {
   });
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [busy, setBusy] = useState(false);
+  const inFlight = useRef(false);
+  const savedField = useRef<{ id: number; input: string } | null>(null);
   const [error, setError] = useState("");
   const [tab, setTab] = useState<"analysis" | "method">("analysis");
   const priorityTotal = Object.values(priorities).reduce(
@@ -72,13 +74,21 @@ export default function Home() {
   const update = <K extends keyof FieldInput>(k: K, value: FieldInput[K]) =>
     setField((prev) => ({ ...prev, [k]: value }));
   const run = async () => {
+    if (inFlight.current || !canAnalyze) return;
+    inFlight.current = true;
     setBusy(true);
     setError("");
     try {
-      const created = await api<{ id: number }>("/fields", {
-        method: "POST",
-        body: JSON.stringify(field),
-      });
+      const input = JSON.stringify(field);
+      let created = savedField.current;
+      if (!created || created.input !== input) {
+        const record = await api<{ id: number }>("/fields", {
+          method: "POST",
+          body: input,
+        });
+        created = { id: record.id, input };
+        savedField.current = created;
+      }
       const result = await api<Analysis>("/analyze", {
         method: "POST",
         body: JSON.stringify({ field_id: created.id, priorities }),
@@ -91,6 +101,7 @@ export default function Home() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error desconocido");
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   };

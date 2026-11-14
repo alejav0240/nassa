@@ -13,22 +13,22 @@ export function QualityIndicator({ quality, compact = false }: QualityIndicatorP
   > = {
     'Información disponible': {
       icon: CheckCircle2,
-      colorClass: 'text-[#166534]',
+      colorClass: 'text-[var(--agro-lime)]',
       shortLabel: 'Disponible',
     },
     'Datos parcialmente disponibles': {
       icon: Info,
-      colorClass: 'text-[#0284C7]',
+      colorClass: 'text-[var(--agro-info-text)]',
       shortLabel: 'Parcial',
     },
     'Resolución insuficiente': {
       icon: AlertTriangle,
-      colorClass: 'text-[#B45309]',
+      colorClass: 'text-[var(--agro-warning-text)]',
       shortLabel: 'Resolución gruesa',
     },
     'Requiere validación local': {
       icon: HelpCircle,
-      colorClass: 'text-[#B45309]',
+      colorClass: 'text-[var(--agro-warning-text)]',
       shortLabel: 'Validar en campo',
     },
   };

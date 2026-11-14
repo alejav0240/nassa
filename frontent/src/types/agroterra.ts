@@ -96,6 +96,7 @@ export interface ParcelMeasurement {
 
 export interface Parcel {
   id: string;
+  backendId?: number;
   name: string;
   location: string;
   department: string;
@@ -110,6 +111,7 @@ export interface Parcel {
   centroid: LatLngPoint;
   polygon: LatLngPoint[];
   imageUrl?: string;
+  indicatorsAvailable?: boolean;
   elevationM: number;
   indicators: {
     moisturePct: number;
