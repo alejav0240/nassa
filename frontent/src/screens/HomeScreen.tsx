@@ -22,6 +22,7 @@ import {
 } from 'recharts';
 import { satelliteService } from '../services/satelliteService';
 import { AnalysisSubTab, NavTab, Parcel, UserPreferences } from '../types/agroterra';
+import { formatAreaHa, getParcelAreaHa } from '../utils/parcelGeometry';
 
 interface HomeScreenProps {
   parcels: Parcel[];
@@ -177,7 +178,7 @@ export function HomeScreen({
             >
               {parcels.map((p) => (
                 <option key={p.id} value={p.id} className="text-slate-900 bg-white">
-                  {p.name} — {p.crop} ({p.areaHa} ha)
+                  {p.name} — {p.crop} ({formatAreaHa(getParcelAreaHa(p))})
                 </option>
               ))}
             </select>
@@ -212,7 +213,7 @@ export function HomeScreen({
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5 truncate">
-              {selectedParcel.location} · {selectedParcel.areaHa.toFixed(1)} hectáreas
+              {selectedParcel.location} · {getParcelAreaHa(selectedParcel).toFixed(2)} hectáreas
             </p>
             <p className="text-xs font-medium text-slate-700 mt-1">
               Cultivo registrado: <span className="font-semibold">{selectedParcel.crop}</span>

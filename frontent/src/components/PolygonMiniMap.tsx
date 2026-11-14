@@ -8,12 +8,13 @@ interface PolygonMiniMapProps {
 
 export function PolygonMiniMap({ parcel, heightClass = 'h-44' }: PolygonMiniMapProps) {
   const positions = parcel.polygon.map((p) => [p.lat, p.lng] as [number, number]);
+  const center = parcel.measurement?.centroid ?? parcel.centroid;
 
   return (
     <div className={`w-full ${heightClass} rounded-2xl overflow-hidden border border-slate-200 relative z-0`}>
       <MapContainer
         key={parcel.id}
-        center={[parcel.centroid.lat, parcel.centroid.lng]}
+        center={[center.lat, center.lng]}
         zoom={15}
         scrollWheelZoom={false}
         dragging={false}
@@ -38,7 +39,9 @@ export function PolygonMiniMap({ parcel, heightClass = 'h-44' }: PolygonMiniMapP
         )}
       </MapContainer>
       <div className="absolute bottom-2 left-2 z-[400] bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg text-[11px] font-medium text-slate-700 border border-slate-200/80">
-        Mapa base OSM · Polígono referencial
+        {parcel.measurement
+          ? `Contorno medido · ${parcel.measurement.vertexCount} vértices`
+          : 'Mapa base OSM · Polígono referencial'}
       </div>
     </div>
   );

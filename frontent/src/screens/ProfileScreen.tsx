@@ -16,6 +16,7 @@ import {
   UserPreferences,
   UserProfile,
 } from '../types/agroterra';
+import { formatAreaHa, getParcelAreaHa } from '../utils/parcelGeometry';
 
 interface ProfileScreenProps {
   userProfile: UserProfile;
@@ -155,7 +156,7 @@ export function ProfileScreen({
             Parcelas registradas ({parcels.length})
           </h3>
           <span className="text-xs font-mono text-slate-500 tabular-nums">
-            {parcels.reduce((sum, p) => sum + p.areaHa, 0).toFixed(2)} ha totales
+            {parcels.reduce((sum, p) => sum + getParcelAreaHa(p), 0).toFixed(2)} ha totales
           </span>
         </div>
         <div className="divide-y divide-slate-100">
@@ -173,7 +174,7 @@ export function ProfileScreen({
                 </p>
               </div>
               <span className="text-xs font-mono font-semibold text-slate-700 tabular-nums">
-                {p.areaHa.toFixed(2)} ha
+                {formatAreaHa(getParcelAreaHa(p))}
               </span>
             </button>
           ))}

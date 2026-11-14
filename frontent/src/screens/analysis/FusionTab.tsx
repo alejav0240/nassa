@@ -13,6 +13,7 @@ import {
 import { fusionService } from '../../services/fusionService';
 import { satelliteService } from '../../services/satelliteService';
 import { Parcel } from '../../types/agroterra';
+import { formatAreaHa, getParcelAreaHa } from '../../utils/parcelGeometry';
 
 interface FusionTabProps {
   parcel: Parcel;
@@ -118,7 +119,7 @@ export function FusionTab({ parcel }: FusionTabProps) {
         <div>
           <h3 className="text-sm font-bold text-slate-900">Comparador multivariable armonizado</h3>
           <p className="text-xs text-slate-500">
-            Parcela analizada: <strong className="text-slate-700">{parcel.name}</strong> ({parcel.areaHa} ha)
+            Parcela analizada: <strong className="text-slate-700">{parcel.name}</strong> ({formatAreaHa(getParcelAreaHa(parcel))})
           </p>
         </div>
 
@@ -229,10 +230,12 @@ export function FusionTab({ parcel }: FusionTabProps) {
             <p className="text-[11px] text-slate-500">Representatividad</p>
             <p className="font-semibold text-slate-900">
               {insufficientSources.length > 0
-                ? `Escala mixta: ${parcel.areaHa} ha frente a píxel regional de ${insufficientSources
+                ? `Escala mixta: ${formatAreaHa(getParcelAreaHa(parcel))} frente a píxel regional de ${insufficientSources
                     .map((i) => i.source.spatialResolution)
                     .join(', ')}`
-                : `Cobertura adecuada a escala de parcela (${parcel.areaHa} ha)`}
+                : `Cobertura adecuada a escala de parcela (${formatAreaHa(
+                    getParcelAreaHa(parcel)
+                  )})`}
             </p>
           </div>
         </div>
@@ -258,7 +261,7 @@ export function FusionTab({ parcel }: FusionTabProps) {
           <div className="bg-white border border-amber-200 rounded-2xl p-3.5 space-y-1.5">
             <p className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
               <AlertTriangle className="w-4 h-4 text-[#F59E0B]" />
-              Detalle por sensor para {parcel.name} ({parcel.areaHa} ha)
+              Detalle por sensor para {parcel.name} ({formatAreaHa(getParcelAreaHa(parcel))})
             </p>
             {insufficientSources.map(({ source, check }) => (
               <p key={source.id} className="text-xs text-slate-700 leading-relaxed">

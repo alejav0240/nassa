@@ -12,6 +12,11 @@ import { useMemo, useState } from 'react';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ParcelFormModal } from '../components/ParcelFormModal';
 import { AnalysisSubTab, NavTab, Parcel } from '../types/agroterra';
+import {
+  formatAreaHa,
+  formatPerimeter,
+  getParcelAreaHa,
+} from '../utils/parcelGeometry';
 
 interface ParcelsScreenProps {
   parcels: Parcel[];
@@ -165,9 +170,30 @@ export function ParcelsScreen({
                     <p className="text-xs text-slate-500 truncate mt-0.5">
                       {parcel.department} · {parcel.location}
                     </p>
-                    <p className="text-xs text-slate-700 mt-1.5 font-mono tabular-nums">
-                      {parcel.areaHa.toFixed(2)} ha · Cultivo: <span className="font-sans font-semibold">{parcel.crop}</span>
-                    </p>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                      <span className="text-xs text-slate-700 font-mono tabular-nums">
+                        {formatAreaHa(getParcelAreaHa(parcel))}
+                      </span>
+                      <span
+                        className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                          parcel.measurement
+                            ? 'bg-[#DCFCE7] text-[#166534]'
+                            : 'bg-slate-100 text-slate-500'
+                        }`}
+                      >
+                        {parcel.measurement ? 'Medida' : 'Declarada'}
+                      </span>
+                      <span className="text-xs text-slate-700">
+                        · Cultivo:{' '}
+                        <span className="font-semibold">{parcel.crop}</span>
+                      </span>
+                    </div>
+                    {parcel.measurement && (
+                      <p className="text-[11px] text-slate-500 font-mono tabular-nums mt-0.5">
+                        Perímetro {formatPerimeter(parcel.measurement.perimeterM)} ·{' '}
+                        {parcel.measurement.vertexCount} vértices
+                      </p>
+                    )}
                     <p className="text-[11px] text-slate-400 mt-0.5">
                       Registro: {parcel.registeredAt} · Siembra: {parcel.plantingDate}
                     </p>
@@ -256,7 +282,9 @@ export function ParcelsScreen({
         title="Eliminar parcela"
         message={
           deletingParcel
-            ? `¿Deseas eliminar "${deletingParcel.name}" (${deletingParcel.areaHa} ha)? Esta acción solo afecta el almacenamiento local del prototipo.`
+            ? `¿Deseas eliminar "${deletingParcel.name}" (${formatAreaHa(
+                getParcelAreaHa(deletingParcel)
+              )})? Esta acción solo afecta el almacenamiento local del prototipo.`
             : ''
         }
         onCancel={() => setDeletingParcel(null)}

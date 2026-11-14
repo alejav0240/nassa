@@ -1,6 +1,13 @@
-import { X } from 'lucide-react';
+import { Ruler, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { MonitoringStatus, Parcel } from '../types/agroterra';
+import { LatLngPoint, MonitoringStatus, Parcel, ParcelMeasurement } from '../types/agroterra';
+import {
+  createReferencePolygon,
+  formatAreaHa,
+  formatPerimeter,
+  formatSquareMeters,
+} from '../utils/parcelGeometry';
+import { ParcelScanner } from './ParcelScanner';
 
 interface ParcelFormModalProps {
   open: boolean;
@@ -32,6 +39,9 @@ export function ParcelFormModal({
   const [lng, setLng] = useState('-68.2958');
   const [monitoringStatus, setMonitoringStatus] = useState<MonitoringStatus>('Disponible');
   const [error, setError] = useState<string | null>(null);
+  const [measurement, setMeasurement] = useState<ParcelMeasurement | null>(null);
+  const [scannedPolygon, setScannedPolygon] = useState<LatLngPoint[] | null>(null);
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -39,13 +49,15 @@ export function ParcelFormModal({
       setName(initialParcel.name);
       setLocation(initialParcel.location);
       setDepartment(initialParcel.department);
-      setAreaHa(String(initialParcel.areaHa));
+      setAreaHa(String(initialParcel.measurement?.areaHa ?? initialParcel.areaHa));
       setCrop(initialParcel.crop);
       setPlantingDate(initialParcel.plantingDate);
       setEstimatedHarvestDate(initialParcel.estimatedHarvestDate);
-      setLat(String(initialParcel.centroid.lat));
-      setLng(String(initialParcel.centroid.lng));
+      setLat(String(initialParcel.measurement?.centroid.lat ?? initialParcel.centroid.lat));
+      setLng(String(initialParcel.measurement?.centroid.lng ?? initialParcel.centroid.lng));
       setMonitoringStatus(initialParcel.monitoringStatus);
+      setMeasurement(initialParcel.measurement ?? null);
+      setScannedPolygon(initialParcel.measurement ? initialParcel.polygon : null);
     } else {
       setName('');
       setLocation('La Paz, Bolivia');
@@ -57,7 +69,10 @@ export function ParcelFormModal({
       setLat('-16.6580');
       setLng('-68.2890');
       setMonitoringStatus('Disponible');
+      setMeasurement(null);
+      setScannedPolygon(null);
     }
+    setScannerOpen(false);
     setError(null);
   }, [open, initialParcel]);
 
@@ -69,12 +84,18 @@ export function ParcelFormModal({
     const parsedArea = Number(areaHa);
     const parsedLat = Number(lat);
     const parsedLng = Number(lng);
+    const validMeasurement =
+      measurement?.valid && scannedPolygon ? measurement : null;
+    const effectiveArea = validMeasurement ? validMeasurement.areaHa : parsedArea;
+    const effectiveCentroid = validMeasurement
+      ? validMeasurement.centroid
+      : { lat: parsedLat, lng: parsedLng };
 
     if (!trimmedName) {
       setError('Ingresa un nombre válido para la parcela.');
       return;
     }
-    if (Number.isNaN(parsedArea) || parsedArea <= 0 || parsedArea > 5000) {
+    if (Number.isNaN(effectiveArea) || effectiveArea <= 0 || effectiveArea > 5000) {
       setError('La superficie debe estar entre 0.01 y 5000 hectáreas.');
       return;
     }
@@ -94,13 +115,19 @@ export function ParcelFormModal({
       return;
     }
 
-    const delta = Math.sqrt(parsedArea) * 0.0006;
-    const defaultPolygon = [
-      { lat: parsedLat + delta, lng: parsedLng - delta },
-      { lat: parsedLat + delta, lng: parsedLng + delta },
-      { lat: parsedLat - delta, lng: parsedLng + delta },
-      { lat: parsedLat - delta, lng: parsedLng - delta },
-    ];
+    const referenceArea = initialParcel
+      ? initialParcel.measurement?.areaHa ?? initialParcel.areaHa
+      : measurement?.areaHa ?? effectiveArea;
+    const areaMatchesExistingPolygon = Math.abs(referenceArea - effectiveArea) < 0.0001;
+
+    const polygon =
+      validMeasurement && scannedPolygon
+        ? scannedPolygon
+        : areaMatchesExistingPolygon
+        ? scannedPolygon ??
+          initialParcel?.polygon ??
+          createReferencePolygon(effectiveCentroid, effectiveArea)
+        : createReferencePolygon(effectiveCentroid, effectiveArea);
 
     const parcelToSave: Parcel = initialParcel
       ? {
@@ -108,12 +135,14 @@ export function ParcelFormModal({
           name: trimmedName,
           location: location.trim() || 'Bolivia',
           department: department.trim() || location.trim(),
-          areaHa: Number(parsedArea.toFixed(2)),
+          areaHa: Number(effectiveArea.toFixed(4)),
+          measurement: validMeasurement ?? undefined,
           crop: crop.trim() || 'Papa',
           plantingDate,
           estimatedHarvestDate,
           monitoringStatus,
-          centroid: { lat: parsedLat, lng: parsedLng },
+          centroid: effectiveCentroid,
+          polygon,
           imageUrl: CROP_IMAGES[crop] || initialParcel.imageUrl,
         }
       : {
@@ -121,14 +150,15 @@ export function ParcelFormModal({
           name: trimmedName,
           location: location.trim() || 'Bolivia',
           department: department.trim() || 'Bolivia',
-          areaHa: Number(parsedArea.toFixed(2)),
+          areaHa: Number(effectiveArea.toFixed(4)),
+          measurement: validMeasurement ?? undefined,
           crop: crop.trim() || 'Papa',
           plantingDate,
           estimatedHarvestDate,
           registeredAt: new Date().toISOString().slice(0, 10),
           monitoringStatus,
-          centroid: { lat: parsedLat, lng: parsedLng },
-          polygon: defaultPolygon,
+          centroid: effectiveCentroid,
+          polygon,
           imageUrl: CROP_IMAGES[crop] || CROP_IMAGES.Papa,
           elevationM: 3650,
           indicators: {
@@ -214,7 +244,7 @@ export function ParcelFormModal({
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Superficie (ha)
+                {measurement ? 'Superficie medida (ha)' : 'Superficie declarada (ha)'}
               </label>
               <input
                 type="number"
@@ -222,10 +252,65 @@ export function ParcelFormModal({
                 min="0.01"
                 value={areaHa}
                 onChange={(e) => setAreaHa(e.target.value)}
-                className="w-full h-11 px-3.5 rounded-xl border border-slate-200 text-sm font-mono tabular-nums text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                readOnly={Boolean(measurement)}
+                className={`w-full h-11 px-3.5 rounded-xl border text-sm font-mono tabular-nums text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 ${
+                  measurement
+                    ? 'border-emerald-200 bg-emerald-50/70 font-semibold text-[#166534]'
+                    : 'border-slate-200'
+                }`}
                 required
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setScannerOpen(true)}
+                className="min-h-[42px] px-3.5 rounded-xl bg-[#16A34A] hover:bg-[#166534] text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <Ruler className="w-4 h-4" />
+                {measurement ? 'Volver a escanear' : 'Escanear en mapa'}
+              </button>
+              {measurement && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMeasurement(null);
+                  }}
+                  className="min-h-[42px] px-3.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Usar superficie declarada
+                </button>
+              )}
+            </div>
+
+            {measurement ? (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 space-y-1">
+                <p className="text-[11px] font-bold text-[#166534] uppercase tracking-wide">
+                  Medición del polígono
+                </p>
+                <p className="text-xs font-semibold text-slate-900 font-mono tabular-nums">
+                  {formatAreaHa(measurement.areaHa)} · {formatSquareMeters(measurement.areaM2)}
+                </p>
+                <p className="text-[11px] text-slate-600">
+                  Perímetro {formatPerimeter(measurement.perimeterM)} ·{' '}
+                  {measurement.vertexCount} vértices · Superficie usada en todos los
+                  cálculos.
+                </p>
+                {measurement.warnings.map((warning) => (
+                  <p key={warning} className="text-[11px] text-amber-800">
+                    {warning}
+                  </p>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                La superficie declarada no es una medición. Usa el escáner para calcular
+                área y perímetro desde el contorno real del terreno.
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -290,7 +375,12 @@ export function ParcelFormModal({
                 step="0.0001"
                 value={lat}
                 onChange={(e) => setLat(e.target.value)}
-                className="w-full h-11 px-3.5 rounded-xl border border-slate-200 text-sm font-mono tabular-nums text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                readOnly={Boolean(measurement)}
+                className={`w-full h-11 px-3.5 rounded-xl border text-sm font-mono tabular-nums text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 ${
+                  measurement
+                    ? 'border-emerald-200 bg-emerald-50/70 text-[#166534]'
+                    : 'border-slate-200'
+                }`}
               />
             </div>
             <div>
@@ -302,10 +392,21 @@ export function ParcelFormModal({
                 step="0.0001"
                 value={lng}
                 onChange={(e) => setLng(e.target.value)}
-                className="w-full h-11 px-3.5 rounded-xl border border-slate-200 text-sm font-mono tabular-nums text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                readOnly={Boolean(measurement)}
+                className={`w-full h-11 px-3.5 rounded-xl border text-sm font-mono tabular-nums text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 ${
+                  measurement
+                    ? 'border-emerald-200 bg-emerald-50/70 text-[#166534]'
+                    : 'border-slate-200'
+                }`}
               />
             </div>
           </div>
+          {measurement && (
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              El centro y la superficie provienen del contorno escaneado. Para editarlos
+              manualmente, elige “Usar superficie declarada”.
+            </p>
+          )}
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
@@ -339,6 +440,24 @@ export function ParcelFormModal({
           </div>
         </form>
       </div>
+
+      <ParcelScanner
+        open={scannerOpen}
+        initialPolygon={scannedPolygon ?? initialParcel?.polygon}
+        initialCenter={{
+          lat: Number(lat) || -16.6524,
+          lng: Number(lng) || -68.2958,
+        }}
+        onClose={() => setScannerOpen(false)}
+        onConfirm={(points, result) => {
+          setScannedPolygon(points);
+          setMeasurement(result);
+          setAreaHa(String(result.areaHa));
+          setLat(String(result.centroid.lat));
+          setLng(String(result.centroid.lng));
+          setScannerOpen(false);
+        }}
+      />
     </div>
   );
 }

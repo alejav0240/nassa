@@ -6,6 +6,7 @@ import {
   Parcel,
   UserPreferences,
 } from '../types/agroterra';
+import { getParcelAreaHa } from '../utils/parcelGeometry';
 import { FusionTab } from './analysis/FusionTab';
 import { HistoryRotationTab } from './analysis/HistoryRotationTab';
 import { InsightsTab } from './analysis/InsightsTab';
@@ -68,7 +69,7 @@ export function AnalysisScreen({
           >
             {parcels.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.name} ({p.areaHa} ha · {p.crop})
+                {p.name} ({getParcelAreaHa(p).toFixed(2)} ha · {p.crop})
               </option>
             ))}
           </select>

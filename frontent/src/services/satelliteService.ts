@@ -6,6 +6,7 @@ import {
   SatelliteSourceSpec,
   SatelliteTimePoint,
 } from '../types/agroterra';
+import { getParcelAreaHa } from '../utils/parcelGeometry';
 
 export const satelliteService = {
   getSources(): SatelliteSourceSpec[] {
@@ -55,7 +56,7 @@ export const satelliteService = {
         referenceDate: '2026-11-12',
         resolution: '9 km (diaria)',
         statusLabel: 'Referencia regional',
-        quality: parcel.areaHa < 10 ? 'Resolución insuficiente' : 'Información disponible',
+        quality: getParcelAreaHa(parcel) < 10 ? 'Resolución insuficiente' : 'Información disponible',
         validationState: 'Demostrativo · Referencia regional',
         interpretation:
           parcel.indicators.moisturePct < 20

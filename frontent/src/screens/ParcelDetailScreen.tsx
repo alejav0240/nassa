@@ -18,6 +18,11 @@ import {
   UserPreferences,
 } from '../types/agroterra';
 import { formatCoordinates } from '../utils/geo';
+import {
+  formatAreaHa,
+  formatPerimeter,
+  getParcelAreaHa,
+} from '../utils/parcelGeometry';
 
 interface ParcelDetailScreenProps {
   parcel: Parcel;
@@ -93,17 +98,39 @@ export function ParcelDetailScreen({
           <p className="text-xs text-slate-600 flex items-center gap-1.5">
             <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span>
-              {parcel.department} · {parcel.location} · {formatCoordinates(parcel.centroid)}
+              {parcel.department} · {parcel.location} ·{' '}
+              {formatCoordinates(parcel.measurement?.centroid ?? parcel.centroid)}
             </span>
           </p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-100">
           <div>
-            <p className="text-[11px] text-slate-500">Superficie</p>
-            <p className="text-sm font-bold text-slate-900 font-mono tabular-nums">
-              {parcel.areaHa.toFixed(2)} ha
+            <p className="text-[11px] text-slate-500 flex items-center gap-1.5">
+              Superficie
+              <span
+                className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                  parcel.measurement
+                    ? 'bg-[#DCFCE7] text-[#166534]'
+                    : 'bg-slate-100 text-slate-500'
+                }`}
+              >
+                {parcel.measurement ? 'Medida' : 'Declarada'}
+              </span>
             </p>
+            <p className="text-sm font-bold text-slate-900 font-mono tabular-nums">
+              {formatAreaHa(getParcelAreaHa(parcel))}
+            </p>
+            {parcel.measurement && (
+              <>
+                <p className="text-[11px] text-slate-500 font-mono tabular-nums mt-0.5">
+                  Perímetro {formatPerimeter(parcel.measurement.perimeterM)}
+                </p>
+                <p className="text-[10px] text-slate-400">
+                  Medición geodésica referencial
+                </p>
+              </>
+            )}
           </div>
           <div>
             <p className="text-[11px] text-slate-500">Cultivo actual</p>

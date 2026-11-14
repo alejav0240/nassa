@@ -74,12 +74,34 @@ export interface FieldObservation {
   category: 'Riego' | 'Fenología' | 'Suelo' | 'Sanidad' | 'General';
 }
 
+export interface ParcelBoundingBox {
+  minLat: number;
+  minLng: number;
+  maxLat: number;
+  maxLng: number;
+}
+
+export interface ParcelMeasurement {
+  areaM2: number;
+  areaHa: number;
+  perimeterM: number;
+  vertexCount: number;
+  centroid: LatLngPoint;
+  bbox: ParcelBoundingBox;
+  measuredAt: string;
+  source: 'drawn' | 'gps' | 'imported';
+  valid: boolean;
+  warnings: string[];
+}
+
 export interface Parcel {
   id: string;
   name: string;
   location: string;
   department: string;
   areaHa: number;
+  /** Medición geodésica del polígono. Su ausencia indica superficie declarada manualmente. */
+  measurement?: ParcelMeasurement;
   crop: string;
   plantingDate: string;
   estimatedHarvestDate: string;

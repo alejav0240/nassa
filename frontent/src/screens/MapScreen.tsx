@@ -2,7 +2,6 @@ import { AnimatePresence, motion } from 'motion/react';
 import {
   AlertTriangle,
   BarChart3,
-  Check,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
@@ -22,7 +21,6 @@ import {
   Sprout,
   Thermometer,
   Trees,
-  Undo2,
   X,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -30,20 +28,26 @@ import {
   CircleMarker,
   MapContainer,
   Polygon,
-  Polyline,
   TileLayer,
   Tooltip as LeafletTooltip,
   useMap,
-  useMapEvents,
 } from 'react-leaflet';
 import { ParcelFormModal } from '../components/ParcelFormModal';
+import { ParcelScanner } from '../components/ParcelScanner';
 import { BOLIVIA_LOCATIONS } from '../data/mockData';
-import { LatLngPoint, MapLayerId, Parcel, UserPreferences } from '../types/agroterra';
 import {
-  calculateCentroid,
-  calculatePolygonAreaHa,
-  formatCoordinates,
-} from '../utils/geo';
+  LatLngPoint,
+  MapLayerId,
+  Parcel,
+  ParcelMeasurement,
+  UserPreferences,
+} from '../types/agroterra';
+import { formatCoordinates } from '../utils/geo';
+import {
+  formatAreaHa,
+  formatPerimeter,
+  getParcelAreaHa,
+} from '../utils/parcelGeometry';
 
 interface MapScreenProps {
   parcels: Parcel[];
@@ -171,25 +175,6 @@ function MapController({
   return null;
 }
 
-function DrawClickHandler({
-  isDrawing,
-  onAddPoint,
-}: {
-  isDrawing: boolean;
-  onAddPoint: (pt: LatLngPoint) => void;
-}) {
-  useMapEvents({
-    click(e) {
-      if (!isDrawing) return;
-      onAddPoint({
-        lat: Number(e.latlng.lat.toFixed(6)),
-        lng: Number(e.latlng.lng.toFixed(6)),
-      });
-    },
-  });
-  return null;
-}
-
 function getParcelFillColor(parcel: Parcel, index: number, layer: MapLayerId): string {
   switch (layer) {
     case 'ndvi':
@@ -248,9 +233,15 @@ export function MapScreen({
   const [userLocation, setUserLocation] = useState<LatLngPoint | null>(null);
   const [locationNotice, setLocationNotice] = useState<string | null>(null);
 
-  // Polygon drawing state
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [draftPoints, setDraftPoints] = useState<LatLngPoint[]>([]);
+  // Surface scanner + save flow
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannerInitialPolygon, setScannerInitialPolygon] = useState<
+    LatLngPoint[] | undefined
+  >(undefined);
+  const [pendingScan, setPendingScan] = useState<{
+    points: LatLngPoint[];
+    measurement: ParcelMeasurement;
+  } | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [newParcelName, setNewParcelName] = useState('');
   const [newParcelCrop, setNewParcelCrop] = useState('Papa');
@@ -260,14 +251,11 @@ export function MapScreen({
   const [parcelFormOpen, setParcelFormOpen] = useState(false);
   const [editingParcel, setEditingParcel] = useState<Parcel | null>(null);
 
-  const draftAreaHa = useMemo(() => calculatePolygonAreaHa(draftPoints), [draftPoints]);
-  const draftCentroid = useMemo(() => calculateCentroid(draftPoints), [draftPoints]);
-
   const currentLayerInfo = MAP_LAYERS.find((l) => l.id === activeLayer) ?? MAP_LAYERS[0];
 
   const isSmallParcelForLayer = useMemo(() => {
     if (!selectedParcel || activeLayer === 'osm') return false;
-    const parcelM2 = selectedParcel.areaHa * 10000;
+    const parcelM2 = getParcelAreaHa(selectedParcel) * 10000;
     const pixelM2 = currentLayerInfo.resolutionMeters * currentLayerInfo.resolutionMeters;
     return parcelM2 < pixelM2;
   }, [selectedParcel, activeLayer, currentLayerInfo]);
@@ -279,9 +267,10 @@ export function MapScreen({
       .map((p) => ({
         id: p.id,
         label: `${p.name} · ${p.crop}`,
-        sub: `${p.location} · ${p.areaHa.toFixed(1)} ha`,
-        lat: p.centroid.lat,
-        lng: p.centroid.lng,
+        sub: `${p.location} · ${getParcelAreaHa(p).toFixed(2)} ha`,
+
+        lat: (p.measurement?.centroid ?? p.centroid).lat,
+        lng: (p.measurement?.centroid ?? p.centroid).lng,
         zoom: 16,
         parcelId: p.id,
       }));
@@ -300,8 +289,9 @@ export function MapScreen({
   }, [searchQuery, parcels]);
 
   const handleSelectAndFly = (parcel: Parcel) => {
+    const center = parcel.measurement?.centroid ?? parcel.centroid;
     onSelectParcel(parcel.id);
-    setMapCenter([parcel.centroid.lat, parcel.centroid.lng]);
+    setMapCenter([center.lat, center.lng]);
     setMapZoom(16);
     setSheetCollapsed(false);
   };
@@ -342,28 +332,39 @@ export function MapScreen({
     }
   };
 
-  const handleFinishDrawing = () => {
-    if (draftPoints.length < 3) return;
+  const openScanner = (initialPolygon?: LatLngPoint[]) => {
+    setScannerInitialPolygon(initialPolygon);
+    setScannerOpen(true);
+    setLayersOpen(false);
+  };
+
+  const handleScanConfirm = (
+    points: LatLngPoint[],
+    measurement: ParcelMeasurement
+  ) => {
+    setPendingScan({ points, measurement });
+    setScannerOpen(false);
     setNewParcelName(`Parcela Nueva ${parcels.length + 1}`);
     setShowSaveModal(true);
   };
 
   const handleSaveDrawnParcel = (e: React.FormEvent) => {
     e.preventDefault();
-    const areaHa = Math.max(0.05, draftAreaHa);
+    if (!pendingScan) return;
     const created: Parcel = {
       id: `parcela-${Date.now()}`,
       name: newParcelName.trim() || `Parcela ${parcels.length + 1}`,
       location: newParcelLocation.trim() || 'Bolivia',
       department: newParcelLocation.trim() || 'Bolivia',
-      areaHa,
+      areaHa: pendingScan.measurement.areaHa,
+      measurement: pendingScan.measurement,
       crop: newParcelCrop,
       plantingDate: '2026-10-01',
       estimatedHarvestDate: '2027-03-15',
       registeredAt: new Date().toISOString().slice(0, 10),
       monitoringStatus: 'Disponible',
-      centroid: draftCentroid,
-      polygon: draftPoints,
+      centroid: pendingScan.measurement.centroid,
+      polygon: pendingScan.points,
       elevationM: 3810,
       indicators: {
         moisturePct: 22,
@@ -380,8 +381,8 @@ export function MapScreen({
     };
     onCreateParcel(created);
     setShowSaveModal(false);
-    setIsDrawing(false);
-    setDraftPoints([]);
+    setPendingScan(null);
+    setScannerInitialPolygon(undefined);
     setMapCenter([created.centroid.lat, created.centroid.lng]);
     setMapZoom(16);
   };
@@ -412,10 +413,6 @@ export function MapScreen({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <MapController targetCenter={mapCenter} targetZoom={mapZoom} />
-        <DrawClickHandler
-          isDrawing={isDrawing}
-          onAddPoint={(pt) => setDraftPoints((prev) => [...prev, pt])}
-        />
 
         {/* Parcel Polygons with Halo Selection Highlight */}
         {parcels.map((parcel, idx) => {
@@ -452,9 +449,7 @@ export function MapScreen({
                     }}
                     eventHandlers={{
                       click: () => {
-                        if (!isDrawing) {
-                          handleSelectAndFly(parcel);
-                        }
+                        handleSelectAndFly(parcel);
                       },
                     }}
                   >
@@ -463,7 +458,7 @@ export function MapScreen({
                       direction="center"
                       className="agro-map-tooltip"
                     >
-                      {parcel.name} · {parcel.areaHa.toFixed(1)} ha
+                      {parcel.name} · {formatAreaHa(getParcelAreaHa(parcel))}
                     </LeafletTooltip>
                   </Polygon>
                 </>
@@ -487,7 +482,10 @@ export function MapScreen({
 
               {/* Centroid marker for zoomed-out visibility */}
               <CircleMarker
-                center={[parcel.centroid.lat, parcel.centroid.lng]}
+                center={[
+                  (parcel.measurement?.centroid ?? parcel.centroid).lat,
+                  (parcel.measurement?.centroid ?? parcel.centroid).lng,
+                ]}
                 radius={isSelected ? 6 : 4.5}
                 pathOptions={{
                   color: '#ffffff',
@@ -497,9 +495,7 @@ export function MapScreen({
                 }}
                 eventHandlers={{
                   click: () => {
-                    if (!isDrawing) {
-                      handleSelectAndFly(parcel);
-                    }
+                    handleSelectAndFly(parcel);
                   },
                 }}
               />
@@ -521,27 +517,6 @@ export function MapScreen({
           />
         )}
 
-        {/* Active Drawing Polygon / Polyline */}
-        {draftPoints.length >= 2 && (
-          <Polyline
-            positions={draftPoints.map((p) => [p.lat, p.lng] as [number, number])}
-            pathOptions={{ color: '#166534', weight: 2.5, dashArray: '6 4' }}
-          />
-        )}
-        {draftPoints.length >= 3 && (
-          <Polygon
-            positions={draftPoints.map((p) => [p.lat, p.lng] as [number, number])}
-            pathOptions={{ color: '#16A34A', weight: 2, fillColor: '#16A34A', fillOpacity: 0.28 }}
-          />
-        )}
-        {draftPoints.map((pt, idx) => (
-          <CircleMarker
-            key={`${pt.lat}-${pt.lng}-${idx}`}
-            center={[pt.lat, pt.lng]}
-            radius={5}
-            pathOptions={{ color: '#166534', weight: 2, fillColor: '#ffffff', fillOpacity: 1 }}
-          />
-        ))}
       </MapContainer>
 
       {/* Top Rounded Search Bar & Quick Parcel Switcher */}
@@ -598,7 +573,7 @@ export function MapScreen({
                 >
                   {p.name}
                   <span className={`ml-1.5 font-mono text-[11px] ${active ? 'text-emerald-200' : 'text-slate-400'}`}>
-                    {p.areaHa.toFixed(1)} ha
+                    {getParcelAreaHa(p).toFixed(2)} ha
                   </span>
                 </motion.button>
               );
@@ -708,18 +683,10 @@ export function MapScreen({
         <motion.button
           type="button"
           whileTap={{ scale: 0.92 }}
-          onClick={() => {
-            setIsDrawing((v) => !v);
-            setDraftPoints([]);
-            setLayersOpen(false);
-          }}
-          title="Dibujar parcela"
-          aria-label="Dibujar parcela"
-          className={`w-11 h-11 rounded-2xl border shadow-[0_6px_18px_rgba(15,23,42,0.09)] flex items-center justify-center transition-colors ${
-            isDrawing
-              ? 'bg-[#16A34A] border-[#16A34A] text-white'
-              : 'bg-white/95 backdrop-blur-md border-slate-200/80 text-slate-700 hover:text-[#166534] hover:bg-emerald-50'
-          }`}
+          onClick={() => openScanner()}
+          title="Escanear parcela"
+          aria-label="Escanear parcela"
+          className="w-11 h-11 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-[0_6px_18px_rgba(15,23,42,0.09)] flex items-center justify-center text-slate-700 hover:text-[#166534] hover:bg-emerald-50 transition-colors"
         >
           <PenTool className="w-5 h-5" />
         </motion.button>
@@ -811,7 +778,7 @@ export function MapScreen({
       <div className="absolute bottom-3.5 left-3.5 right-3.5 z-[450] flex flex-col items-center gap-2 pointer-events-none">
         {/* Compact Thematic Legend */}
         <AnimatePresence>
-          {activeLayer !== 'osm' && !isDrawing && (
+          {activeLayer !== 'osm' && (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -850,66 +817,20 @@ export function MapScreen({
           )}
         </AnimatePresence>
 
-        {/* Drawing Toolbar / Empty State / Selected Parcel Bottom Sheet */}
+        {/* Empty State / Selected Parcel Bottom Sheet */}
         <div className="pointer-events-auto w-full max-w-md">
-          {isDrawing ? (
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white/98 backdrop-blur-md rounded-3xl p-4 border border-emerald-300 shadow-[0_12px_32px_rgba(15,23,42,0.14)] space-y-3"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <p className="text-xs font-bold text-[#166534]">Dibujar nueva parcela</p>
-                  <p className="text-[11px] text-slate-600">
-                    Toca el mapa para agregar vértices ({draftPoints.length} puntos)
-                  </p>
-                </div>
-                <span className="text-sm font-mono font-bold text-slate-900 tabular-nums">
-                  {draftAreaHa.toFixed(2)} ha
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setDraftPoints((prev) => prev.slice(0, -1))}
-                  disabled={draftPoints.length === 0}
-                  className="h-10 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 disabled:opacity-40 flex items-center gap-1 hover:bg-slate-50"
-                >
-                  <Undo2 className="w-3.5 h-3.5" /> Deshacer
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsDrawing(false);
-                    setDraftPoints([]);
-                  }}
-                  className="h-10 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleFinishDrawing}
-                  disabled={draftPoints.length < 3}
-                  className="flex-1 h-10 rounded-xl bg-[#16A34A] hover:bg-[#166534] text-white text-xs font-semibold disabled:opacity-40 flex items-center justify-center gap-1 transition-colors"
-                >
-                  <Check className="w-3.5 h-3.5" /> Finalizar
-                </button>
-              </div>
-            </motion.div>
-          ) : parcels.length === 0 ? (
+          {parcels.length === 0 ? (
             <div className="bg-white/98 backdrop-blur-md rounded-3xl p-4 border border-slate-200 shadow-xl text-center space-y-2.5">
               <p className="text-sm font-bold text-slate-900">
-                Dibuja o registra una parcela para comenzar el monitoreo
+                Escanea o registra una parcela para comenzar el monitoreo
               </p>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setIsDrawing(true)}
+                  onClick={() => openScanner()}
                   className="flex-1 h-10 rounded-xl bg-[#16A34A] text-white text-xs font-semibold"
                 >
-                  Dibujar en mapa
+                  Escanear en mapa
                 </button>
                 <button
                   type="button"
@@ -958,7 +879,7 @@ export function MapScreen({
                     <p className="text-xs text-slate-500 mt-0.5 truncate">
                       {selectedParcel.crop} ·{' '}
                       <span className="font-mono font-semibold text-slate-700 tabular-nums">
-                        {selectedParcel.areaHa.toFixed(2)} ha
+                        {formatAreaHa(getParcelAreaHa(selectedParcel))}
                       </span>{' '}
                       · {selectedParcel.location}
                     </p>
@@ -1068,8 +989,8 @@ export function MapScreen({
         </div>
       </div>
 
-      {/* Save Drawn Polygon Modal */}
-      {showSaveModal && (
+      {/* Save Scanned Parcel Modal */}
+      {showSaveModal && pendingScan && (
         <div
           className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4"
           role="dialog"
@@ -1080,13 +1001,19 @@ export function MapScreen({
             className="bg-white w-full max-w-sm rounded-3xl p-5 shadow-xl space-y-4"
           >
             <div>
-              <h3 className="text-base font-bold text-slate-900">Guardar parcela dibujada</h3>
+              <h3 className="text-base font-bold text-slate-900">Guardar parcela escaneada</h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Superficie calculada:{' '}
-                <strong className="font-mono text-[#166534]">{draftAreaHa.toFixed(2)} ha</strong>
+                Superficie medida:{' '}
+                <strong className="font-mono text-[#166534]">
+                  {formatAreaHa(pendingScan.measurement.areaHa)}
+                </strong>
               </p>
               <p className="text-[11px] text-slate-500 font-mono mt-0.5">
-                Centroide: {formatCoordinates(draftCentroid)}
+                Perímetro {formatPerimeter(pendingScan.measurement.perimeterM)} ·{' '}
+                {pendingScan.measurement.vertexCount} vértices
+              </p>
+              <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                Centroide: {formatCoordinates(pendingScan.measurement.centroid)}
               </p>
             </div>
 
@@ -1130,14 +1057,19 @@ export function MapScreen({
             </div>
 
             <div className="text-[11px] text-slate-500 bg-slate-50 rounded-xl p-2.5 max-h-24 overflow-y-auto font-mono">
-              Coordenadas ({draftPoints.length} vértices):{' '}
-              {draftPoints.map((p) => `[${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}]`).join(', ')}
+              Coordenadas ({pendingScan.points.length} vértices):{' '}
+              {pendingScan.points
+                .map((p) => `[${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}]`)
+                .join(', ')}
             </div>
 
             <div className="flex items-center gap-2.5">
               <button
                 type="button"
-                onClick={() => setShowSaveModal(false)}
+                onClick={() => {
+                  setShowSaveModal(false);
+                  setPendingScan(null);
+                }}
                 className="flex-1 h-11 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700"
               >
                 Seguir editando
@@ -1152,6 +1084,14 @@ export function MapScreen({
           </form>
         </div>
       )}
+
+      <ParcelScanner
+        open={scannerOpen}
+        initialPolygon={scannerInitialPolygon}
+        initialCenter={{ lat: mapCenter[0], lng: mapCenter[1] }}
+        onClose={() => setScannerOpen(false)}
+        onConfirm={handleScanConfirm}
+      />
 
       {/* Edit or Register Modal from Map */}
       <ParcelFormModal

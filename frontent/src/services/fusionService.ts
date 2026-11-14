@@ -1,6 +1,7 @@
 import { SATELLITE_SOURCES, SIMULATED_INSIGHTS } from '../data/mockData';
 import { Parcel, SatelliteSourceId, SimulatedInsight } from '../types/agroterra';
 import { checkSpatialRepresentativeness } from '../utils/geo';
+import { getParcelAreaHa } from '../utils/parcelGeometry';
 
 export interface FusionComparisonPreset {
   id: string;
@@ -80,7 +81,7 @@ export const fusionService = {
       const spec = SATELLITE_SOURCES.find((s) => s.id === id)!;
       return {
         source: spec,
-        check: checkSpatialRepresentativeness(parcel.areaHa, spec),
+        check: checkSpatialRepresentativeness(getParcelAreaHa(parcel), spec),
       };
     });
   },
