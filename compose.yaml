@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: agroshift
+      POSTGRES_USER: agroshift
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agroshift -d agroshift"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      DATABASE_URL: postgresql+psycopg://agroshift:${POSTGRES_PASSWORD}@db:5432/agroshift
+      CORS_ORIGINS: http://localhost:3000
+      CLIMATE_START_YEAR: 2020
+      CLIMATE_END_YEAR: 2024
+    ports: ["127.0.0.1:8000:8000"]
+    networks: [internal]
+
+  web:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on: [api]
+    environment:
+      INTERNAL_API_URL: http://api:8000
+    ports: ["3000:3000"]
+    networks: [internal]
+
+networks:
+  internal:
+
+volumes:
+  postgres_data:
