@@ -304,6 +304,7 @@ export function MapScreen({
     setMapCenter([parcel.centroid.lat, parcel.centroid.lng]);
     setMapZoom(16);
     setSheetCollapsed(false);
+    onOpenParcelDetail(parcel.id);
   };
 
   const handleGeolocate = () => {
@@ -379,6 +380,7 @@ export function MapScreen({
       observations: [],
     };
     onCreateParcel(created);
+    onOpenParcelDetail(created.id);
     setShowSaveModal(false);
     setIsDrawing(false);
     setDraftPoints([]);

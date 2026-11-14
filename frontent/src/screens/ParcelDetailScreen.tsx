@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { DataSourcesCatalog } from '../components/DataSourcesCatalog';
-import { PolygonMiniMap } from '../components/PolygonMiniMap';
+import { Parcel3DView } from '../components/Parcel3DView';
 import { QualityIndicator } from '../components/QualityBadgeText';
 import { satelliteService } from '../services/satelliteService';
 import {
@@ -81,10 +81,10 @@ export function ParcelDetailScreen({
         </button>
       </div>
 
-      {/* Mini Map + Core Metadata */}
-      <div className="bg-white rounded-3xl p-4 border border-slate-200/90 shadow-xs space-y-4">
-        <PolygonMiniMap parcel={parcel} heightClass="h-44" />
+      {/* Custom area visualization + Core Metadata */}
+      <Parcel3DView parcel={parcel} />
 
+      <div className="bg-white rounded-3xl p-4 border border-slate-200/90 shadow-xs space-y-4">
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2">
             <h1 className="text-xl font-bold text-slate-900">{parcel.name}</h1>

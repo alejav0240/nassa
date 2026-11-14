@@ -239,6 +239,29 @@ export function HomeScreen({
           <span className="font-mono tabular-nums text-[11px] whitespace-nowrap">Nov 2026</span>
         </div>
 
+        <section
+          aria-labelledby="next-step-title"
+          className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl bg-white text-[#166534] flex items-center justify-center shrink-0">
+              <TrendingUp className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-[11px] uppercase tracking-wide font-bold text-[#166534]">Siguiente paso recomendado</p>
+              <h2 id="next-step-title" className="text-sm font-bold text-slate-900 mt-0.5">Revisá el análisis de {selectedParcel.name}</h2>
+              <p className="text-xs text-slate-600 mt-1 leading-5">Compará la evolución satelital y detectá cambios antes de revisar el historial.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onNavigate('analisis', 'satelital')}
+            className="min-h-[44px] px-4 rounded-xl bg-[#166534] text-white text-xs font-bold hover:bg-[#14532d] transition-colors whitespace-nowrap"
+          >
+            Abrir análisis
+          </button>
+        </section>
+
         {/* 4 Indicator Cards */}
         <section aria-label="Indicadores ambientales" className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {indicatorCards.map((card) => {
@@ -281,14 +304,14 @@ export function HomeScreen({
                     key={act.label}
                     type="button"
                     onClick={act.onClick}
-                    className="min-h-[76px] bg-white hover:bg-slate-50 active:scale-[0.99] transition-all rounded-2xl p-3.5 border border-slate-200/90 shadow-xs text-left flex flex-col justify-between"
+                    className={`min-h-[76px] ${act.label === 'Analizar mi parcela' ? 'bg-[#166534] text-white border-[#166534] hover:bg-[#14532d]' : 'bg-white text-slate-900 border-slate-200/90 hover:bg-slate-50'} active:scale-[0.99] transition-all rounded-2xl p-3.5 border shadow-xs text-left flex flex-col justify-between`}
                   >
-                    <div className="w-8 h-8 rounded-xl bg-[#DCFCE7] text-[#166534] flex items-center justify-center">
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${act.label === 'Analizar mi parcela' ? 'bg-white/15 text-white' : 'bg-[#DCFCE7] text-[#166534]'}`}>
                       <Icon className="w-4 h-4" />
                     </div>
                     <div className="mt-2">
-                      <p className="text-xs font-bold text-slate-900 leading-tight">{act.label}</p>
-                      <p className="text-[11px] text-slate-500 mt-0.5 truncate">{act.sub}</p>
+                      <p className={`text-xs font-bold leading-tight ${act.label === 'Analizar mi parcela' ? 'text-white' : 'text-slate-900'}`}>{act.label}</p>
+                      <p className={`text-[11px] mt-0.5 truncate ${act.label === 'Analizar mi parcela' ? 'text-emerald-100' : 'text-slate-500'}`}>{act.sub}</p>
                     </div>
                   </button>
                 );

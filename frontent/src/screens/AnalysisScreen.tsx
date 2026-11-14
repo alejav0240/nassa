@@ -77,12 +77,15 @@ export function AnalysisScreen({
       </div>
 
       {/* Sub-navigation Tabs */}
-      <div className="flex items-center gap-1 p-1 bg-slate-200/70 rounded-xl overflow-x-auto no-scrollbar">
+      <div role="tablist" aria-label="Secciones del análisis" className="flex items-center gap-1 p-1 bg-slate-200/70 rounded-xl overflow-x-auto no-scrollbar">
         {SUB_TABS.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => onChangeSubTab(t.id)}
+            role="tab"
+            aria-selected={subTab === t.id}
+            aria-controls={`analysis-panel-${t.id}`}
             className={`flex-1 min-h-[38px] px-3 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
               subTab === t.id
                 ? 'bg-white text-[#166534] shadow-xs'
@@ -95,10 +98,10 @@ export function AnalysisScreen({
       </div>
 
       {/* Active Sub-module */}
-      {subTab === 'satelital' && <SatelliteTab parcel={selectedParcel} preferences={preferences} />}
-      {subTab === 'fusion' && <FusionTab parcel={selectedParcel} />}
+      {subTab === 'satelital' && <div id="analysis-panel-satelital" role="tabpanel"><SatelliteTab parcel={selectedParcel} preferences={preferences} /></div>}
+      {subTab === 'fusion' && <div id="analysis-panel-fusion" role="tabpanel"><FusionTab parcel={selectedParcel} /></div>}
       {subTab === 'fuentes' && (
-        <div className="space-y-3">
+        <div id="analysis-panel-fuentes" role="tabpanel" className="space-y-3">
           <div className="px-1">
             <h2 className="text-base font-bold text-slate-900">
               Fuentes satelitales y cartográficas del sistema
@@ -110,13 +113,15 @@ export function AnalysisScreen({
           <DataSourcesCatalog />
         </div>
       )}
-      {subTab === 'insights' && <InsightsTab parcel={selectedParcel} />}
+      {subTab === 'insights' && <div id="analysis-panel-insights" role="tabpanel"><InsightsTab parcel={selectedParcel} /></div>}
       {subTab === 'historial' && (
-        <HistoryRotationTab
-          parcel={selectedParcel}
-          allHistory={historyRecords}
-          onAddHistory={onAddHistory}
-        />
+        <div id="analysis-panel-historial" role="tabpanel">
+          <HistoryRotationTab
+            parcel={selectedParcel}
+            allHistory={historyRecords}
+            onAddHistory={onAddHistory}
+          />
+        </div>
       )}
     </div>
   );
