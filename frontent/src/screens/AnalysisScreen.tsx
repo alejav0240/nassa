@@ -24,6 +24,7 @@ interface AnalysisScreenProps {
   preferences: UserPreferences;
   analysisStatus: 'idle' | 'loading' | 'ready' | 'error';
   backendAnalysis: BackendAnalysis | null;
+  analysisIsStale: boolean;
   analysisError: string | null;
 }
 
@@ -46,6 +47,7 @@ export function AnalysisScreen({
   preferences,
   analysisStatus,
   backendAnalysis,
+  analysisIsStale,
   analysisError,
 }: AnalysisScreenProps) {
   if (!selectedParcel) {
@@ -108,6 +110,12 @@ export function AnalysisScreen({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {analysisIsStale && (
+        <div role="status" className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+          La parcela cambió desde el último análisis. El resultado visible corresponde a una versión anterior; vuelve a ejecutar el análisis para actualizarlo.
         </div>
       )}
 

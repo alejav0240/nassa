@@ -63,6 +63,78 @@ class AnalyzeRequest(StrictModel):
     priorities: Priorities = Field(default_factory=Priorities)
 
 
+class CoordinateRead(BaseModel):
+    latitude: float
+    longitude: float
+
+
+class DataQualityRead(BaseModel):
+    complete_years: list[int]
+    excluded_years: list[int]
+    policy: str
+
+
+class MonthlyClimateRead(BaseModel):
+    month: int
+    precipitation_mm: float | None
+    temperature_c: float | None
+    frost_days_per_year: float
+    heat_days_per_year: float
+
+
+class ClimateRead(BaseModel):
+    source: str
+    source_url: str
+    data_type: str
+    summary_version: int
+    data_quality: DataQualityRead
+    years: list[int]
+    annual_rainfall_mm: float
+    annual_rainfall_by_year: dict[int, float]
+    rainfall_variability_pct: float | None
+    annual_frost_days: float
+    mean_temperature_c: float
+    monthly: list[MonthlyClimateRead]
+    limitations: list[str]
+    query_coordinates: CoordinateRead | None = None
+    requested_coordinates: CoordinateRead | None = None
+    cache_grouping_note: str | None = None
+
+
+class StrategyRead(BaseModel):
+    id: str
+    title: str
+    crops: list[dict[str, str]]
+    score: float
+    scores: dict[str, float]
+    explanation: str
+    benefits: list[str]
+    risks: list[str]
+    flagged_for_review: bool
+
+
+class MethodologyRead(BaseModel):
+    method: str
+    formula: str
+    nasa_source: str
+    crop_coefficients: dict[str, Any]
+    scope: str
+    limitations: list[str]
+
+
+class AnalysisRead(BaseModel):
+    id: int
+    field_id: int
+    created_at: datetime
+    priorities: Priorities
+    climate: ClimateRead
+    strategies: list[StrategyRead]
+    methodology: MethodologyRead
+    history: list[dict[str, Any]] = Field(default_factory=list)
+    field_snapshot: FieldRead | None = None
+    history_note: str | None = None
+
+
 class ErrorResponse(BaseModel):
     detail: str = Field(description='Descripción del error')
 

@@ -48,6 +48,7 @@ export default function App() {
     syncStatus,
     analysisStatus,
     backendAnalysis,
+    analysisIsStale,
     analysisError,
     runBackendAnalysis,
   } = useAgroTerraState();
@@ -141,6 +142,7 @@ export default function App() {
             preferences={preferences}
             analysisStatus={analysisStatus}
             backendAnalysis={backendAnalysis}
+            analysisIsStale={analysisIsStale}
             analysisError={analysisError}
           />
         );
