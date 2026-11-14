@@ -56,6 +56,7 @@ interface MapScreenProps {
   onOpenParcelDetail: (id: string) => void;
   onAnalyzeParcel: (id: string) => void;
   onOpenParcelHistory: (id: string) => void;
+  syncStatus: 'idle' | 'saving' | 'saved' | 'error';
 }
 
 interface LayerDef {
@@ -232,6 +233,7 @@ export function MapScreen({
   onOpenParcelDetail,
   onAnalyzeParcel,
   onOpenParcelHistory,
+  syncStatus,
 }: MapScreenProps) {
   const initialLat = selectedParcel?.centroid.lat ?? -16.6524;
   const initialLng = selectedParcel?.centroid.lng ?? -68.2958;
@@ -255,6 +257,7 @@ export function MapScreen({
   const [newParcelName, setNewParcelName] = useState('');
   const [newParcelCrop, setNewParcelCrop] = useState('Papa');
   const [newParcelLocation, setNewParcelLocation] = useState('Altiplano, Bolivia');
+  const [drawingError, setDrawingError] = useState<string | null>(null);
 
   // Edit / Register modal from map
   const [parcelFormOpen, setParcelFormOpen] = useState(false);
@@ -344,7 +347,15 @@ export function MapScreen({
   };
 
   const handleFinishDrawing = () => {
-    if (draftPoints.length < 3) return;
+    if (draftPoints.length < 3) {
+      setDrawingError('Agregá al menos tres puntos para formar un área.');
+      return;
+    }
+    if (draftAreaHa <= 0.01) {
+      setDrawingError('El área es demasiado pequeña. Alejá el mapa o marcá una parcela mayor.');
+      return;
+    }
+    setDrawingError(null);
     setNewParcelName(`Parcela Nueva ${parcels.length + 1}`);
     setShowSaveModal(true);
   };
@@ -408,6 +419,7 @@ export function MapScreen({
         zoom={mapZoom}
         zoomControl={false}
         className="w-full h-full z-0"
+        aria-label="Mapa interactivo de parcelas agrícolas"
       >
         <TileLayer
           attribution="&copy; OpenStreetMap contributors"
@@ -581,6 +593,26 @@ export function MapScreen({
           </div>
         </div>
 
+        {!searchOpen && !isDrawing && (
+          <div className="pointer-events-auto max-w-md bg-white/92 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-sm px-3.5 py-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-900">Mapa de parcelas</p>
+                <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                  {parcels.length} {parcels.length === 1 ? 'área registrada' : 'áreas registradas'} · {currentLayerInfo.name}
+                </p>
+              </div>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 text-[#166534] px-2 py-1 text-[10px] font-bold whitespace-nowrap">
+                <MapPin className="w-3 h-3" />
+                {selectedParcel ? 'Área activa' : 'Sin selección'}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-600 mt-2 leading-4">
+              Tocá una parcela para abrir su ficha 3D o usá <strong>Dibujar</strong> para registrar una nueva.
+            </p>
+          </div>
+        )}
+
         {/* Sleek Parcel Switcher Chips */}
         {parcels.length > 0 && !searchOpen && (
           <div className="pointer-events-auto flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-full py-0.5">
@@ -637,7 +669,8 @@ export function MapScreen({
                       setMapCenter([hit.lat, hit.lng]);
                       setMapZoom(hit.zoom);
                       if (hit.parcelId) {
-                        onSelectParcel(hit.parcelId);
+                         onSelectParcel(hit.parcelId);
+                         onOpenParcelDetail(hit.parcelId);
                       }
                       setSearchOpen(false);
                     }}
@@ -680,7 +713,7 @@ export function MapScreen({
       </div>
 
       {/* Right Floating Action Buttons (4 clean tactile controls) */}
-      <div className="absolute right-3.5 top-1/2 -translate-y-1/2 z-[450] flex flex-col gap-2.5">
+       <div className="absolute right-3.5 top-1/2 -translate-y-1/2 z-[450] flex flex-col gap-2.5" role="toolbar" aria-label="Controles del mapa">
         <motion.button
           type="button"
           whileTap={{ scale: 0.92 }}
@@ -853,7 +886,7 @@ export function MapScreen({
         </AnimatePresence>
 
         {/* Drawing Toolbar / Empty State / Selected Parcel Bottom Sheet */}
-        <div className="pointer-events-auto w-full max-w-md">
+         <div className="pointer-events-auto w-full max-w-md lg:max-w-xl">
           {isDrawing ? (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -863,9 +896,9 @@ export function MapScreen({
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <p className="text-xs font-bold text-[#166534]">Dibujar nueva parcela</p>
-                  <p className="text-[11px] text-slate-600">
-                    Toca el mapa para agregar vértices ({draftPoints.length} puntos)
-                  </p>
+                   <p className="text-[11px] text-slate-600">
+                     Tocá el mapa para agregar vértices · {draftPoints.length} {draftPoints.length === 1 ? 'punto' : 'puntos'}
+                   </p>
                 </div>
                 <span className="text-sm font-mono font-bold text-slate-900 tabular-nums">
                   {draftAreaHa.toFixed(2)} ha
@@ -896,9 +929,21 @@ export function MapScreen({
                   disabled={draftPoints.length < 3}
                   className="flex-1 h-10 rounded-xl bg-[#16A34A] hover:bg-[#166534] text-white text-xs font-semibold disabled:opacity-40 flex items-center justify-center gap-1 transition-colors"
                 >
-                  <Check className="w-3.5 h-3.5" /> Finalizar
+                   <Check className="w-3.5 h-3.5" /> Revisar área
                 </button>
               </div>
+              {drawingError && (
+                <p role="alert" className="rounded-xl bg-red-50 border border-red-200 px-3 py-2 text-[11px] text-red-700">
+                  {drawingError}
+                </p>
+              )}
+              <p className="text-[10px] text-slate-500 text-center" aria-live="polite">
+                {syncStatus === 'saving'
+                  ? 'Guardando en el backend…'
+                  : syncStatus === 'error'
+                    ? 'Se guardó localmente; falta sincronizar.'
+                    : 'Podés revisar la forma antes de guardarla.'}
+              </p>
             </motion.div>
           ) : parcels.length === 0 ? (
             <div className="bg-white/98 backdrop-blur-md rounded-3xl p-4 border border-slate-200 shadow-xl text-center space-y-2.5">

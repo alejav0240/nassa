@@ -44,7 +44,8 @@ export function ParcelDetailScreen({
   const [noteText, setNoteText] = useState('');
   const [noteCategory, setNoteCategory] = useState<FieldObservation['category']>('Fenología');
 
-  const indicators = satelliteService.getIndicatorsForParcel(parcel);
+  const hasIndicators = parcel.indicatorsAvailable !== false;
+  const indicators = hasIndicators ? satelliteService.getIndicatorsForParcel(parcel) : [];
   const parcelHistory = historyRecords.filter((h) => h.parcelId === parcel.id);
 
   const handleSaveNote = (e: React.FormEvent) => {
@@ -83,6 +84,12 @@ export function ParcelDetailScreen({
 
       {/* Custom area visualization + Core Metadata */}
       <Parcel3DView parcel={parcel} />
+
+      {!hasIndicators && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+          Esta parcela está registrada, pero todavía no tiene indicadores ambientales. Ejecutá un análisis para consultar datos climáticos y generar métricas.
+        </div>
+      )}
 
       <div className="bg-white rounded-3xl p-4 border border-slate-200/90 shadow-xs space-y-4">
         <div className="space-y-1.5">
@@ -164,7 +171,7 @@ export function ParcelDetailScreen({
       {tab === 'resumen' && (
         <div className="space-y-3">
           <p className="text-xs text-slate-500 px-1">
-            Indicadores demostrativos de referencia con fuente, resolución y microexplicación.
+            Indicadores con fuente, resolución y microexplicación.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {indicators.map((ind) => {

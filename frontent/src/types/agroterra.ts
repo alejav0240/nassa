@@ -89,6 +89,7 @@ export interface Parcel {
   centroid: LatLngPoint;
   polygon: LatLngPoint[];
   imageUrl?: string;
+  indicatorsAvailable?: boolean;
   elevationM: number;
   indicators: {
     moisturePct: number;

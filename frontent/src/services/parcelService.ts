@@ -34,6 +34,7 @@ function mapBackendField(field: BackendField): Parcel {
     monitoringStatus: 'Disponible',
     centroid: { lat: field.latitude, lng: field.longitude },
     polygon: polygon.length >= 3 ? polygon : fallbackPolygon(field),
+    indicatorsAvailable: false,
     elevationM: 0,
     indicators: {
       moisturePct: 0,

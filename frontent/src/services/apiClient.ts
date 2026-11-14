@@ -46,6 +46,18 @@ export interface BackendFieldPayload {
   geometry_geojson: BackendField['geometry_geojson'];
 }
 
+export interface BackendAnalysis {
+  id: number;
+  created_at: string;
+  climate?: {
+    annual_rainfall_mm?: number;
+    mean_temperature_c?: number;
+    annual_frost_days?: number;
+  };
+  strategies?: Array<{ id: string; title: string; score: number; explanation: string }>;
+  methodology?: { scope?: string; limitations?: string[] };
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_CONFIG.baseUrl}${path}`, {
     ...init,
@@ -72,6 +84,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const backendApi = {
   health: () => request<BackendHealth>('/health'),
   listFields: () => request<BackendField[]>('/fields?limit=100'),
+  analyzeField: (fieldId: number, priorities = { water: 40, soil: 40, income: 20 }) =>
+    request<BackendAnalysis>('/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ field_id: fieldId, priorities }),
+    }),
   createField: (payload: BackendFieldPayload) =>
     request<BackendField>('/fields', {
       method: 'POST',

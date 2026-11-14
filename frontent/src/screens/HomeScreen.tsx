@@ -33,6 +33,7 @@ interface HomeScreenProps {
   onNavigate: (tab: NavTab, subTab?: AnalysisSubTab) => void;
   onOpenAlerts: () => void;
   backendStatus: 'checking' | 'connected' | 'offline';
+  syncStatus: 'idle' | 'saving' | 'saved' | 'error';
 }
 
 export function HomeScreen({
@@ -45,6 +46,7 @@ export function HomeScreen({
   onNavigate,
   onOpenAlerts,
   backendStatus,
+  syncStatus,
 }: HomeScreenProps) {
   if (!selectedParcel) {
     return (
@@ -61,7 +63,8 @@ export function HomeScreen({
     );
   }
 
-  const timeSeries = satelliteService.getTimeSeriesForParcel(selectedParcel).slice(-6);
+  const hasIndicators = selectedParcel.indicatorsAvailable !== false;
+  const timeSeries = hasIndicators ? satelliteService.getTimeSeriesForParcel(selectedParcel).slice(-6) : [];
   const moistureDisplay =
     preferences.moistureUnit === 'volumetric'
       ? `${selectedParcel.indicators.moistureVolumetric.toFixed(2)} m³/m³`
@@ -71,36 +74,36 @@ export function HomeScreen({
     {
       id: 'humedad',
       title: 'Humedad superficial del suelo',
-      value: moistureDisplay,
-      source: 'Fuente: SMAP',
-      status: 'Referencia regional',
+      value: hasIndicators ? moistureDisplay : 'N/D',
+      source: hasIndicators ? 'Fuente: SMAP' : 'Sin análisis',
+      status: hasIndicators ? 'Referencia regional' : 'Pendiente de análisis',
       icon: Droplets,
       accent: 'text-[#0284C7] bg-sky-50',
     },
     {
       id: 'temperatura',
       title: 'Temperatura superficial',
-      value: `${selectedParcel.indicators.temperatureC.toFixed(1)} °C`,
-      source: 'Fuente: ECOSTRESS',
-      status: 'Observación disponible',
+      value: hasIndicators ? `${selectedParcel.indicators.temperatureC.toFixed(1)} °C` : 'N/D',
+      source: hasIndicators ? 'Fuente: ECOSTRESS' : 'Sin análisis',
+      status: hasIndicators ? 'Observación disponible' : 'Pendiente de análisis',
       icon: Thermometer,
       accent: 'text-[#B45309] bg-amber-50',
     },
     {
       id: 'precipitacion',
       title: 'Precipitación mensual',
-      value: `${selectedParcel.indicators.precipitationMm.toFixed(1)} mm`,
-      source: 'Fuente: GPM',
-      status: 'Acumulado del período',
+      value: hasIndicators ? `${selectedParcel.indicators.precipitationMm.toFixed(1)} mm` : 'N/D',
+      source: hasIndicators ? 'Fuente: GPM' : 'Sin análisis',
+      status: hasIndicators ? 'Acumulado del período' : 'Pendiente de análisis',
       icon: CloudRain,
       accent: 'text-[#0284C7] bg-sky-50',
     },
     {
       id: 'ndvi',
       title: 'Índice NDVI',
-      value: selectedParcel.indicators.ndvi.toFixed(2),
-      source: 'Fuente: Landsat/MODIS',
-      status: selectedParcel.indicators.ndvi >= 0.55 ? 'Vegetación activa' : 'Cobertura moderada',
+      value: hasIndicators ? selectedParcel.indicators.ndvi.toFixed(2) : 'N/D',
+      source: hasIndicators ? 'Fuente: Landsat/MODIS' : 'Sin análisis',
+      status: hasIndicators ? selectedParcel.indicators.ndvi >= 0.55 ? 'Vegetación activa' : 'Cobertura moderada' : 'Pendiente de análisis',
       icon: Sprout,
       accent: 'text-[#166534] bg-[#DCFCE7]',
     },
@@ -169,6 +172,11 @@ export function HomeScreen({
             <span className={`w-1.5 h-1.5 rounded-full ${backendStatus === 'connected' ? 'bg-lime-300' : backendStatus === 'offline' ? 'bg-amber-300' : 'bg-white/70 animate-pulse'}`} />
             {backendStatus === 'connected' ? 'Backend conectado' : backendStatus === 'offline' ? 'Modo local' : 'Conectando…'}
           </span>
+          {syncStatus !== 'idle' && (
+            <span className="text-[10px] font-semibold text-emerald-100">
+              {syncStatus === 'saving' ? 'Guardando…' : syncStatus === 'saved' ? 'Guardado' : 'No sincronizado'}
+            </span>
+          )}
         </div>
 
         {/* Parcel Selector */}
@@ -349,7 +357,7 @@ export function HomeScreen({
             </div>
 
             <div className="h-48 w-full">
-              <ResponsiveContainer width="100%" height="100%">
+              {hasIndicators ? <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={timeSeries} margin={{ top: 8, right: 8, left: -22, bottom: 0 }}>
                   <defs>
                     <linearGradient id="ndviGradHome" x1="0" y1="0" x2="0" y2="1">
@@ -393,7 +401,11 @@ export function HomeScreen({
                     fillOpacity={0}
                   />
                 </AreaChart>
-              </ResponsiveContainer>
+              </ResponsiveContainer> : (
+                <div className="h-full flex items-center justify-center rounded-xl bg-slate-50 text-xs text-slate-500 text-center px-6">
+                  El backend todavía no tiene una serie ambiental para esta parcela. Ejecutá un análisis para generarla.
+                </div>
+              )}
             </div>
           </section>
         </div>

@@ -10,6 +10,7 @@ import { FusionTab } from './analysis/FusionTab';
 import { HistoryRotationTab } from './analysis/HistoryRotationTab';
 import { InsightsTab } from './analysis/InsightsTab';
 import { SatelliteTab } from './analysis/SatelliteTab';
+import type { BackendAnalysis } from '../services/apiClient';
 
 interface AnalysisScreenProps {
   subTab: AnalysisSubTab;
@@ -20,6 +21,9 @@ interface AnalysisScreenProps {
   historyRecords: CropHistoryRecord[];
   onAddHistory: (record: CropHistoryRecord) => void;
   preferences: UserPreferences;
+  analysisStatus: 'idle' | 'loading' | 'ready' | 'error';
+  backendAnalysis: BackendAnalysis | null;
+  analysisError: string | null;
 }
 
 const SUB_TABS: { id: AnalysisSubTab; label: string }[] = [
@@ -39,6 +43,9 @@ export function AnalysisScreen({
   historyRecords,
   onAddHistory,
   preferences,
+  analysisStatus,
+  backendAnalysis,
+  analysisError,
 }: AnalysisScreenProps) {
   if (!selectedParcel) {
     return (
@@ -75,6 +82,33 @@ export function AnalysisScreen({
           <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
       </div>
+
+      {analysisStatus !== 'idle' && (
+        <div
+          role={analysisStatus === 'error' ? 'alert' : 'status'}
+          className={`rounded-2xl border px-4 py-3 text-xs ${
+            analysisStatus === 'error'
+              ? 'border-red-200 bg-red-50 text-red-800'
+              : analysisStatus === 'loading'
+                ? 'border-amber-200 bg-amber-50 text-amber-900'
+                : 'border-emerald-200 bg-emerald-50 text-emerald-900'
+          }`}
+        >
+          {analysisStatus === 'loading' && 'Consultando NASA POWER y calculando estrategias…'}
+          {analysisStatus === 'error' && (analysisError ?? 'No se pudo completar el análisis.')}
+          {analysisStatus === 'ready' && backendAnalysis && (
+            <div className="space-y-2">
+              <p className="font-bold">Análisis real recibido del backend</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <span>Precipitación: <strong>{backendAnalysis.climate?.annual_rainfall_mm ?? 'N/D'} mm</strong></span>
+                <span>Temperatura: <strong>{backendAnalysis.climate?.mean_temperature_c ?? 'N/D'} °C</strong></span>
+                <span>Heladas: <strong>{backendAnalysis.climate?.annual_frost_days ?? 'N/D'}</strong></span>
+                <span>Estrategias: <strong>{backendAnalysis.strategies?.length ?? 0}</strong></span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Sub-navigation Tabs */}
       <div role="tablist" aria-label="Secciones del análisis" className="flex items-center gap-1 p-1 bg-slate-200/70 rounded-xl overflow-x-auto no-scrollbar">

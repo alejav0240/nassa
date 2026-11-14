@@ -43,6 +43,11 @@ export default function App() {
     setUserProfile,
     resetAllDemoData,
     backendStatus,
+    syncStatus,
+    analysisStatus,
+    backendAnalysis,
+    analysisError,
+    runBackendAnalysis,
   } = useAgroTerraState();
 
   const isSimulated = preferences.simulateDeviceFrame;
@@ -78,6 +83,7 @@ export default function App() {
             unreadAlertsCount={unreadAlertsCount}
             preferences={preferences}
             backendStatus={backendStatus}
+            syncStatus={syncStatus}
             onSelectParcel={setSelectedParcelId}
             onOpenParcelDetail={openParcelDetail}
             onNavigate={navigateTo}
@@ -91,12 +97,14 @@ export default function App() {
             selectedParcel={selectedParcel}
             preferences={preferences}
             isSimulatedFrame={isSimulated}
+            syncStatus={syncStatus}
             onSelectParcel={setSelectedParcelId}
             onCreateParcel={createParcel}
             onUpdateParcel={updateParcel}
             onOpenParcelDetail={openParcelDetail}
             onAnalyzeParcel={(id) => {
               setSelectedParcelId(id);
+              void runBackendAnalysis(id);
               navigateTo('analisis', 'satelital');
             }}
             onOpenParcelHistory={(id) => {
@@ -129,6 +137,9 @@ export default function App() {
             historyRecords={historyRecords}
             onAddHistory={addHistoryRecord}
             preferences={preferences}
+            analysisStatus={analysisStatus}
+            backendAnalysis={backendAnalysis}
+            analysisError={analysisError}
           />
         );
       case 'perfil':
