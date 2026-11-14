@@ -1,0 +1,1171 @@
+import { AnimatePresence, motion } from 'motion/react';
+import {
+  AlertTriangle,
+  BarChart3,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  CloudRain,
+  Compass,
+  Crosshair,
+  Droplets,
+  Edit3,
+  Eye,
+  History,
+  Layers,
+  Map as MapIcon,
+  MapPin,
+  Mountain,
+  PenTool,
+  Search,
+  Sprout,
+  Thermometer,
+  Trees,
+  Undo2,
+  X,
+} from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  CircleMarker,
+  MapContainer,
+  Polygon,
+  Polyline,
+  TileLayer,
+  Tooltip as LeafletTooltip,
+  useMap,
+  useMapEvents,
+} from 'react-leaflet';
+import { ParcelFormModal } from '../components/ParcelFormModal';
+import { BOLIVIA_LOCATIONS } from '../data/mockData';
+import { LatLngPoint, MapLayerId, Parcel, UserPreferences } from '../types/agroterra';
+import {
+  calculateCentroid,
+  calculatePolygonAreaHa,
+  formatCoordinates,
+} from '../utils/geo';
+
+interface MapScreenProps {
+  parcels: Parcel[];
+  selectedParcel: Parcel | null;
+  preferences: UserPreferences;
+  isSimulatedFrame?: boolean;
+  onSelectParcel: (id: string) => void;
+  onCreateParcel: (parcel: Parcel) => void;
+  onUpdateParcel: (parcel: Parcel) => void;
+  onOpenParcelDetail: (id: string) => void;
+  onAnalyzeParcel: (id: string) => void;
+  onOpenParcelHistory: (id: string) => void;
+}
+
+interface LayerDef {
+  id: MapLayerId;
+  name: string;
+  subtitle: string;
+  source: string;
+  resolutionMeters: number;
+  icon: typeof MapIcon;
+  scaleMin?: string;
+  scaleMax?: string;
+  gradient?: string;
+  isDemo: boolean;
+}
+
+const MAP_LAYERS: LayerDef[] = [
+  {
+    id: 'osm',
+    name: 'Mapa base OSM',
+    subtitle: 'Cartografía vectorial OpenStreetMap',
+    source: 'OpenStreetMap',
+    resolutionMeters: 1,
+    icon: MapIcon,
+    isDemo: false,
+  },
+  {
+    id: 'humedad',
+    name: 'Humedad del suelo',
+    subtitle: 'Referencia regional · 9 km',
+    source: 'SMAP (DEMO)',
+    resolutionMeters: 9000,
+    icon: Droplets,
+    scaleMin: '10 %',
+    scaleMax: '40 %',
+    gradient: 'from-amber-400 via-sky-400 to-blue-700',
+    isDemo: true,
+  },
+  {
+    id: 'temperatura',
+    name: 'Temperatura superficial',
+    subtitle: 'Radiometría térmica · ~70 m',
+    source: 'ECOSTRESS (DEMO)',
+    resolutionMeters: 70,
+    icon: Thermometer,
+    scaleMin: '22 °C',
+    scaleMax: '36 °C',
+    gradient: 'from-emerald-400 via-amber-400 to-red-600',
+    isDemo: true,
+  },
+  {
+    id: 'precipitacion',
+    name: 'Precipitación mensual',
+    subtitle: 'Acumulado de cuenca · ~10 km',
+    source: 'GPM (DEMO)',
+    resolutionMeters: 10000,
+    icon: CloudRain,
+    scaleMin: '10 mm',
+    scaleMax: '150 mm',
+    gradient: 'from-slate-300 via-sky-400 to-indigo-700',
+    isDemo: true,
+  },
+  {
+    id: 'ndvi',
+    name: 'Índice NDVI',
+    subtitle: 'Vigor vegetal · 30–250 m',
+    source: 'Landsat/MODIS (DEMO)',
+    resolutionMeters: 250,
+    icon: Sprout,
+    scaleMin: '0.00',
+    scaleMax: '1.00',
+    gradient: 'from-red-500 via-amber-400 to-emerald-600',
+    isDemo: true,
+  },
+  {
+    id: 'biomasa',
+    name: 'Biomasa',
+    subtitle: 'Muestreo LiDAR · ~25 m',
+    source: 'GEDI (DEMO)',
+    resolutionMeters: 25,
+    icon: Trees,
+    scaleMin: '10 Mg/ha',
+    scaleMax: '80 Mg/ha',
+    gradient: 'from-lime-300 via-emerald-500 to-emerald-900',
+    isDemo: true,
+  },
+  {
+    id: 'suelo',
+    name: 'Propiedades del suelo',
+    subtitle: 'Estimación zonal · 250 m',
+    source: 'SoilGrids (DEMO)',
+    resolutionMeters: 250,
+    icon: Mountain,
+    scaleMin: 'pH 5.5',
+    scaleMax: 'pH 8.0',
+    gradient: 'from-amber-700 via-amber-500 to-emerald-700',
+    isDemo: true,
+  },
+];
+
+const PARCEL_BASE_PALETTE = ['#16A34A', '#0D9488', '#0284C7', '#65A30D'];
+
+function MapController({
+  targetCenter,
+  targetZoom,
+}: {
+  targetCenter: [number, number];
+  targetZoom: number;
+}) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo(targetCenter, targetZoom, { duration: 0.65 });
+  }, [map, targetCenter, targetZoom]);
+  return null;
+}
+
+function DrawClickHandler({
+  isDrawing,
+  onAddPoint,
+}: {
+  isDrawing: boolean;
+  onAddPoint: (pt: LatLngPoint) => void;
+}) {
+  useMapEvents({
+    click(e) {
+      if (!isDrawing) return;
+      onAddPoint({
+        lat: Number(e.latlng.lat.toFixed(6)),
+        lng: Number(e.latlng.lng.toFixed(6)),
+      });
+    },
+  });
+  return null;
+}
+
+function getParcelFillColor(parcel: Parcel, index: number, layer: MapLayerId): string {
+  switch (layer) {
+    case 'ndvi':
+      return parcel.indicators.ndvi >= 0.65
+        ? '#15803d'
+        : parcel.indicators.ndvi >= 0.5
+        ? '#65a30d'
+        : '#d97706';
+    case 'humedad':
+      return parcel.indicators.moisturePct >= 25
+        ? '#0369a1'
+        : parcel.indicators.moisturePct >= 20
+        ? '#0284c7'
+        : '#f59e0b';
+    case 'temperatura':
+      return parcel.indicators.temperatureC >= 32
+        ? '#dc2626'
+        : parcel.indicators.temperatureC >= 29.5
+        ? '#f59e0b'
+        : '#16a34a';
+    case 'precipitacion':
+      return parcel.indicators.precipitationMm >= 95 ? '#1d4ed8' : '#0ea5e9';
+    case 'biomasa':
+      return parcel.indicators.biomassMgHa >= 50 ? '#14532d' : '#22c55e';
+    case 'suelo':
+      return '#b45309';
+    default:
+      return PARCEL_BASE_PALETTE[index % PARCEL_BASE_PALETTE.length];
+  }
+}
+
+export function MapScreen({
+  parcels,
+  selectedParcel,
+  preferences,
+  isSimulatedFrame,
+  onSelectParcel,
+  onCreateParcel,
+  onUpdateParcel,
+  onOpenParcelDetail,
+  onAnalyzeParcel,
+  onOpenParcelHistory,
+}: MapScreenProps) {
+  const initialLat = selectedParcel?.centroid.lat ?? -16.6524;
+  const initialLng = selectedParcel?.centroid.lng ?? -68.2958;
+
+  const [mapCenter, setMapCenter] = useState<[number, number]>([initialLat, initialLng]);
+  const [mapZoom, setMapZoom] = useState<number>(15);
+  const [activeLayer, setActiveLayer] = useState<MapLayerId>('osm');
+  const [layersOpen, setLayersOpen] = useState(false);
+  const [sheetCollapsed, setSheetCollapsed] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const [userLocation, setUserLocation] = useState<LatLngPoint | null>(null);
+  const [locationNotice, setLocationNotice] = useState<string | null>(null);
+
+  // Polygon drawing state
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [draftPoints, setDraftPoints] = useState<LatLngPoint[]>([]);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [newParcelName, setNewParcelName] = useState('');
+  const [newParcelCrop, setNewParcelCrop] = useState('Papa');
+  const [newParcelLocation, setNewParcelLocation] = useState('Altiplano, Bolivia');
+
+  // Edit / Register modal from map
+  const [parcelFormOpen, setParcelFormOpen] = useState(false);
+  const [editingParcel, setEditingParcel] = useState<Parcel | null>(null);
+
+  const draftAreaHa = useMemo(() => calculatePolygonAreaHa(draftPoints), [draftPoints]);
+  const draftCentroid = useMemo(() => calculateCentroid(draftPoints), [draftPoints]);
+
+  const currentLayerInfo = MAP_LAYERS.find((l) => l.id === activeLayer) ?? MAP_LAYERS[0];
+
+  const isSmallParcelForLayer = useMemo(() => {
+    if (!selectedParcel || activeLayer === 'osm') return false;
+    const parcelM2 = selectedParcel.areaHa * 10000;
+    const pixelM2 = currentLayerInfo.resolutionMeters * currentLayerInfo.resolutionMeters;
+    return parcelM2 < pixelM2;
+  }, [selectedParcel, activeLayer, currentLayerInfo]);
+
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const parcelHits = parcels
+      .filter((p) => !q || p.name.toLowerCase().includes(q) || p.location.toLowerCase().includes(q))
+      .map((p) => ({
+        id: p.id,
+        label: `${p.name} · ${p.crop}`,
+        sub: `${p.location} · ${p.areaHa.toFixed(1)} ha`,
+        lat: p.centroid.lat,
+        lng: p.centroid.lng,
+        zoom: 16,
+        parcelId: p.id,
+      }));
+    const boliviaHits = BOLIVIA_LOCATIONS.filter(
+      (loc) => !q || loc.name.toLowerCase().includes(q)
+    ).map((loc) => ({
+      id: loc.name,
+      label: loc.name,
+      sub: 'Zona agrícola de referencia',
+      lat: loc.lat,
+      lng: loc.lng,
+      zoom: loc.zoom,
+      parcelId: undefined,
+    }));
+    return [...parcelHits, ...boliviaHits].slice(0, 6);
+  }, [searchQuery, parcels]);
+
+  const handleSelectAndFly = (parcel: Parcel) => {
+    onSelectParcel(parcel.id);
+    setMapCenter([parcel.centroid.lat, parcel.centroid.lng]);
+    setMapZoom(16);
+    setSheetCollapsed(false);
+  };
+
+  const handleGeolocate = () => {
+    setLocationNotice(null);
+    if (!navigator.geolocation) {
+      setLocationNotice('Geolocalización no disponible en este navegador. Centrando en Bolivia.');
+      setMapCenter([-16.6524, -68.2958]);
+      setMapZoom(14);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const pt = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setUserLocation(pt);
+        setMapCenter([pt.lat, pt.lng]);
+        setMapZoom(15);
+      },
+      () => {
+        setLocationNotice(
+          'Permiso de ubicación no concedido. Mostrando parcela seleccionada.'
+        );
+        setMapCenter([initialLat, initialLng]);
+        setMapZoom(14);
+      },
+      { timeout: 6000 }
+    );
+  };
+
+  const handleCenterOnParcel = () => {
+    if (selectedParcel) {
+      setMapCenter([selectedParcel.centroid.lat, selectedParcel.centroid.lng]);
+      setMapZoom(16);
+    } else {
+      setMapCenter([-17.2, -66.5]);
+      setMapZoom(6);
+    }
+  };
+
+  const handleFinishDrawing = () => {
+    if (draftPoints.length < 3) return;
+    setNewParcelName(`Parcela Nueva ${parcels.length + 1}`);
+    setShowSaveModal(true);
+  };
+
+  const handleSaveDrawnParcel = (e: React.FormEvent) => {
+    e.preventDefault();
+    const areaHa = Math.max(0.05, draftAreaHa);
+    const created: Parcel = {
+      id: `parcela-${Date.now()}`,
+      name: newParcelName.trim() || `Parcela ${parcels.length + 1}`,
+      location: newParcelLocation.trim() || 'Bolivia',
+      department: newParcelLocation.trim() || 'Bolivia',
+      areaHa,
+      crop: newParcelCrop,
+      plantingDate: '2026-10-01',
+      estimatedHarvestDate: '2027-03-15',
+      registeredAt: new Date().toISOString().slice(0, 10),
+      monitoringStatus: 'Disponible',
+      centroid: draftCentroid,
+      polygon: draftPoints,
+      elevationM: 3810,
+      indicators: {
+        moisturePct: 22,
+        moistureVolumetric: 0.22,
+        temperatureC: 30.1,
+        precipitationMm: 81.0,
+        ndvi: 0.59,
+        soilOrganicCarbon: '16.5 g/kg',
+        soilTexture: 'Franco arcilloso',
+        soilPh: 6.3,
+        biomassMgHa: 39.0,
+      },
+      observations: [],
+    };
+    onCreateParcel(created);
+    setShowSaveModal(false);
+    setIsDrawing(false);
+    setDraftPoints([]);
+    setMapCenter([created.centroid.lat, created.centroid.lng]);
+    setMapZoom(16);
+  };
+
+  const moistureValue = selectedParcel
+    ? preferences.moistureUnit === 'volumetric'
+      ? `${selectedParcel.indicators.moistureVolumetric.toFixed(2)} m³/m³`
+      : `${selectedParcel.indicators.moisturePct}%`
+    : '';
+
+  return (
+    <div
+      className={`relative w-full overflow-hidden bg-slate-100 select-none ${
+        isSimulatedFrame
+          ? 'h-[748px]'
+          : 'h-[calc(100dvh-64px)] lg:h-[calc(100vh-32px)] lg:rounded-3xl border border-slate-200/90 shadow-xs'
+      }`}
+    >
+      {/* Full-bleed Interactive OpenStreetMap */}
+      <MapContainer
+        center={mapCenter}
+        zoom={mapZoom}
+        zoomControl={false}
+        className="w-full h-full z-0"
+      >
+        <TileLayer
+          attribution="&copy; OpenStreetMap contributors"
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <MapController targetCenter={mapCenter} targetZoom={mapZoom} />
+        <DrawClickHandler
+          isDrawing={isDrawing}
+          onAddPoint={(pt) => setDraftPoints((prev) => [...prev, pt])}
+        />
+
+        {/* Parcel Polygons with Halo Selection Highlight */}
+        {parcels.map((parcel, idx) => {
+          const isSelected = selectedParcel?.id === parcel.id;
+          const fillColor = getParcelFillColor(parcel, idx, activeLayer);
+          const positions = parcel.polygon.map((p) => [p.lat, p.lng] as [number, number]);
+
+          return (
+            <React.Fragment key={parcel.id}>
+              {positions.length >= 3 && (
+                <>
+                  {/* Outer soft highlight halo for selected parcel */}
+                  {isSelected && (
+                    <Polygon
+                      positions={positions}
+                      pathOptions={{
+                        color: '#86EFAC',
+                        weight: 9,
+                        opacity: 0.65,
+                        fillOpacity: 0,
+                      }}
+                    />
+                  )}
+
+                  <Polygon
+                    positions={positions}
+                    pathOptions={{
+                      color: isSelected ? '#166534' : fillColor,
+                      weight: isSelected ? 3 : 2,
+                      opacity: isSelected ? 1 : 0.85,
+                      dashArray: isSelected ? undefined : '5 4',
+                      fillColor,
+                      fillOpacity: isSelected ? 0.38 : activeLayer === 'osm' ? 0.2 : 0.45,
+                    }}
+                    eventHandlers={{
+                      click: () => {
+                        if (!isDrawing) {
+                          handleSelectAndFly(parcel);
+                        }
+                      },
+                    }}
+                  >
+                    <LeafletTooltip
+                      permanent
+                      direction="center"
+                      className="agro-map-tooltip"
+                    >
+                      {parcel.name} · {parcel.areaHa.toFixed(1)} ha
+                    </LeafletTooltip>
+                  </Polygon>
+                </>
+              )}
+
+              {/* Corner survey vertices on selected parcel */}
+              {isSelected &&
+                positions.map((pos, vIdx) => (
+                  <CircleMarker
+                    key={`${parcel.id}-v-${vIdx}`}
+                    center={pos}
+                    radius={3.5}
+                    pathOptions={{
+                      color: '#166534',
+                      weight: 2,
+                      fillColor: '#ffffff',
+                      fillOpacity: 1,
+                    }}
+                  />
+                ))}
+
+              {/* Centroid marker for zoomed-out visibility */}
+              <CircleMarker
+                center={[parcel.centroid.lat, parcel.centroid.lng]}
+                radius={isSelected ? 6 : 4.5}
+                pathOptions={{
+                  color: '#ffffff',
+                  weight: 2,
+                  fillColor: isSelected ? '#166534' : fillColor,
+                  fillOpacity: 1,
+                }}
+                eventHandlers={{
+                  click: () => {
+                    if (!isDrawing) {
+                      handleSelectAndFly(parcel);
+                    }
+                  },
+                }}
+              />
+            </React.Fragment>
+          );
+        })}
+
+        {/* User Geolocation Pin */}
+        {userLocation && (
+          <CircleMarker
+            center={[userLocation.lat, userLocation.lng]}
+            radius={8}
+            pathOptions={{
+              color: '#ffffff',
+              weight: 3,
+              fillColor: '#0284C7',
+              fillOpacity: 1,
+            }}
+          />
+        )}
+
+        {/* Active Drawing Polygon / Polyline */}
+        {draftPoints.length >= 2 && (
+          <Polyline
+            positions={draftPoints.map((p) => [p.lat, p.lng] as [number, number])}
+            pathOptions={{ color: '#166534', weight: 2.5, dashArray: '6 4' }}
+          />
+        )}
+        {draftPoints.length >= 3 && (
+          <Polygon
+            positions={draftPoints.map((p) => [p.lat, p.lng] as [number, number])}
+            pathOptions={{ color: '#16A34A', weight: 2, fillColor: '#16A34A', fillOpacity: 0.28 }}
+          />
+        )}
+        {draftPoints.map((pt, idx) => (
+          <CircleMarker
+            key={`${pt.lat}-${pt.lng}-${idx}`}
+            center={[pt.lat, pt.lng]}
+            radius={5}
+            pathOptions={{ color: '#166534', weight: 2, fillColor: '#ffffff', fillOpacity: 1 }}
+          />
+        ))}
+      </MapContainer>
+
+      {/* Top Rounded Search Bar & Quick Parcel Switcher */}
+      <div className="absolute top-3.5 left-3.5 right-3.5 z-[450] flex flex-col gap-2 pointer-events-none">
+        <div className="pointer-events-auto max-w-md w-full relative">
+          <div className="flex items-center h-12 rounded-full bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-[0_8px_24px_rgba(15,23,42,0.08)] px-2 gap-2 focus-within:ring-2 focus-within:ring-[#16A34A] transition-shadow">
+            <div className="w-8 h-8 rounded-full bg-[#DCFCE7] text-[#166534] flex items-center justify-center shrink-0">
+              <Search className="w-4 h-4" />
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onFocus={() => setSearchOpen(true)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setSearchOpen(true);
+              }}
+              placeholder="Buscar parcela o zona agrícola..."
+              className="flex-1 bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none min-w-0"
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                aria-label="Limpiar búsqueda"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            ) : (
+              <span className="text-[10px] font-semibold text-slate-500 pr-2.5 whitespace-nowrap">
+                OSM
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Sleek Parcel Switcher Chips */}
+        {parcels.length > 0 && !searchOpen && (
+          <div className="pointer-events-auto flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-full py-0.5">
+            {parcels.map((p) => {
+              const active = selectedParcel?.id === p.id;
+              return (
+                <motion.button
+                  key={p.id}
+                  type="button"
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => handleSelectAndFly(p)}
+                  className={`min-h-[34px] px-3.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all border ${
+                    active
+                      ? 'bg-[#166534] text-white border-[#166534] shadow-md shadow-emerald-900/15'
+                      : 'bg-white/92 backdrop-blur-md text-slate-700 border-slate-200/80 shadow-xs hover:bg-white'
+                  }`}
+                >
+                  {p.name}
+                  <span className={`ml-1.5 font-mono text-[11px] ${active ? 'text-emerald-200' : 'text-slate-400'}`}>
+                    {p.areaHa.toFixed(1)} ha
+                  </span>
+                </motion.button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Search Results Dropdown */}
+        <AnimatePresence>
+          {searchOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.14 }}
+              className="pointer-events-auto max-w-md bg-white/98 backdrop-blur-md rounded-3xl border border-slate-200/90 shadow-[0_12px_32px_rgba(15,23,42,0.12)] overflow-hidden"
+            >
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 text-[11px] font-semibold text-slate-500">
+                <span>Parcelas y ubicaciones en Bolivia</span>
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(false)}
+                  className="text-[#166534] hover:underline"
+                >
+                  Cerrar
+                </button>
+              </div>
+              <div className="max-h-56 overflow-y-auto divide-y divide-slate-100">
+                {searchResults.map((hit) => (
+                  <button
+                    key={hit.id}
+                    type="button"
+                    onClick={() => {
+                      setMapCenter([hit.lat, hit.lng]);
+                      setMapZoom(hit.zoom);
+                      if (hit.parcelId) {
+                        onSelectParcel(hit.parcelId);
+                      }
+                      setSearchOpen(false);
+                    }}
+                    className="w-full px-4 py-3 text-left hover:bg-emerald-50/60 flex items-center gap-3 transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#166534] flex items-center justify-center shrink-0">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-slate-900 truncate">{hit.label}</p>
+                      <p className="text-[11px] text-slate-500 truncate">{hit.sub}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Geolocation Feedback Notice */}
+        <AnimatePresence>
+          {locationNotice && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              className="pointer-events-auto max-w-md bg-white/95 backdrop-blur-md border border-amber-200 text-slate-800 rounded-2xl px-3.5 py-2.5 text-xs flex items-center justify-between gap-2 shadow-md"
+            >
+              <span>{locationNotice}</span>
+              <button
+                type="button"
+                onClick={() => setLocationNotice(null)}
+                className="text-[#166534] font-semibold shrink-0"
+              >
+                OK
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Right Floating Action Buttons (4 clean tactile controls) */}
+      <div className="absolute right-3.5 top-1/2 -translate-y-1/2 z-[450] flex flex-col gap-2.5">
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.92 }}
+          onClick={handleGeolocate}
+          title="Mi ubicación"
+          aria-label="Mi ubicación"
+          className="w-11 h-11 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-[0_6px_18px_rgba(15,23,42,0.09)] flex items-center justify-center text-slate-700 hover:text-[#166534] hover:bg-emerald-50 transition-colors"
+        >
+          <Crosshair className="w-5 h-5" />
+        </motion.button>
+
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.92 }}
+          onClick={() => setLayersOpen((v) => !v)}
+          title="Capas"
+          aria-label="Capas"
+          className={`w-11 h-11 rounded-2xl border shadow-[0_6px_18px_rgba(15,23,42,0.09)] flex items-center justify-center transition-colors ${
+            layersOpen || activeLayer !== 'osm'
+              ? 'bg-[#166534] border-[#166534] text-white'
+              : 'bg-white/95 backdrop-blur-md border-slate-200/80 text-slate-700 hover:text-[#166534] hover:bg-emerald-50'
+          }`}
+        >
+          <Layers className="w-5 h-5" />
+        </motion.button>
+
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.92 }}
+          onClick={() => {
+            setIsDrawing((v) => !v);
+            setDraftPoints([]);
+            setLayersOpen(false);
+          }}
+          title="Dibujar parcela"
+          aria-label="Dibujar parcela"
+          className={`w-11 h-11 rounded-2xl border shadow-[0_6px_18px_rgba(15,23,42,0.09)] flex items-center justify-center transition-colors ${
+            isDrawing
+              ? 'bg-[#16A34A] border-[#16A34A] text-white'
+              : 'bg-white/95 backdrop-blur-md border-slate-200/80 text-slate-700 hover:text-[#166534] hover:bg-emerald-50'
+          }`}
+        >
+          <PenTool className="w-5 h-5" />
+        </motion.button>
+
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.92 }}
+          onClick={handleCenterOnParcel}
+          title="Centrar mapa"
+          aria-label="Centrar mapa"
+          className="w-11 h-11 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-[0_6px_18px_rgba(15,23,42,0.09)] flex items-center justify-center text-slate-700 hover:text-[#166534] hover:bg-emerald-50 transition-colors"
+        >
+          <Compass className="w-5 h-5" />
+        </motion.button>
+      </div>
+
+      {/* Friendly Layer Selector Drawer */}
+      <AnimatePresence>
+        {layersOpen && (
+          <motion.div
+            initial={{ opacity: 0, x: 14, scale: 0.96 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 14, scale: 0.96 }}
+            transition={{ duration: 0.16 }}
+            className="absolute right-16 top-28 z-[460] w-72 max-w-[calc(100vw-88px)] bg-white/98 backdrop-blur-md rounded-3xl border border-slate-200/90 shadow-[0_14px_34px_rgba(15,23,42,0.14)] p-4 space-y-3"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-bold text-slate-900">Capas cartográficas</h3>
+                <p className="text-[10px] text-slate-500">Base: OpenStreetMap · Capas DEMO</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLayersOpen(false)}
+                aria-label="Cerrar capas"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-1.5 max-h-64 overflow-y-auto pr-0.5">
+              {MAP_LAYERS.map((layer) => {
+                const isOn = activeLayer === layer.id;
+                const LayerIcon = layer.icon;
+                return (
+                  <button
+                    key={layer.id}
+                    type="button"
+                    role="switch"
+                    aria-checked={isOn}
+                    onClick={() => setActiveLayer(isOn && layer.id !== 'osm' ? 'osm' : layer.id)}
+                    className={`w-full px-2.5 py-2 rounded-2xl text-left transition-colors flex items-center justify-between gap-2.5 ${
+                      isOn
+                        ? 'bg-[#DCFCE7]/80 text-[#166534]'
+                        : 'hover:bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                          isOn ? 'bg-white text-[#166534] shadow-2xs' : 'bg-slate-100 text-slate-500'
+                        }`}
+                      >
+                        <LayerIcon className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold truncate">{layer.name}</p>
+                        <p className="text-[10px] opacity-80 truncate">{layer.source}</p>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`w-9 h-5 rounded-full p-0.5 transition-colors shrink-0 flex items-center ${
+                        isOn ? 'bg-[#16A34A] justify-end' : 'bg-slate-300 justify-start'
+                      }`}
+                    >
+                      <span className="w-4 h-4 rounded-full bg-white shadow-xs" />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bottom Area: Simple Legend + Modern Parcel Bottom Sheet */}
+      <div className="absolute bottom-3.5 left-3.5 right-3.5 z-[450] flex flex-col items-center gap-2 pointer-events-none">
+        {/* Compact Thematic Legend */}
+        <AnimatePresence>
+          {activeLayer !== 'osm' && !isDrawing && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.16 }}
+              className="pointer-events-auto w-full max-w-md bg-white/95 backdrop-blur-md rounded-2xl px-3.5 py-2.5 border border-slate-200/80 shadow-md space-y-1.5"
+            >
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <span className="font-bold text-slate-900">{currentLayerInfo.name}</span>
+                <span className="text-[10px] font-semibold text-[#B45309]">
+                  {currentLayerInfo.source}
+                </span>
+              </div>
+              {currentLayerInfo.gradient && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono text-slate-500 shrink-0">
+                    {currentLayerInfo.scaleMin}
+                  </span>
+                  <div
+                    className={`flex-1 h-2 rounded-full bg-gradient-to-r ${currentLayerInfo.gradient}`}
+                  />
+                  <span className="text-[10px] font-mono text-slate-500 shrink-0">
+                    {currentLayerInfo.scaleMax}
+                  </span>
+                </div>
+              )}
+              {isSmallParcelForLayer && (
+                <div className="flex items-center gap-1.5 text-[11px] text-amber-900 bg-amber-50/90 px-2.5 py-1 rounded-xl">
+                  <AlertTriangle className="w-3.5 h-3.5 text-[#F59E0B] shrink-0" />
+                  <span className="leading-snug">
+                    La resolución de esta fuente puede no representar con precisión una parcela pequeña.
+                  </span>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Drawing Toolbar / Empty State / Selected Parcel Bottom Sheet */}
+        <div className="pointer-events-auto w-full max-w-md">
+          {isDrawing ? (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white/98 backdrop-blur-md rounded-3xl p-4 border border-emerald-300 shadow-[0_12px_32px_rgba(15,23,42,0.14)] space-y-3"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-xs font-bold text-[#166534]">Dibujar nueva parcela</p>
+                  <p className="text-[11px] text-slate-600">
+                    Toca el mapa para agregar vértices ({draftPoints.length} puntos)
+                  </p>
+                </div>
+                <span className="text-sm font-mono font-bold text-slate-900 tabular-nums">
+                  {draftAreaHa.toFixed(2)} ha
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDraftPoints((prev) => prev.slice(0, -1))}
+                  disabled={draftPoints.length === 0}
+                  className="h-10 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 disabled:opacity-40 flex items-center gap-1 hover:bg-slate-50"
+                >
+                  <Undo2 className="w-3.5 h-3.5" /> Deshacer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDrawing(false);
+                    setDraftPoints([]);
+                  }}
+                  className="h-10 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleFinishDrawing}
+                  disabled={draftPoints.length < 3}
+                  className="flex-1 h-10 rounded-xl bg-[#16A34A] hover:bg-[#166534] text-white text-xs font-semibold disabled:opacity-40 flex items-center justify-center gap-1 transition-colors"
+                >
+                  <Check className="w-3.5 h-3.5" /> Finalizar
+                </button>
+              </div>
+            </motion.div>
+          ) : parcels.length === 0 ? (
+            <div className="bg-white/98 backdrop-blur-md rounded-3xl p-4 border border-slate-200 shadow-xl text-center space-y-2.5">
+              <p className="text-sm font-bold text-slate-900">
+                Dibuja o registra una parcela para comenzar el monitoreo
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsDrawing(true)}
+                  className="flex-1 h-10 rounded-xl bg-[#16A34A] text-white text-xs font-semibold"
+                >
+                  Dibujar en mapa
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingParcel(null);
+                    setParcelFormOpen(true);
+                  }}
+                  className="flex-1 h-10 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800"
+                >
+                  Registrar
+                </button>
+              </div>
+            </div>
+          ) : (
+            selectedParcel && (
+              <motion.div
+                layout
+                key={selectedParcel.id}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.18 }}
+                className="bg-white/98 backdrop-blur-md rounded-3xl px-4 pt-2.5 pb-4 border border-slate-200/90 shadow-[0_12px_36px_rgba(15,23,42,0.14)] space-y-3"
+              >
+                {/* Drag Handle Affordance */}
+                <button
+                  type="button"
+                  onClick={() => setSheetCollapsed((v) => !v)}
+                  aria-label={sheetCollapsed ? 'Expandir tarjeta de parcela' : 'Minimizar tarjeta de parcela'}
+                  className="w-full flex flex-col items-center py-0.5 group"
+                >
+                  <span className="w-10 h-1 rounded-full bg-slate-300 group-hover:bg-slate-400 transition-colors" />
+                </button>
+
+                {/* Parcel Header */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="text-base font-bold text-slate-900 truncate">
+                        {selectedParcel.name}
+                      </h2>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#166534]">
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                        {selectedParcel.monitoringStatus}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5 truncate">
+                      {selectedParcel.crop} ·{' '}
+                      <span className="font-mono font-semibold text-slate-700 tabular-nums">
+                        {selectedParcel.areaHa.toFixed(2)} ha
+                      </span>{' '}
+                      · {selectedParcel.location}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setSheetCollapsed((v) => !v)}
+                    aria-label={sheetCollapsed ? 'Mostrar más' : 'Mostrar menos'}
+                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center shrink-0 transition-colors"
+                  >
+                    {sheetCollapsed ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+
+                {!sheetCollapsed && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.14 }}
+                    className="space-y-3"
+                  >
+                    {/* Clean Mini Indicators Strip */}
+                    <div className="grid grid-cols-4 gap-2">
+                      <div className="bg-slate-50 rounded-2xl px-2 py-2 text-center border border-slate-100">
+                        <p className="text-[10px] text-slate-500">Humedad</p>
+                        <p className="text-xs font-bold text-slate-900 font-mono tabular-nums mt-0.5">
+                          {moistureValue}
+                        </p>
+                      </div>
+                      <div className="bg-slate-50 rounded-2xl px-2 py-2 text-center border border-slate-100">
+                        <p className="text-[10px] text-slate-500">Temp.</p>
+                        <p className="text-xs font-bold text-slate-900 font-mono tabular-nums mt-0.5">
+                          {selectedParcel.indicators.temperatureC.toFixed(1)}°C
+                        </p>
+                      </div>
+                      <div className="bg-slate-50 rounded-2xl px-2 py-2 text-center border border-slate-100">
+                        <p className="text-[10px] text-slate-500">Lluvia</p>
+                        <p className="text-xs font-bold text-slate-900 font-mono tabular-nums mt-0.5">
+                          {selectedParcel.indicators.precipitationMm.toFixed(0)} mm
+                        </p>
+                      </div>
+                      <div className="bg-[#DCFCE7]/55 rounded-2xl px-2 py-2 text-center border border-emerald-100">
+                        <p className="text-[10px] text-[#166534]">NDVI</p>
+                        <p className="text-xs font-bold text-[#166534] font-mono tabular-nums mt-0.5">
+                          {selectedParcel.indicators.ndvi.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Primary + Secondary Action Buttons */}
+                    <div className="flex items-center gap-2">
+                      <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => onOpenParcelDetail(selectedParcel.id)}
+                        className="flex-[1.35] min-h-[42px] px-3 rounded-2xl bg-[#166534] hover:bg-[#14532d] text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-colors"
+                      >
+                        <Eye className="w-4 h-4 shrink-0" />
+                        <span>Ver detalle</span>
+                      </motion.button>
+
+                      <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => onAnalyzeParcel(selectedParcel.id)}
+                        className="flex-1 min-h-[42px] px-2.5 rounded-2xl bg-[#DCFCE7] hover:bg-emerald-200/80 text-[#166534] text-xs font-semibold flex items-center justify-center gap-1 transition-colors"
+                      >
+                        <BarChart3 className="w-3.5 h-3.5 shrink-0" />
+                        <span>Analizar</span>
+                      </motion.button>
+
+                      <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          setEditingParcel(selectedParcel);
+                          setParcelFormOpen(true);
+                        }}
+                        aria-label="Editar parcela"
+                        title="Editar"
+                        className="w-[42px] h-[42px] rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center shrink-0 transition-colors"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </motion.button>
+
+                      <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => onOpenParcelHistory(selectedParcel.id)}
+                        aria-label="Historial de parcela"
+                        title="Historial"
+                        className="w-[42px] h-[42px] rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center shrink-0 transition-colors"
+                      >
+                        <History className="w-4 h-4" />
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                )}
+              </motion.div>
+            )
+          )}
+        </div>
+      </div>
+
+      {/* Save Drawn Polygon Modal */}
+      {showSaveModal && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <form
+            onSubmit={handleSaveDrawnParcel}
+            className="bg-white w-full max-w-sm rounded-3xl p-5 shadow-xl space-y-4"
+          >
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Guardar parcela dibujada</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Superficie calculada:{' '}
+                <strong className="font-mono text-[#166534]">{draftAreaHa.toFixed(2)} ha</strong>
+              </p>
+              <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                Centroide: {formatCoordinates(draftCentroid)}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Nombre de la parcela
+              </label>
+              <input
+                type="text"
+                value={newParcelName}
+                onChange={(e) => setNewParcelName(e.target.value)}
+                required
+                className="w-full h-11 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Cultivo</label>
+                <select
+                  value={newParcelCrop}
+                  onChange={(e) => setNewParcelCrop(e.target.value)}
+                  className="w-full h-11 px-2.5 rounded-xl border border-slate-200 text-sm bg-white"
+                >
+                  <option value="Papa">Papa</option>
+                  <option value="Quinua">Quinua</option>
+                  <option value="Maíz">Maíz</option>
+                  <option value="Haba">Haba</option>
+                  <option value="Cebada">Cebada</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Zona</label>
+                <input
+                  type="text"
+                  value={newParcelLocation}
+                  onChange={(e) => setNewParcelLocation(e.target.value)}
+                  className="w-full h-11 px-3 rounded-xl border border-slate-200 text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="text-[11px] text-slate-500 bg-slate-50 rounded-xl p-2.5 max-h-24 overflow-y-auto font-mono">
+              Coordenadas ({draftPoints.length} vértices):{' '}
+              {draftPoints.map((p) => `[${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}]`).join(', ')}
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setShowSaveModal(false)}
+                className="flex-1 h-11 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700"
+              >
+                Seguir editando
+              </button>
+              <button
+                type="submit"
+                className="flex-1 h-11 rounded-xl bg-[#16A34A] text-white text-xs font-semibold"
+              >
+                Guardar parcela
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Edit or Register Modal from Map */}
+      <ParcelFormModal
+        open={parcelFormOpen}
+        initialParcel={editingParcel}
+        onClose={() => setParcelFormOpen(false)}
+        onSave={(saved) => {
+          if (editingParcel) {
+            onUpdateParcel(saved);
+          } else {
+            onCreateParcel(saved);
+          }
+        }}
+      />
+    </div>
+  );
+}

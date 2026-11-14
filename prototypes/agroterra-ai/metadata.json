@@ -1,0 +1,6 @@
+{
+  "name": "AgroTerra AI",
+  "description": "Prototipo móvil de monitoreo agrícola, integración satelital y fusión de datos geoespaciales para agricultores e investigadores de Bolivia.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

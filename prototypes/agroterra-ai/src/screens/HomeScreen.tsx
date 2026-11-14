@@ -1,0 +1,372 @@
+import {
+  Bell,
+  ChevronDown,
+  ChevronRight,
+  CloudRain,
+  Droplets,
+  History,
+  Layers,
+  Map as MapIcon,
+  Sprout,
+  Thermometer,
+  TrendingUp,
+} from 'lucide-react';
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import { satelliteService } from '../services/satelliteService';
+import { AnalysisSubTab, NavTab, Parcel, UserPreferences } from '../types/agroterra';
+
+interface HomeScreenProps {
+  parcels: Parcel[];
+  selectedParcel: Parcel | null;
+  unreadAlertsCount: number;
+  preferences: UserPreferences;
+  onSelectParcel: (id: string) => void;
+  onOpenParcelDetail: (id: string) => void;
+  onNavigate: (tab: NavTab, subTab?: AnalysisSubTab) => void;
+  onOpenAlerts: () => void;
+}
+
+export function HomeScreen({
+  parcels,
+  selectedParcel,
+  unreadAlertsCount,
+  preferences,
+  onSelectParcel,
+  onOpenParcelDetail,
+  onNavigate,
+  onOpenAlerts,
+}: HomeScreenProps) {
+  if (!selectedParcel) {
+    return (
+      <div className="p-6 text-center space-y-3">
+        <p className="text-sm text-slate-600">No hay parcelas registradas todavía.</p>
+        <button
+          type="button"
+          onClick={() => onNavigate('parcelas')}
+          className="px-4 py-2.5 rounded-xl bg-[#16A34A] text-white text-sm font-semibold"
+        >
+          Ir a Mis parcelas
+        </button>
+      </div>
+    );
+  }
+
+  const timeSeries = satelliteService.getTimeSeriesForParcel(selectedParcel).slice(-6);
+  const moistureDisplay =
+    preferences.moistureUnit === 'volumetric'
+      ? `${selectedParcel.indicators.moistureVolumetric.toFixed(2)} m³/m³`
+      : `${selectedParcel.indicators.moisturePct} %`;
+
+  const indicatorCards = [
+    {
+      id: 'humedad',
+      title: 'Humedad superficial del suelo',
+      value: moistureDisplay,
+      source: 'Fuente: SMAP',
+      status: 'Referencia regional',
+      icon: Droplets,
+      accent: 'text-[#0284C7] bg-sky-50',
+    },
+    {
+      id: 'temperatura',
+      title: 'Temperatura superficial',
+      value: `${selectedParcel.indicators.temperatureC.toFixed(1)} °C`,
+      source: 'Fuente: ECOSTRESS',
+      status: 'Observación disponible',
+      icon: Thermometer,
+      accent: 'text-[#B45309] bg-amber-50',
+    },
+    {
+      id: 'precipitacion',
+      title: 'Precipitación mensual',
+      value: `${selectedParcel.indicators.precipitationMm.toFixed(1)} mm`,
+      source: 'Fuente: GPM',
+      status: 'Acumulado del período',
+      icon: CloudRain,
+      accent: 'text-[#0284C7] bg-sky-50',
+    },
+    {
+      id: 'ndvi',
+      title: 'Índice NDVI',
+      value: selectedParcel.indicators.ndvi.toFixed(2),
+      source: 'Fuente: Landsat/MODIS',
+      status: selectedParcel.indicators.ndvi >= 0.55 ? 'Vegetación activa' : 'Cobertura moderada',
+      icon: Sprout,
+      accent: 'text-[#166534] bg-[#DCFCE7]',
+    },
+  ];
+
+  const quickActions = [
+    {
+      label: 'Ver mapa satelital',
+      sub: 'Capas y polígonos OSM',
+      icon: MapIcon,
+      onClick: () => onNavigate('mapa'),
+    },
+    {
+      label: 'Analizar mi parcela',
+      sub: 'Series y fusión de datos',
+      icon: TrendingUp,
+      onClick: () => onNavigate('analisis', 'satelital'),
+    },
+    {
+      label: 'Consultar historial',
+      sub: 'Ciclos y rotación agrícola',
+      icon: History,
+      onClick: () => onNavigate('analisis', 'historial'),
+    },
+    {
+      label: 'Revisar alertas',
+      sub: `${unreadAlertsCount} sin leer`,
+      icon: Bell,
+      onClick: onOpenAlerts,
+    },
+  ];
+
+  return (
+    <div className="space-y-5 pb-6">
+      {/* Top App Header */}
+      <header className="bg-gradient-to-br from-[#166534] via-[#15803d] to-[#14532d] text-white px-4 pt-4 pb-6 rounded-b-3xl lg:rounded-3xl shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center font-bold text-sm tracking-tight border border-white/20 shrink-0">
+              AT
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-emerald-100 truncate">AgroTerra AI</p>
+              <h1 className="text-lg font-bold leading-tight truncate">Buenos días</h1>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onOpenAlerts}
+            aria-label={`Notificaciones (${unreadAlertsCount} sin leer)`}
+            className="relative min-h-[44px] min-w-[44px] rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors shrink-0"
+          >
+            <Bell className="w-5 h-5 text-white" />
+            {unreadAlertsCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#F59E0B] text-slate-950 text-[10px] font-bold flex items-center justify-center tabular-nums">
+                {unreadAlertsCount}
+              </span>
+            )}
+          </button>
+        </div>
+
+        <p className="text-sm text-emerald-50/90 mt-2">Monitorea la salud de tus terrenos</p>
+
+        {/* Parcel Selector */}
+        <div className="mt-4">
+          <label htmlFor="home-parcel-select" className="sr-only">
+            Seleccionar parcela activa
+          </label>
+          <div className="relative">
+            <select
+              id="home-parcel-select"
+              value={selectedParcel.id}
+              onChange={(e) => onSelectParcel(e.target.value)}
+              className="w-full h-11 pl-3.5 pr-10 rounded-xl bg-white/15 border border-white/25 text-sm font-semibold text-white appearance-none focus:outline-none focus:ring-2 focus:ring-white/60 cursor-pointer"
+            >
+              {parcels.map((p) => (
+                <option key={p.id} value={p.id} className="text-slate-900 bg-white">
+                  {p.name} — {p.crop} ({p.areaHa} ha)
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="w-4 h-4 text-white/80 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+        </div>
+
+        {/* Hero Parcel Summary Card */}
+        <div className="mt-4 bg-white text-slate-900 rounded-2xl p-3.5 shadow-sm flex items-center gap-3.5">
+          <div className="w-20 h-20 rounded-xl overflow-hidden bg-emerald-50 shrink-0 relative">
+            {selectedParcel.imageUrl ? (
+              <img
+                src={selectedParcel.imageUrl}
+                alt={`Cultivo de ${selectedParcel.crop} en ${selectedParcel.name}`}
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-[#166534]">
+                <Layers className="w-7 h-7" />
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-base font-bold text-slate-900 truncate">
+                {selectedParcel.name}
+              </h2>
+              <span className="text-xs font-semibold text-[#166534] whitespace-nowrap shrink-0">
+                {selectedParcel.monitoringStatus}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5 truncate">
+              {selectedParcel.location} · {selectedParcel.areaHa.toFixed(1)} hectáreas
+            </p>
+            <p className="text-xs font-medium text-slate-700 mt-1">
+              Cultivo registrado: <span className="font-semibold">{selectedParcel.crop}</span>
+            </p>
+            <div className="mt-2 flex items-center justify-between gap-2">
+              <span className="text-[11px] text-slate-500">Datos demostrativos</span>
+              <button
+                type="button"
+                onClick={() => onOpenParcelDetail(selectedParcel.id)}
+                className="text-xs font-semibold text-[#16A34A] hover:text-[#166534] inline-flex items-center gap-0.5 whitespace-nowrap"
+              >
+                Ver ficha <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content Grid */}
+      <div className="px-4 lg:px-0 space-y-5">
+        {/* Honest Demo Indicator Notice */}
+        <div className="flex items-center justify-between gap-2 text-xs text-slate-500 px-1">
+          <span>Indicadores ambientales de referencia (valores demostrativos)</span>
+          <span className="font-mono tabular-nums text-[11px] whitespace-nowrap">Nov 2026</span>
+        </div>
+
+        {/* 4 Indicator Cards */}
+        <section aria-label="Indicadores ambientales" className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {indicatorCards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <div
+                key={card.id}
+                className="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-xs flex flex-col justify-between gap-2.5"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-xs font-medium text-slate-600 leading-snug">{card.title}</p>
+                  <div
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${card.accent}`}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-slate-900 font-mono tabular-nums tracking-tight">
+                    {card.value}
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-1 truncate">{card.source}</p>
+                  <p className="text-[11px] font-medium text-slate-700 truncate">{card.status}</p>
+                </div>
+              </div>
+            );
+          })}
+        </section>
+
+        {/* Quick Navigation + Environmental Chart split on desktop */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          {/* Quick Navigation Cards */}
+          <section aria-label="Accesos rápidos" className="lg:col-span-5 space-y-2.5">
+            <h2 className="text-sm font-bold text-slate-900 px-1">Acciones rápidas</h2>
+            <div className="grid grid-cols-2 gap-2.5">
+              {quickActions.map((act) => {
+                const Icon = act.icon;
+                return (
+                  <button
+                    key={act.label}
+                    type="button"
+                    onClick={act.onClick}
+                    className="min-h-[76px] bg-white hover:bg-slate-50 active:scale-[0.99] transition-all rounded-2xl p-3.5 border border-slate-200/90 shadow-xs text-left flex flex-col justify-between"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-[#DCFCE7] text-[#166534] flex items-center justify-center">
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <div className="mt-2">
+                      <p className="text-xs font-bold text-slate-900 leading-tight">{act.label}</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5 truncate">{act.sub}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Resumen Ambiental Chart */}
+          <section
+            aria-label="Resumen ambiental"
+            className="lg:col-span-7 bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs space-y-3"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <h2 className="text-sm font-bold text-slate-900">Resumen ambiental</h2>
+                <p className="text-xs text-slate-500">
+                  Evolución demostrativa NDVI y lluvia (últimos 6 meses)
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onNavigate('analisis', 'satelital')}
+                className="text-xs font-semibold text-[#16A34A] hover:text-[#166534] whitespace-nowrap"
+              >
+                Explorar →
+              </button>
+            </div>
+
+            <div className="h-48 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={timeSeries} margin={{ top: 8, right: 8, left: -22, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="ndviGradHome" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#16A34A" stopOpacity={0.28} />
+                      <stop offset="95%" stopColor="#16A34A" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                  <XAxis dataKey="period" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <YAxis
+                    yAxisId="ndvi"
+                    domain={[0, 1]}
+                    tick={{ fontSize: 11, fill: '#64748b' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis yAxisId="rain" orientation="right" hide />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: '12px',
+                      border: '1px solid #e2e8f0',
+                      fontSize: '12px',
+                    }}
+                  />
+                  <Area
+                    yAxisId="ndvi"
+                    type="monotone"
+                    dataKey="ndvi"
+                    name="NDVI (demo)"
+                    stroke="#16A34A"
+                    strokeWidth={2.5}
+                    fill="url(#ndviGradHome)"
+                  />
+                  <Area
+                    yAxisId="rain"
+                    type="monotone"
+                    dataKey="precipitationMm"
+                    name="Precipitación (mm)"
+                    stroke="#0284C7"
+                    strokeWidth={1.8}
+                    fillOpacity={0}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
