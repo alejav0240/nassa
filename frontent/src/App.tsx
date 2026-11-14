@@ -42,6 +42,7 @@ export default function App() {
     userProfile,
     setUserProfile,
     resetAllDemoData,
+    backendStatus,
   } = useAgroTerraState();
 
   const isSimulated = preferences.simulateDeviceFrame;
@@ -76,6 +77,7 @@ export default function App() {
             selectedParcel={selectedParcel}
             unreadAlertsCount={unreadAlertsCount}
             preferences={preferences}
+            backendStatus={backendStatus}
             onSelectParcel={setSelectedParcelId}
             onOpenParcelDetail={openParcelDetail}
             onNavigate={navigateTo}

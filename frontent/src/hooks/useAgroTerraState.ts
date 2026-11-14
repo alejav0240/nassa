@@ -21,6 +21,7 @@ export function useAgroTerraState() {
   const [activeTab, setActiveTab] = useState<NavTab>('inicio');
   const [analysisSubTab, setAnalysisSubTab] = useState<AnalysisSubTab>('satelital');
   const [parcels, setParcels] = useState<Parcel[]>(() => parcelService.getAll());
+  const [backendStatus, setBackendStatus] = useState<'checking' | 'connected' | 'offline'>('checking');
   const [selectedParcelId, setSelectedParcelId] = useState<string>(() => {
     const initial = parcelService.getAll();
     return initial[0]?.id ?? 'parcela-norte';
@@ -66,6 +67,25 @@ export function useAgroTerraState() {
     }
   }, [userProfile]);
 
+  useEffect(() => {
+    let active = true;
+    void parcelService.loadRemote().then((remoteParcels) => {
+      if (!active) return;
+      if (remoteParcels) {
+        setBackendStatus('connected');
+        if (remoteParcels.length > 0) {
+          setParcels(remoteParcels);
+          setSelectedParcelId(remoteParcels[0].id);
+        }
+      } else {
+        setBackendStatus('offline');
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const selectedParcel = useMemo(() => {
     return parcels.find((p) => p.id === selectedParcelId) ?? parcels[0] ?? null;
   }, [parcels, selectedParcelId]);
@@ -102,17 +122,37 @@ export function useAgroTerraState() {
     const updated = parcelService.create(parcel);
     setParcels(updated);
     setSelectedParcelId(parcel.id);
+    void parcelService.createRemote(parcel).then((remoteParcel) => {
+      if (!remoteParcel) return;
+      setParcels((current) => {
+        const withoutLocal = current.filter((item) => item.id !== parcel.id);
+        const next = [remoteParcel, ...withoutLocal];
+        parcelService.saveAll(next);
+        return next;
+      });
+      setSelectedParcelId(remoteParcel.id);
+    });
   }, []);
 
   const updateParcel = useCallback((parcel: Parcel) => {
     const updated = parcelService.update(parcel);
     setParcels(updated);
+    void parcelService.updateRemote(parcel).then((remoteParcel) => {
+      if (!remoteParcel) return;
+      setParcels((current) => {
+        const next = current.map((item) => item.id === parcel.id ? { ...parcel, ...remoteParcel } : item);
+        parcelService.saveAll(next);
+        return next;
+      });
+    });
   }, []);
 
   const deleteParcel = useCallback(
     (parcelId: string) => {
+      const parcelToDelete = parcels.find((item) => item.id === parcelId);
       const updated = parcelService.remove(parcelId);
       setParcels(updated);
+      if (parcelToDelete) void parcelService.removeRemote(parcelToDelete);
       if (selectedParcelId === parcelId) {
         setSelectedParcelId(updated[0]?.id ?? '');
       }
@@ -120,7 +160,7 @@ export function useAgroTerraState() {
         setDetailParcelId(null);
       }
     },
-    [selectedParcelId, detailParcelId]
+    [parcels, selectedParcelId, detailParcelId]
   );
 
   const addObservation = useCallback((parcelId: string, obs: FieldObservation) => {
@@ -187,5 +227,6 @@ export function useAgroTerraState() {
     userProfile,
     setUserProfile,
     resetAllDemoData,
+    backendStatus,
   };
 }

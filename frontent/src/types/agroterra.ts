@@ -76,6 +76,7 @@ export interface FieldObservation {
 
 export interface Parcel {
   id: string;
+  backendId?: number;
   name: string;
   location: string;
   department: string;

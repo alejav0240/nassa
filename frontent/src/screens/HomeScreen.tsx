@@ -32,6 +32,7 @@ interface HomeScreenProps {
   onOpenParcelDetail: (id: string) => void;
   onNavigate: (tab: NavTab, subTab?: AnalysisSubTab) => void;
   onOpenAlerts: () => void;
+  backendStatus: 'checking' | 'connected' | 'offline';
 }
 
 export function HomeScreen({
@@ -43,6 +44,7 @@ export function HomeScreen({
   onOpenParcelDetail,
   onNavigate,
   onOpenAlerts,
+  backendStatus,
 }: HomeScreenProps) {
   if (!selectedParcel) {
     return (
@@ -161,7 +163,13 @@ export function HomeScreen({
           </button>
         </div>
 
-        <p className="text-sm text-emerald-50/90 mt-2">Monitorea la salud de tus terrenos</p>
+        <div className="flex items-center justify-between gap-2 mt-2">
+          <p className="text-sm text-emerald-50/90">Monitorea la salud de tus terrenos</p>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2 py-1 text-[10px] font-semibold text-emerald-50 whitespace-nowrap">
+            <span className={`w-1.5 h-1.5 rounded-full ${backendStatus === 'connected' ? 'bg-lime-300' : backendStatus === 'offline' ? 'bg-amber-300' : 'bg-white/70 animate-pulse'}`} />
+            {backendStatus === 'connected' ? 'Backend conectado' : backendStatus === 'offline' ? 'Modo local' : 'Conectando…'}
+          </span>
+        </div>
 
         {/* Parcel Selector */}
         <div className="mt-4">
