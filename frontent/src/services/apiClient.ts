@@ -129,6 +129,33 @@ export interface ClimateAnomalies {
   limitations: string[];
 }
 
+export interface BackendRecommendation {
+  id: string;
+  label: string;
+  score: number;
+  status: 'compatible' | 'revisar' | 'no_priorizar';
+  is_current: boolean;
+  reasons: string[];
+  risks: string[];
+  criteria: Record<string, {
+    score: number;
+    label?: string;
+    observed_mm?: number;
+    threshold_mm?: number;
+    observed_days?: number;
+    threshold_days?: number;
+  }>;
+}
+
+export interface BackendRecommendations {
+  field_id: number;
+  source: string[];
+  climate_years: number[];
+  data_quality?: { complete_years: number[]; excluded_years: number[]; policy: string };
+  recommendations: BackendRecommendation[];
+  methodology: { formula: string; scope: string; limitations: string[] };
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${API_CONFIG.baseUrl}${path}`;
   let response: Response;
@@ -167,6 +194,12 @@ export const backendApi = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ field_id: fieldId, priorities }),
+    }),
+  recommendCrops: (fieldId: number, limit = 3) =>
+    request<BackendRecommendations>('/recommendations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ field_id: fieldId, limit }),
     }),
   createField: (payload: BackendFieldPayload) =>
     request<BackendField>('/fields', {

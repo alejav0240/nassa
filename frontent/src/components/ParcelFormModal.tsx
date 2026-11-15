@@ -157,6 +157,7 @@ export function ParcelFormModal({
           estimatedHarvestDate,
           registeredAt: new Date().toISOString().slice(0, 10),
           monitoringStatus,
+          indicatorsAvailable: false,
           centroid: effectiveCentroid,
           polygon,
           imageUrl: CROP_IMAGES[crop] || CROP_IMAGES.Papa,

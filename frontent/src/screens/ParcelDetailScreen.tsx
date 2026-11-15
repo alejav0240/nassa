@@ -1,15 +1,21 @@
 import {
   ArrowLeft,
   Calendar,
+  Check,
+  Info,
+  LoaderCircle,
   MapPin,
   Mountain,
   Plus,
+  Sparkles,
   Trash2,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { CropIcon } from '../components/CropIcon';
 import { DataSourcesCatalog } from '../components/DataSourcesCatalog';
 import { Parcel3DView } from '../components/Parcel3DView';
 import { QualityIndicator } from '../components/QualityBadgeText';
+import { backendApi, BackendRecommendations } from '../services/apiClient';
 import { satelliteService } from '../services/satelliteService';
 import {
   CropHistoryRecord,
@@ -48,6 +54,9 @@ export function ParcelDetailScreen({
   const [tab, setTab] = useState<DetailTab>('resumen');
   const [noteText, setNoteText] = useState('');
   const [noteCategory, setNoteCategory] = useState<FieldObservation['category']>('Fenología');
+  const [recommendationStatus, setRecommendationStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [recommendations, setRecommendations] = useState<BackendRecommendations | null>(null);
+  const [recommendationError, setRecommendationError] = useState<string | null>(null);
 
   const hasIndicators = parcel.indicatorsAvailable !== false;
   const indicators = hasIndicators ? satelliteService.getIndicatorsForParcel(parcel) : [];
@@ -64,6 +73,23 @@ export function ParcelDetailScreen({
       note: noteText.trim(),
     });
     setNoteText('');
+  };
+
+  const handleRecommendCrops = async () => {
+    if (!parcel.backendId) {
+      setRecommendationStatus('error');
+      setRecommendationError('Registra o sincroniza la parcela para usar clima real de NASA POWER.');
+      return;
+    }
+    setRecommendationStatus('loading');
+    setRecommendationError(null);
+    try {
+      setRecommendations(await backendApi.recommendCrops(parcel.backendId));
+      setRecommendationStatus('ready');
+    } catch (error) {
+      setRecommendationStatus('error');
+      setRecommendationError(error instanceof Error ? error.message : 'No se pudo evaluar la parcela.');
+    }
   };
 
   return (
@@ -87,7 +113,27 @@ export function ParcelDetailScreen({
         </button>
       </div>
 
-      {/* Custom area visualization + Core Metadata */}
+      <section className="rounded-3xl border border-[var(--agro-line)]/90 bg-[var(--agro-surface)] p-4 shadow-xs">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wide font-bold text-[var(--agro-muted)]">Parcela seleccionada</p>
+            <h1 className="text-xl font-bold text-[var(--agro-text)] mt-1 truncate">{parcel.name}</h1>
+            <p className="text-xs text-[var(--agro-muted)] flex items-center gap-1.5 mt-1">
+              <MapPin className="w-3.5 h-3.5 shrink-0" /> {parcel.department} · {parcel.location}
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full bg-[var(--agro-success-bg)] px-2.5 py-1 text-[11px] font-bold text-[var(--agro-success-text)]">
+            {parcel.monitoringStatus}
+          </span>
+        </div>
+        <div className="grid grid-cols-3 gap-3 mt-4 pt-3 border-t border-[var(--agro-line)]">
+          <div><p className="text-[10px] text-[var(--agro-muted)]">Superficie</p><p className="text-sm font-bold text-[var(--agro-text)] font-mono tabular-nums mt-0.5">{parcel.areaHa.toFixed(2)} ha</p></div>
+          <div><p className="text-[10px] text-[var(--agro-muted)]">Cultivo</p><p className="text-sm font-bold text-[var(--agro-text)] mt-0.5 truncate">{parcel.crop}</p></div>
+          <div><p className="text-[10px] text-[var(--agro-muted)]">Geometría</p><p className="text-sm font-bold text-[var(--agro-text)] mt-0.5">{parcel.polygon.length} vértices</p></div>
+        </div>
+      </section>
+
+      {/* Referencial shape visualization + core metadata */}
       <Parcel3DView parcel={parcel} />
 
       {!hasIndicators && (
@@ -96,10 +142,77 @@ export function ParcelDetailScreen({
         </div>
       )}
 
+      <section className="rounded-3xl border border-[var(--agro-line)]/90 bg-[var(--agro-surface)] p-4 shadow-xs" aria-labelledby="crop-recommendation-title">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-[var(--agro-success-bg)] text-[var(--agro-lime)] flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 id="crop-recommendation-title" className="text-sm font-bold text-[var(--agro-text)]">Sugerencias de cultivo</h2>
+              <p className="text-xs text-[var(--agro-muted)] mt-1 leading-relaxed">
+                Evalúa qué cultivos son más compatibles con el clima histórico y los datos declarados de esta parcela.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => void handleRecommendCrops()}
+            disabled={recommendationStatus === 'loading'}
+            className="min-h-[44px] px-4 rounded-xl bg-[var(--agro-accent)] text-[#10300f] text-xs font-extrabold inline-flex items-center justify-center gap-2 disabled:opacity-60 shrink-0"
+          >
+            {recommendationStatus === 'loading' && <LoaderCircle className="w-4 h-4 animate-spin" />}
+            {recommendationStatus === 'loading' ? 'Evaluando…' : 'Sugerir cultivos'}
+          </button>
+        </div>
+
+        {recommendationStatus === 'idle' && !parcel.backendId && (
+          <p className="mt-3 rounded-xl bg-[var(--agro-surface-soft)] p-3 text-[11px] text-[var(--agro-muted)] flex items-start gap-2">
+            <Info className="w-4 h-4 shrink-0" /> Esta parcela todavía es local o demostrativa. Sincronízala para consultar datos climáticos reales.
+          </p>
+        )}
+        {recommendationError && (
+          <p role="alert" className="mt-3 rounded-xl bg-[var(--agro-danger-bg)] p-3 text-xs text-[var(--agro-danger-text)]">{recommendationError}</p>
+        )}
+        {recommendations && recommendationStatus === 'ready' && (
+          <div className="mt-4 space-y-3">
+            <div className="rounded-xl bg-[var(--agro-info-bg)] p-3 text-[11px] text-[var(--agro-info-text)] flex items-start gap-2">
+              <Info className="w-4 h-4 shrink-0" />
+              <span>Filtro exploratorio con {recommendations.source.join(' + ')} · periodo {recommendations.climate_years.join('–')}. No predice rendimiento ni reemplaza validación local.</span>
+            </div>
+            <div className="grid gap-3 lg:grid-cols-3">
+              {recommendations.recommendations.map((item, index) => (
+                <article key={item.id} className="rounded-2xl border border-[var(--agro-line)] bg-[var(--agro-surface-soft)] p-3.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <CropIcon crop={item.label} className="text-[var(--agro-lime)]" />
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wide font-bold text-[var(--agro-muted)]">Opción {index + 1}</p>
+                        <h3 className="text-sm font-bold text-[var(--agro-text)]">{item.label}</h3>
+                      </div>
+                    </div>
+                    <span className="text-lg font-bold text-[var(--agro-text)] font-mono tabular-nums">{item.score}<small className="text-[10px] font-sans text-[var(--agro-muted)]">/100</small></span>
+                  </div>
+                  <p className="mt-3 text-[10px] font-bold uppercase tracking-wide text-[var(--agro-lime)]">
+                    {item.status === 'compatible' ? 'Compatible en el filtro' : item.status === 'revisar' ? 'Requiere revisión' : 'No priorizar'}
+                    {item.is_current && ' · Cultivo actual'}
+                  </p>
+                  <ul className="mt-2 space-y-1.5 text-[11px] text-[var(--agro-muted)]">
+                    {item.reasons.slice(0, 2).map((reason) => <li key={reason} className="flex gap-1.5"><Check className="w-3.5 h-3.5 text-[var(--agro-lime)] shrink-0" />{reason}</li>)}
+                    {item.risks.slice(0, 2).map((risk) => <li key={risk} className="flex gap-1.5"><Info className="w-3.5 h-3.5 text-[var(--agro-warning-text)] shrink-0" />{risk}</li>)}
+                  </ul>
+                </article>
+              ))}
+            </div>
+            <p className="text-[11px] text-[var(--agro-muted)]">Método: {recommendations.methodology.formula}. La altitud, variedad, plagas y calendario fenológico todavía requieren información adicional.</p>
+          </div>
+        )}
+      </section>
+
       <div className="bg-[var(--agro-surface)] rounded-3xl p-4 border border-[var(--agro-line)]/90 shadow-xs space-y-4">
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2">
-            <h1 className="text-xl font-bold text-[var(--agro-text)]">{parcel.name}</h1>
+            <h2 className="text-base font-bold text-[var(--agro-text)]">Metadatos de la parcela</h2>
             <span className="text-xs font-semibold text-[var(--agro-lime)]">{parcel.monitoringStatus}</span>
           </div>
           <p className="text-xs text-[var(--agro-muted)] flex items-center gap-1.5">

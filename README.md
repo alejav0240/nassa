@@ -75,6 +75,7 @@ La documentación actualizada del backend, endpoints de campañas y planes, conf
 - `GET /api/fields`
 - `GET /api/fields/{id}`
 - `POST /api/analyze` (requiere `field_id` y pesos `water`, `soil`, `income`)
+- `POST /api/recommendations` (requiere `field_id`; sugiere cultivos compatibles y expone razones/riesgos)
 - `GET /api/analyses/{id}`
 
 Ejemplo:

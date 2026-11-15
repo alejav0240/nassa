@@ -366,6 +366,7 @@ export function MapScreen({
       estimatedHarvestDate: '2027-03-15',
       registeredAt: new Date().toISOString().slice(0, 10),
       monitoringStatus: 'Disponible',
+      indicatorsAvailable: false,
       centroid: pendingScan.measurement.centroid,
       polygon: pendingScan.points,
       elevationM: 3810,
@@ -459,7 +460,7 @@ export function MapScreen({
                     }}
                   >
                     <LeafletTooltip
-                      permanent
+                      permanent={isSelected}
                       direction="center"
                       className="agro-map-tooltip"
                     >

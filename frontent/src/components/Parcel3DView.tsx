@@ -1,4 +1,4 @@
-import { CheckCircle2, Compass, MapPin, Ruler, Sprout } from 'lucide-react';
+import { CheckCircle2, MapPin, Ruler, Sprout } from 'lucide-react';
 import { Parcel } from '../types/agroterra';
 import { formatCoordinates } from '../utils/geo';
 
@@ -28,6 +28,7 @@ function projectPolygon(parcel: Parcel) {
 
 export function Parcel3DView({ parcel }: Parcel3DViewProps) {
   const polygonPoints = projectPolygon(parcel);
+  const vertexCount = parcel.polygon.length;
 
   return (
     <section className="rounded-3xl border border-[var(--agro-line)]/90 bg-[var(--agro-surface)] shadow-xs overflow-hidden">
@@ -50,7 +51,7 @@ export function Parcel3DView({ parcel }: Parcel3DViewProps) {
           <div className="absolute inset-x-8 bottom-5 h-12 rounded-[50%] bg-[#547e5b]/20 blur-xl" />
           <div className="relative w-full max-w-[580px] perspective-[1100px]">
             <div className="transform-gpu rotate-x-[55deg] rotate-z-[-4deg] transition-transform duration-500 hover:rotate-x-[48deg]">
-              <svg viewBox="0 0 600 380" className="w-full h-auto drop-shadow-[0_26px_18px_rgba(22,74,38,0.25)]" role="img" aria-label={`Vista 3D referencial de ${parcel.name}`}>
+              <svg viewBox="0 0 600 380" className="w-full h-auto drop-shadow-[0_26px_18px_rgba(22,74,38,0.25)]" role="img" aria-label={`Diagrama referencial de la forma de ${parcel.name}`}>
                 <defs>
                   <linearGradient id={`parcel-top-${parcel.id}`} x1="0" y1="0" x2="1" y2="1">
                     <stop offset="0%" stopColor="#8fca78" />
@@ -68,14 +69,16 @@ export function Parcel3DView({ parcel }: Parcel3DViewProps) {
                 <polygon points={polygonPoints} transform="translate(0 26)" fill={`url(#parcel-side-${parcel.id})`} stroke="#164b34" strokeWidth="5" strokeLinejoin="round" />
                 <polygon points={polygonPoints} fill={`url(#parcel-top-${parcel.id})`} stroke="#e3f7c8" strokeWidth="4" strokeLinejoin="round" />
                 <polygon points={polygonPoints} fill={`url(#parcel-lines-${parcel.id})`} opacity="0.72" />
-                <circle cx="300" cy="178" r="7" fill="#fff" stroke="#166534" strokeWidth="4" />
               </svg>
             </div>
           </div>
           <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 text-[10px] font-bold text-[var(--agro-success-text)]">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--agro-surface)] backdrop-blur px-2.5 py-1.5"><Compass className="w-3 h-3" /> Vista 3D referencial</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--agro-surface)] backdrop-blur px-2.5 py-1.5">Diagrama de forma</span>
             <span className="rounded-full bg-[var(--agro-surface)] backdrop-blur px-2.5 py-1.5">N ↑</span>
           </div>
+          <p className="absolute bottom-3 left-3 right-3 text-center text-[10px] font-medium text-[var(--agro-success-text)]">
+            Representación referencial · no muestra relieve ni pendiente
+          </p>
         </div>
 
         <aside className="order-3 space-y-3" aria-label="Resumen del área">
@@ -85,7 +88,7 @@ export function Parcel3DView({ parcel }: Parcel3DViewProps) {
               <CheckCircle2 className="w-4 h-4 text-emerald-200" />
             </div>
             <p className="text-2xl font-bold font-mono tabular-nums mt-2">{parcel.areaHa.toFixed(2)} <span className="text-sm font-sans font-medium">ha</span></p>
-            <p className="text-xs text-emerald-100 mt-1">Polígono referencial</p>
+            <p className="text-xs text-emerald-100 mt-1">Polígono referencial · {vertexCount} vértices</p>
           </div>
           <div className="rounded-2xl bg-[var(--agro-surface-soft)] border border-[var(--agro-line)] p-3.5">
             <div className="flex items-center gap-2 text-[var(--agro-lime)]">

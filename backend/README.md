@@ -38,6 +38,7 @@ No hay aislamiento entre agricultores/cuentas. Mantener el MVP en un entorno pri
 | GET, POST | `/api/fields/{id}/campaigns` | Historial agrícola |
 | DELETE | `/api/fields/{id}/campaigns/{campaign_id}` | Quitar campaña |
 | POST | `/api/analyze` | Consultar clima y comparar estrategias |
+| POST | `/api/recommendations` | Ordenar cultivos por compatibilidad climática y datos declarados |
 | GET | `/api/analyses/{id}` | Recuperar análisis histórico |
 | GET | `/api/fields/{id}/analyses` | Análisis de parcela |
 | POST | `/api/plans` | Guardar estrategia de un análisis |
@@ -107,6 +108,12 @@ Se aceptan únicamente años con todos los días válidos en las cuatro variable
 La caché conserva la agrupación previa de coordenadas a 0,5 grados, informa coordenadas originales/consultadas y no afirma medir una parcela. La versión 2 recalcula entradas antiguas al primer uso. Se resuelven conflictos por inserciones concurrentes de la misma clave. Una carrera todavía puede realizar dos consultas NASA, aunque persiste una sola entrada.
 
 El clima sirve para advertencias históricas. El ranking mantiene coeficientes heurísticos de demostración; no es un modelo predictivo ni agronómico validado. El historial se guarda y se incorpora al contexto del análisis, pero la línea base futura sigue repitiendo el cultivo actual. No se generan calendarios fenológicos ni cifras de rendimiento/ahorro.
+
+## Sugerencias de cultivo
+
+`POST /api/recommendations` recibe `field_id` y un `limit` opcional (1–6). Combina la serie histórica disponible de NASA POWER con los coeficientes heurísticos del catálogo de cultivos y los datos declarados de suelo/riego. Devuelve puntuación, razones, riesgos y calidad de datos para cada opción.
+
+La respuesta es un filtro exploratorio: no incorpora todavía ECOCROP, altitud persistida, variedades, plagas, calendario fenológico ni estadísticas productivas locales. No debe interpretarse como rendimiento esperado ni como recomendación agronómica definitiva.
 
 ## Esquema y actualización
 
