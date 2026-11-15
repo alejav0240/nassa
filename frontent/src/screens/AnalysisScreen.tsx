@@ -1,5 +1,6 @@
 import { ChevronDown } from 'lucide-react';
 import { DataSourcesCatalog } from '../components/DataSourcesCatalog';
+import { ClimateAnomaliesSection } from '../components/ClimateAnomaliesSection';
 import {
   AnalysisSubTab,
   CropHistoryRecord,
@@ -156,7 +157,7 @@ export function AnalysisScreen({
           <DataSourcesCatalog />
         </div>
       )}
-      {subTab === 'insights' && <div id="analysis-panel-insights" role="tabpanel"><InsightsTab parcel={selectedParcel} /></div>}
+      {subTab === 'insights' && <div id="analysis-panel-insights" role="tabpanel" className="space-y-4"><ClimateAnomaliesSection parcel={selectedParcel} /><InsightsTab parcel={selectedParcel} /></div>}
       {subTab === 'historial' && (
         <div id="analysis-panel-historial" role="tabpanel">
           <HistoryRotationTab

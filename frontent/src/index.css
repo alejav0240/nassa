@@ -244,3 +244,13 @@ html, body { background: var(--agro-canvas); color: var(--agro-text); }
 .theme-toggle select { background: var(--agro-surface); color: var(--agro-text); border: 1px solid var(--agro-line); border-radius: 10px; padding: 6px 10px; min-height: 36px; font: inherit; }
 .agro-theme input:not([type="checkbox"]):not([type="range"]):not([type="radio"]), .agro-theme textarea { color: var(--agro-text); background-color: var(--agro-surface); }
 .agro-theme input::placeholder, .agro-theme textarea::placeholder { color: var(--agro-muted); opacity: 1; }
+
+/* Climate ML panel follows the existing light/dark theme tokens. */
+.climate-ml { background: var(--agro-surface); color: var(--agro-text); border-color: var(--agro-line); --ml-warning: #fbbf24; }
+:root[data-theme="light"] .climate-ml { --ml-warning: #92400e; }
+.climate-ml .ml-muted { color: var(--agro-muted); }
+.climate-ml .ml-warning { color: var(--ml-warning); }
+.climate-ml .ml-border { border-color: var(--agro-line); }
+.climate-ml .ml-link { color: var(--agro-lime); }
+.climate-ml .ml-retry { border-color: var(--ml-warning); color: var(--ml-warning); }
+.climate-ml .recharts-default-tooltip { background: var(--agro-surface) !important; color: var(--agro-text) !important; border: 1px solid var(--agro-line) !important; }

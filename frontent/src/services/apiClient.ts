@@ -7,8 +7,13 @@ export interface ApiRequestOptions {
   delayMs?: number;
 }
 
+function apiBaseUrl(value?: string): string {
+  const base = value?.trim().replace(/\/+$/, '') || '/api';
+  return base.endsWith('/api') ? base : `${base}/api`;
+}
+
 export const API_CONFIG = {
-  baseUrl: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseUrl: apiBaseUrl(import.meta.env.VITE_API_BASE_URL),
   mode: 'remote-rest' as 'demo-local' | 'remote-rest',
 };
 
@@ -103,14 +108,42 @@ export interface BackendAnalysis {
   history_note?: string;
 }
 
+export interface ClimateAnomalies {
+  availability: 'ready';
+  model_id: string;
+  version: string;
+  source: string;
+  location: { latitude: number; longitude: number };
+  reference_period: string[];
+  evaluation_period: string[];
+  observations: { training: number; evaluation: number };
+  data_quality: { missing_pct: number; missing_or_invalid_days: number };
+  score_semantics: string;
+  evaluation: { flagged_days: number; flagged_pct: number };
+  anomalies: Array<{
+    date: string;
+    score: number;
+    observed: { rain_30d_mm: number; tmin_c: number; frost_7d: number; dry_spell_days: number };
+    explanation: string;
+  }>;
+  limitations: string[];
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_CONFIG.baseUrl}${path}`, {
-    ...init,
-    headers: {
-      Accept: 'application/json',
-      ...(init?.headers || {}),
-    },
-  });
+  const url = `${API_CONFIG.baseUrl}${path}`;
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...init,
+      headers: {
+        Accept: 'application/json',
+        ...(import.meta.env.VITE_API_KEY ? { 'X-API-Key': import.meta.env.VITE_API_KEY } : {}),
+        ...(init?.headers || {}),
+      },
+    });
+  } catch (cause) {
+    throw new Error(`No se pudo conectar con la API (${url}). Comprueba FastAPI y el proxy de Vite.`, { cause });
+  }
 
   if (!response.ok) {
     let message = `Error HTTP ${response.status}`;
@@ -126,6 +159,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const backendApi = {
+  climateAnomalies: (fieldId?: number) => request<ClimateAnomalies>(`/ml/climate-anomalies${fieldId ? `?field_id=${fieldId}` : ''}`),
   health: () => request<BackendHealth>('/health'),
   listFields: () => request<BackendField[]>('/fields?limit=100'),
   analyzeField: (fieldId: number, priorities = { water: 40, soil: 40, income: 20 }) =>

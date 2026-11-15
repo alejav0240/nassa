@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from copy import deepcopy
+from datetime import date
 import secrets
 from fastapi import FastAPI, Depends, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,6 +15,7 @@ from .schemas import CropsResponse, ErrorResponse, HealthResponse
 from .services.nasa import fetch_power
 from .services.climate_cache import get_climate
 from .services.rotation import CROPS, CROP_METADATA, evaluate
+from .ml.model import PILOT, ModelUnavailable, infer
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,6 +26,7 @@ async def lifespan(app: FastAPI):
     yield
 
 tags_metadata = [
+    {'name': 'Climate ML', 'description': 'Detección retrospectiva de anomalías NASA POWER; independiente del ranking agrícola.'},
     {
         'name': 'Health',
         'description': 'Verificación de disponibilidad del servicio.',
@@ -56,6 +59,44 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.add_middleware(CORSMiddleware, allow_origins=[x.strip() for x in settings.cors_origins.split(',')], allow_credentials=False, allow_methods=['GET', 'POST', 'PUT', 'DELETE'], allow_headers=['Content-Type', 'X-API-Key'])
+
+@app.get('/api/ml/climate-anomalies', tags=['Climate ML'])
+def climate_anomalies(
+    latitude: float = Query(PILOT['latitude'], ge=-90, le=90),
+    longitude: float = Query(PILOT['longitude'], ge=-180, le=180),
+    start_date: date = Query(date(2023, 1, 1)),
+    end_date: date = Query(date(2024, 12, 31)),
+    field_id: int | None = Query(None, ge=1),
+    db: Session = Depends(get_db),
+):
+    if abs(latitude - PILOT['latitude']) > 0.0001 or abs(longitude - PILOT['longitude']) > 0.0001:
+        raise HTTPException(422, 'El modelo piloto solo está validado para -16.57, -68.69')
+    if start_date > end_date or start_date < date(2023, 1, 1) or end_date > date(2024, 12, 31):
+        raise HTTPException(422, 'El período debe estar dentro de la evaluación 2023–2024')
+    try:
+        result = infer()
+    except (ModelUnavailable, ValueError, OSError) as exc:
+        raise HTTPException(503, str(exc)) from exc
+    result['requested_period'] = [start_date.isoformat(), end_date.isoformat()]
+    result['anomalies'] = [row for row in result['anomalies'] if start_date.isoformat() <= row['date'] <= end_date.isoformat()]
+    if field_id is not None:
+        field = db.get(Field, field_id)
+        if field is None:
+            raise HTTPException(404, 'Parcela no encontrada')
+        if abs(field.latitude - latitude) > 0.0001 or abs(field.longitude - longitude) > 0.0001:
+            raise HTTPException(409, 'La parcela no coincide con la ubicación del modelo piloto')
+        campaigns = db.scalars(select(Campaign).where(Campaign.field_id == field_id,
+            Campaign.start_date <= end_date, Campaign.end_date >= start_date).order_by(Campaign.start_date)).all()
+        overlaps = []
+        for campaign in campaigns:
+            dates = [row['date'] for row in result['anomalies'] if campaign.start_date.isoformat() <= row['date'] <= campaign.end_date.isoformat()]
+            overlaps.append({'campaign_id': campaign.id, 'crop': campaign.crop,
+                'window': [campaign.start_date.isoformat(), campaign.end_date.isoformat()],
+                'anomalous_days': len(dates), 'dates': dates})
+        result['campaign_exposure'] = overlaps
+        result['strategy_comparison'] = {key: overlaps for key in ('actual', 'agua', 'suelo')}
+        result['strategy_note'] = 'Las tres estrategias comparten la misma referencia climática; solo se muestran campañas históricas registradas. No se modifica su ranking ni se presume un calendario futuro.'
+    return result
 
 @app.get(
     '/api/health',
