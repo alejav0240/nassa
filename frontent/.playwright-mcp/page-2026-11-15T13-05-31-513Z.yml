@@ -1,0 +1,321 @@
+- generic [ref=f2e1]:
+  - generic [ref=f2e3]:
+    - complementary "Navegación de escritorio" [ref=f2e4]:
+      - generic [ref=f2e5]:
+        - generic [ref=f2e6]:
+          - generic [ref=f2e7]: AT
+          - generic [ref=f2e8]:
+            - paragraph [ref=f2e9]: AgroTerra AI
+            - paragraph [ref=f2e10]: Monitoreo Geoespacial
+        - generic [ref=f2e11]:
+          - button "Inicio" [ref=f2e12]
+          - button "Mapa" [ref=f2e17]
+          - button "Mis parcelas" [ref=f2e21]
+          - button "Análisis" [active] [ref=f2e27]
+          - button "Perfil" [ref=f2e31]
+      - generic [ref=f2e36]:
+        - paragraph [ref=f2e37]: Datos con procedencia
+        - paragraph [ref=f2e38]: El análisis distingue datos disponibles, pendientes de integración y validación local.
+    - main [ref=f2e39]:
+      - generic [ref=f2e40]:
+        - generic [ref=f2e42] [cursor=pointer]:
+          - generic [ref=f2e45]: Apariencia
+          - combobox "Apariencia" [ref=f2e46]:
+            - option "Sistema" [selected]
+            - option "Claro"
+            - option "Oscuro"
+        - generic [ref=f2e295]:
+          - generic [ref=f2e296]:
+            - generic [ref=f2e297]:
+              - heading "Centro de Análisis" [level=1] [ref=f2e298]
+              - paragraph [ref=f2e299]: Evidencia climática y escenarios de rotación · Parcela de prueba
+            - combobox "Parcela para análisis" [ref=f2e301]:
+              - option "Parcela de prueba (2.02 ha · papa)" [selected]
+              - option "ppp (2.00 ha · papa)"
+              - option "Parcela piloto — Viacha (2.50 ha · papa)"
+              - option "Parcela piloto — Viacha (2.50 ha · papa)"
+          - status [ref=f2e302]:
+            - generic [ref=f2e303]:
+              - paragraph [ref=f2e304]: Análisis real recibido del backend
+              - generic [ref=f2e305]:
+                - generic [ref=f2e306]:
+                  - text: "Precipitación:"
+                  - strong [ref=f2e307]: 623.6 mm
+                - generic [ref=f2e308]:
+                  - text: "Temperatura:"
+                  - strong [ref=f2e309]: 8.2 °C
+                - generic [ref=f2e310]:
+                  - text: "Heladas:"
+                  - strong [ref=f2e311]: "74"
+                - generic [ref=f2e312]:
+                  - text: "Estrategias:"
+                  - strong [ref=f2e313]: "3"
+          - generic [ref=f2e314]:
+            - generic [ref=f2e315]:
+              - generic [ref=f2e319]:
+                - paragraph [ref=f2e320]: Escenario heurístico · no predicción
+                - heading "Diversificación orientada al suelo" [level=2] [ref=f2e321]
+                - paragraph [ref=f2e322]: Papa → Tarwi → Avena
+              - generic [ref=f2e323]:
+                - paragraph [ref=f2e324]: Puntaje orientativo
+                - paragraph [ref=f2e325]: Media
+                - paragraph [ref=f2e326]: 68.9/100
+            - paragraph [ref=f2e327]: Explora una leguminosa y cobertura potencial, sujetas a evaluación local.
+            - button "Actualizar recomendación" [ref=f2e328]
+          - generic [ref=f2e334]:
+            - generic [ref=f2e335]:
+              - heading "Prioridades del agricultor" [level=2] [ref=f2e336]
+              - paragraph [ref=f2e337]: Ajustá los pesos y volvé a ejecutar el escenario. No son predicciones de rendimiento.
+            - generic [ref=f2e338]:
+              - generic [ref=f2e339]:
+                - generic [ref=f2e340]:
+                  - generic [ref=f2e341]: Agua
+                  - status "Agua 40" [ref=f2e345]: "40"
+                - slider "Prioridad Agua" [ref=f2e346]: "40"
+              - generic [ref=f2e347]:
+                - generic [ref=f2e348]:
+                  - generic [ref=f2e349]: Suelo
+                  - status "Suelo 40" [ref=f2e353]: "40"
+                - slider "Prioridad Suelo" [ref=f2e354]: "40"
+              - generic [ref=f2e355]:
+                - generic [ref=f2e356]:
+                  - generic [ref=f2e357]: Ingreso / mercado
+                  - status "Ingreso / mercado 20" [ref=f2e362]: "20"
+                - slider "Prioridad Ingreso / mercado" [ref=f2e363]: "20"
+            - button "Actualizar estrategias" [ref=f2e364]
+          - region "Qué cultivar en esta parcela" [ref=f2e365]:
+            - generic [ref=f2e366]:
+              - generic [ref=f2e367]:
+                - heading "Qué cultivar en esta parcela" [level=2] [ref=f2e372]
+                - paragraph [ref=f2e373]: Comparación orientativa según clima histórico, textura, pH y el cultivo actual.
+              - button "Actualizar sugerencias de cultivos" [ref=f2e374]: Actualizar
+            - generic [ref=f2e380]:
+              - text: "Perfil usado:"
+              - strong [ref=f2e381]: desconocida
+              - text: · pH
+              - strong [ref=f2e382]: "6.4"
+              - text: · cultivo actual
+              - strong [ref=f2e383]: papa
+            - generic [ref=f2e384]:
+              - article [ref=f2e385]:
+                - generic [ref=f2e386]:
+                  - generic [ref=f2e387]:
+                    - heading "Haba" [level=3] [ref=f2e389]
+                    - paragraph [ref=f2e390]: Revisar antes de sembrar
+                  - generic [ref=f2e391]:
+                    - paragraph [ref=f2e392]: "89.9"
+                    - paragraph [ref=f2e393]: compatibilidad
+                - generic [ref=f2e394]:
+                  - generic [ref=f2e395]:
+                    - paragraph [ref=f2e396]: Región orientativa
+                    - paragraph
+                  - generic [ref=f2e397]:
+                    - paragraph [ref=f2e398]: Cosecha
+                    - paragraph
+                - paragraph [ref=f2e399]:
+                  - strong [ref=f2e400]: "Productos:"
+                - paragraph [ref=f2e401]:
+                  - strong [ref=f2e402]: "Coincide:"
+                  - text: La precipitación histórica (623.6 mm/año) supera el umbral orientativo de 400 mm. Las heladas aproximadas (74.0 días/año) están dentro del límite ilustrativo de 130 días.
+                - paragraph [ref=f2e403]:
+                  - strong [ref=f2e404]: "Revisar:"
+                  - text: "No se declaró riego: validar la distribución mensual de lluvia y la humedad del suelo. Faltan textura y/o pH medidos; la compatibilidad del suelo no está verificada."
+                - paragraph [ref=f2e405]:
+                  - strong [ref=f2e406]: "Precaución:"
+              - article [ref=f2e407]:
+                - generic [ref=f2e408]:
+                  - generic [ref=f2e409]:
+                    - heading "Tarwi" [level=3] [ref=f2e411]
+                    - paragraph [ref=f2e412]: Revisar antes de sembrar
+                  - generic [ref=f2e413]:
+                    - paragraph [ref=f2e414]: "88.8"
+                    - paragraph [ref=f2e415]: compatibilidad
+                - generic [ref=f2e416]:
+                  - generic [ref=f2e417]:
+                    - paragraph [ref=f2e418]: Región orientativa
+                    - paragraph
+                  - generic [ref=f2e419]:
+                    - paragraph [ref=f2e420]: Cosecha
+                    - paragraph
+                - paragraph [ref=f2e421]:
+                  - strong [ref=f2e422]: "Productos:"
+                - paragraph [ref=f2e423]:
+                  - strong [ref=f2e424]: "Coincide:"
+                  - text: La precipitación histórica (623.6 mm/año) supera el umbral orientativo de 300 mm. Las heladas aproximadas (74.0 días/año) están dentro del límite ilustrativo de 165 días.
+                - paragraph [ref=f2e425]:
+                  - strong [ref=f2e426]: "Revisar:"
+                  - text: "No se declaró riego: validar la distribución mensual de lluvia y la humedad del suelo. Faltan textura y/o pH medidos; la compatibilidad del suelo no está verificada."
+                - paragraph [ref=f2e427]:
+                  - strong [ref=f2e428]: "Precaución:"
+              - article [ref=f2e429]:
+                - generic [ref=f2e430]:
+                  - generic [ref=f2e431]:
+                    - heading "Avena" [level=3] [ref=f2e433]
+                    - paragraph [ref=f2e434]: Revisar antes de sembrar
+                  - generic [ref=f2e435]:
+                    - paragraph [ref=f2e436]: "83.3"
+                    - paragraph [ref=f2e437]: compatibilidad
+                - generic [ref=f2e438]:
+                  - generic [ref=f2e439]:
+                    - paragraph [ref=f2e440]: Región orientativa
+                    - paragraph
+                  - generic [ref=f2e441]:
+                    - paragraph [ref=f2e442]: Cosecha
+                    - paragraph
+                - paragraph [ref=f2e443]:
+                  - strong [ref=f2e444]: "Productos:"
+                - paragraph [ref=f2e445]:
+                  - strong [ref=f2e446]: "Coincide:"
+                  - text: La precipitación histórica (623.6 mm/año) supera el umbral orientativo de 350 mm. Las heladas aproximadas (74.0 días/año) están dentro del límite ilustrativo de 155 días.
+                - paragraph [ref=f2e447]:
+                  - strong [ref=f2e448]: "Revisar:"
+                  - text: "No se declaró riego: validar la distribución mensual de lluvia y la humedad del suelo. Faltan textura y/o pH medidos; la compatibilidad del suelo no está verificada."
+                - paragraph [ref=f2e449]:
+                  - strong [ref=f2e450]: "Precaución:"
+              - article [ref=f2e451]:
+                - generic [ref=f2e452]:
+                  - generic [ref=f2e453]:
+                    - heading "Quinua" [level=3] [ref=f2e455]
+                    - paragraph [ref=f2e456]: Revisar antes de sembrar
+                  - generic [ref=f2e457]:
+                    - paragraph [ref=f2e458]: "81.8"
+                    - paragraph [ref=f2e459]: compatibilidad
+                - generic [ref=f2e460]:
+                  - generic [ref=f2e461]:
+                    - paragraph [ref=f2e462]: Región orientativa
+                    - paragraph
+                  - generic [ref=f2e463]:
+                    - paragraph [ref=f2e464]: Cosecha
+                    - paragraph
+                - paragraph [ref=f2e465]:
+                  - strong [ref=f2e466]: "Productos:"
+                - paragraph [ref=f2e467]:
+                  - strong [ref=f2e468]: "Coincide:"
+                  - text: La precipitación histórica (623.6 mm/año) supera el umbral orientativo de 200 mm. Las heladas aproximadas (74.0 días/año) están dentro del límite ilustrativo de 200 días.
+                - paragraph [ref=f2e469]:
+                  - strong [ref=f2e470]: "Revisar:"
+                  - text: "No se declaró riego: validar la distribución mensual de lluvia y la humedad del suelo. Faltan textura y/o pH medidos; la compatibilidad del suelo no está verificada."
+                - paragraph [ref=f2e471]:
+                  - strong [ref=f2e472]: "Precaución:"
+              - article [ref=f2e473]:
+                - generic [ref=f2e474]:
+                  - generic [ref=f2e475]:
+                    - heading "Cebada" [level=3] [ref=f2e477]
+                    - paragraph [ref=f2e478]: Revisar antes de sembrar
+                  - generic [ref=f2e479]:
+                    - paragraph [ref=f2e480]: "81.5"
+                    - paragraph [ref=f2e481]: compatibilidad
+                - generic [ref=f2e482]:
+                  - generic [ref=f2e483]:
+                    - paragraph [ref=f2e484]: Región orientativa
+                    - paragraph
+                  - generic [ref=f2e485]:
+                    - paragraph [ref=f2e486]: Cosecha
+                    - paragraph
+                - paragraph [ref=f2e487]:
+                  - strong [ref=f2e488]: "Productos:"
+                - paragraph [ref=f2e489]:
+                  - strong [ref=f2e490]: "Coincide:"
+                  - text: La precipitación histórica (623.6 mm/año) supera el umbral orientativo de 250 mm. Las heladas aproximadas (74.0 días/año) están dentro del límite ilustrativo de 175 días.
+                - paragraph [ref=f2e491]:
+                  - strong [ref=f2e492]: "Revisar:"
+                  - text: "No se declaró riego: validar la distribución mensual de lluvia y la humedad del suelo. Faltan textura y/o pH medidos; la compatibilidad del suelo no está verificada."
+                - paragraph [ref=f2e493]:
+                  - strong [ref=f2e494]: "Precaución:"
+              - article [ref=f2e495]:
+                - generic [ref=f2e496]:
+                  - generic [ref=f2e497]:
+                    - generic [ref=f2e498]:
+                      - heading "Papa" [level=3] [ref=f2e499]
+                      - generic [ref=f2e500]: Actual
+                    - paragraph [ref=f2e501]: Revisar antes de sembrar
+                  - generic [ref=f2e502]:
+                    - paragraph [ref=f2e503]: "78.8"
+                    - paragraph [ref=f2e504]: compatibilidad
+                - generic [ref=f2e505]:
+                  - generic [ref=f2e506]:
+                    - paragraph [ref=f2e507]: Región orientativa
+                    - paragraph
+                  - generic [ref=f2e508]:
+                    - paragraph [ref=f2e509]: Cosecha
+                    - paragraph
+                - paragraph [ref=f2e510]:
+                  - strong [ref=f2e511]: "Productos:"
+                - paragraph [ref=f2e512]:
+                  - strong [ref=f2e513]: "Coincide:"
+                  - text: La precipitación histórica (623.6 mm/año) supera el umbral orientativo de 350 mm. Las heladas aproximadas (74.0 días/año) están dentro del límite ilustrativo de 140 días.
+                - paragraph [ref=f2e514]:
+                  - strong [ref=f2e515]: "Revisar:"
+                  - text: "No se declaró riego: validar la distribución mensual de lluvia y la humedad del suelo. Faltan textura y/o pH medidos; la compatibilidad del suelo no está verificada."
+                - paragraph [ref=f2e516]:
+                  - strong [ref=f2e517]: "Precaución:"
+            - generic [ref=f2e518]:
+              - paragraph [ref=f2e519]:
+                - strong [ref=f2e520]: "Fuente:"
+                - text: NASA POWER · Catálogo heurístico AgroShift AI · años 2020–2024.
+              - paragraph [ref=f2e521]:
+                - strong [ref=f2e522]: "Método:"
+                - text: 55% clima + 25% suelo heurístico + 20% mercado heurístico. Filtro exploratorio de compatibilidad; no predice rendimiento, ingresos ni éxito agronómico.
+              - paragraph [ref=f2e523]: Los coeficientes no están calibrados con ECOCROP ni validados localmente en esta versión. No se usa altitud porque todavía no es un dato persistido en la API de parcelas. La precipitación anual no sustituye balance hídrico mensual ni calendario fenológico. Validar semillas, plagas, manejo, mercado y recomendación con especialistas locales.
+          - generic [ref=f2e524]:
+            - generic [ref=f2e525]:
+              - heading "Estrategias calculadas para esta parcela" [level=2] [ref=f2e526]
+              - paragraph [ref=f2e527]: NASA POWER + reglas heurísticas transparentes · requiere revisión local
+            - group [ref=f2e528]:
+              - generic "Ver comparación técnica y alternativas" [ref=f2e529] [cursor=pointer]
+            - paragraph [ref=f2e530]: "Exploración educativa. Los puntajes NO predicen rendimientos, ahorro, ingresos, fijación real de N ni viabilidad agronómica. Fuente: NASA POWER; período 2020–2024."
+          - tablist "Secciones del análisis" [ref=f2e531]:
+            - tab "Clima y datos" [selected] [ref=f2e532]
+            - tab "Fusión" [ref=f2e533]
+            - tab "Fuentes" [ref=f2e534]
+            - tab "Insights AI" [ref=f2e535]
+            - tab "Historial" [ref=f2e536]
+          - tabpanel [ref=f2e537]:
+            - generic [ref=f2e538]:
+              - generic [ref=f2e539]:
+                - generic [ref=f2e541]:
+                  - heading "Datos ambientales disponibles" [level=2] [ref=f2e547]
+                  - paragraph [ref=f2e548]: Valores consultados para Parcela de prueba; NASA POWER entrega datos climáticos de cuadrícula, no mediciones directas de la parcela.
+                - generic [ref=f2e549]:
+                  - generic [ref=f2e550]:
+                    - generic [ref=f2e551]: Real
+                    - paragraph [ref=f2e555]: Precipitación anual
+                    - paragraph [ref=f2e556]: 623.6 mm
+                  - generic [ref=f2e557]:
+                    - generic [ref=f2e558]: Real
+                    - paragraph [ref=f2e562]: Temperatura media
+                    - paragraph [ref=f2e563]: 8.2 °C
+                  - generic [ref=f2e564]:
+                    - generic [ref=f2e565]: Real
+                    - paragraph [ref=f2e580]: Heladas aproximadas
+                    - paragraph [ref=f2e581]: 74 días/año
+                  - generic [ref=f2e582]:
+                    - generic [ref=f2e583]: Real
+                    - paragraph [ref=f2e589]: Años completos
+                    - paragraph [ref=f2e590]: "5"
+                - application [ref=f2e594]:
+                  - generic [ref=f2e645]:
+                    - generic [ref=f2e646]:
+                      - generic [ref=f2e647]: ene
+                      - generic [ref=f2e649]: feb
+                      - generic [ref=f2e651]: mar
+                      - generic [ref=f2e653]: abr
+                      - generic [ref=f2e655]: may
+                      - generic [ref=f2e657]: jun
+                      - generic [ref=f2e659]: jul
+                      - generic [ref=f2e661]: ago
+                      - generic [ref=f2e663]: sept
+                      - generic [ref=f2e665]: oct
+                      - generic [ref=f2e667]: nov
+                      - generic [ref=f2e669]: dic
+                    - generic [ref=f2e671]:
+                      - generic [ref=f2e672]: "0"
+                      - generic [ref=f2e674]: "35"
+                      - generic [ref=f2e676]: "70"
+                      - generic [ref=f2e678]: "105"
+                      - generic [ref=f2e680]: "140"
+                - paragraph [ref=f2e682]: "Fuente: NASA POWER · período 2020–2024 · Solo años completos en las cuatro variables; sin imputación. La precipitación mensual es climatológica; no equivale a un pronóstico."
+              - generic [ref=f2e683]:
+                - heading "Indicadores satelitales aún no conectados" [level=2] [ref=f2e684]
+                - paragraph [ref=f2e685]: NDVI, humedad SMAP, temperatura ECOSTRESS, GPM, biomasa GEDI y propiedades SoilGrids se mantienen como N/D. El catálogo describe sus fuentes, pero esta versión no descarga ni valida observaciones para la parcela.
+  - generic [aria-hidden] [ref=f2e273]: "0"

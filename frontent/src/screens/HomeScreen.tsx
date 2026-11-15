@@ -143,8 +143,8 @@ export function HomeScreen({
       id: 'humedad',
       title: 'Humedad superficial del suelo',
       value: hasIndicators ? moistureDisplay : 'N/D',
-      source: climate ? 'Fuente no integrada' : hasIndicators ? 'Fuente: SMAP' : 'Sin análisis',
-      status: climate ? 'No disponible en NASA POWER' : hasIndicators ? 'Referencia regional' : 'Pendiente de análisis',
+      source: hasIndicators ? 'SMAP · referencia regional (9 km)' : 'Sin fuente conectada',
+      status: hasIndicators ? 'Demostrativo · validar en campo' : 'Pendiente de análisis',
       available: hasIndicators,
       icon: Droplets,
       accent: 'text-[var(--agro-info-text)] bg-[var(--agro-info-bg)]',
@@ -173,8 +173,10 @@ export function HomeScreen({
       id: 'ndvi',
       title: 'Índice NDVI',
       value: hasIndicators ? selectedParcel.indicators.ndvi.toFixed(2) : 'N/D',
-      source: climate ? 'Fuente no integrada' : hasIndicators ? 'Fuente: Landsat/MODIS' : 'Sin análisis',
-      status: climate ? 'No disponible en NASA POWER' : hasIndicators ? selectedParcel.indicators.ndvi >= 0.55 ? 'Vegetación activa' : 'Cobertura moderada' : 'Pendiente de análisis',
+      source: hasIndicators ? 'Landsat/MODIS · referencia regional' : 'Sin fuente conectada',
+      status: hasIndicators
+        ? `${selectedParcel.indicators.ndvi >= 0.55 ? 'Vegetación activa' : 'Cobertura moderada'} · demostrativo`
+        : 'Pendiente de análisis',
       available: hasIndicators,
       icon: Sprout,
       accent: 'text-[var(--agro-lime)] bg-[var(--agro-selected)]',
@@ -373,7 +375,7 @@ export function HomeScreen({
               <h2 id="indicators-title" className="text-sm font-bold text-[var(--agro-text)]">Indicadores ambientales</h2>
               <p className="text-xs text-[var(--agro-muted)] mt-0.5">Datos disponibles para orientar tu próxima decisión</p>
             </div>
-              <span className="text-[11px] text-[var(--agro-muted)] whitespace-nowrap">{climate ? 'NASA POWER' : hasIndicators ? 'Demostrativos' : analysisStatus === 'loading' ? 'Consultando…' : 'Pendientes'}</span>
+              <span className="text-[11px] text-[var(--agro-muted)] whitespace-nowrap">{climate ? 'NASA POWER + referencias satelitales' : hasIndicators ? 'Demostrativos' : analysisStatus === 'loading' ? 'Consultando…' : 'Pendientes'}</span>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {indicatorCards.map((card) => {

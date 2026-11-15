@@ -25,7 +25,10 @@ export default defineConfig(() => {
         },
       },
       // Required when the dev server is accessed through the current Cloudflare tunnel.
-      allowedHosts: ['calendars-works-logan-dylan.trycloudflare.com'],
+      allowedHosts: [
+        'calendars-works-logan-dylan.trycloudflare.com',
+        'onion-simpsons-wake-headquarters.trycloudflare.com',
+      ],
     },
   };
 });
