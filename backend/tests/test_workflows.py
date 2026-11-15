@@ -151,6 +151,15 @@ def test_readiness_and_schema(client):
     assert client.get('/api/ready').status_code == 200
     assert client.get('/openapi.json').status_code == 200
 
+def test_data_sources_registry_is_explicit(client):
+    response = client.get('/api/data-sources')
+    assert response.status_code == 200
+    body = response.json()
+    ids = {source['id'] for source in body['sources']}
+    assert {'NASA_POWER', 'ECOCROP', 'INE_BOLIVIA', 'SoilGrids', 'SMAP', 'GEDI'} <= ids
+    assert next(source for source in body['sources'] if source['id'] == 'NASA_POWER')['status'] == 'connected'
+    assert body['note']
+
 def test_valid_polygon(client):
     geometry = {'type': 'Polygon', 'coordinates': [[[-68.3,-16.6],[-68.2,-16.6],[-68.2,-16.5],[-68.3,-16.6]]]}
     assert client.post('/api/fields', json={**FIELD, 'geometry_geojson': geometry}).status_code == 201

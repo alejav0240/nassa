@@ -12,10 +12,12 @@ from .database import Base, engine, get_db
 from .models import Field, ClimateCache, Analysis, Campaign, Plan
 from .schemas import FieldCreate, FieldRead, AnalyzeRequest, AnalysisRead, RecommendationRequest, RecommendationsRead, CampaignCreate, CampaignRead, PlanCreate, PlanRead, PlanUpdate
 from .schemas import CropsResponse, ErrorResponse, HealthResponse
+from .schemas_sources import SourceProbeRead, SourcesRead
 from .services.nasa import fetch_power
 from .services.climate_cache import get_climate
 from .services.rotation import CROPS, CROP_METADATA, evaluate, recommend_crops
 from .ml.model import PILOT, ModelUnavailable, infer
+from .services.data_sources import list_sources, probe_source
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -42,6 +44,10 @@ tags_metadata = [
     {
         'name': 'Analyses',
         'description': 'Evaluación climática y comparación de estrategias de rotación.',
+    },
+    {
+        'name': 'Data sources',
+        'description': 'Registro de fuentes oficiales, adaptadores y estado de integración.',
     },
 ]
 
@@ -121,6 +127,34 @@ def health():
 def crops():
     """Lista cultivos soportados y su metodología de puntuación."""
     return {'crops': [{'id': k, **v} for k, v in CROPS.items()], 'methodology': CROP_METADATA}
+
+
+@app.get(
+    '/api/data-sources',
+    tags=['Data sources'],
+    response_model=SourcesRead,
+    summary='Listar fuentes de datos',
+    description='Expone la trazabilidad de fuentes oficiales y diferencia conexiones activas de adaptadores pendientes.',
+)
+def data_sources():
+    return {
+        'sources': list_sources(),
+        'note': 'connected significa que la fuente participa en cálculos actuales; metadata_available valida solo el catálogo público; adapter_available requiere ETL o procesamiento geoespacial antes de incorporarse a recomendaciones.',
+    }
+
+
+@app.get(
+    '/api/data-sources/{source_id}/probe',
+    tags=['Data sources'],
+    response_model=SourceProbeRead,
+    summary='Verificar acceso a una fuente oficial',
+    description='Realiza una comprobación puntual y limitada de disponibilidad. No descarga datasets ni sustituye validación de calidad.',
+)
+async def probe_data_source(source_id: str):
+    try:
+        return await probe_source(source_id.upper())
+    except ValueError as exc:
+        raise HTTPException(404, str(exc)) from exc
 
 @app.get(
     '/api/fields',

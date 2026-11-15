@@ -1,0 +1,133 @@
+- generic [active] [ref=f5e1]:
+  - generic [ref=f5e3]:
+    - complementary "Navegación de escritorio" [ref=f5e4]:
+      - generic [ref=f5e5]:
+        - generic [ref=f5e6]:
+          - generic [ref=f5e7]: AT
+          - generic [ref=f5e8]:
+            - paragraph [ref=f5e9]: AgroTerra AI
+            - paragraph [ref=f5e10]: Monitoreo Geoespacial
+        - generic [ref=f5e11]:
+          - button "Inicio" [ref=f5e12]
+          - button "Mapa" [ref=f5e17]
+          - button "Mis parcelas" [ref=f5e21]
+          - button "Análisis" [ref=f5e27]
+          - button "Perfil" [ref=f5e31]
+      - generic [ref=f5e36]:
+        - paragraph [ref=f5e37]: Prototipo demostrativo
+        - paragraph [ref=f5e38]: Series ambientales y capas temáticas simuladas para evaluación de flujo móvil en Bolivia.
+    - main [ref=f5e39]:
+      - generic [ref=f5e40]:
+        - generic [ref=f5e42] [cursor=pointer]:
+          - generic [ref=f5e45]: Apariencia
+          - combobox "Apariencia" [ref=f5e46]:
+            - option "Sistema" [selected]
+            - option "Claro"
+            - option "Oscuro"
+        - generic [ref=f5e48]:
+          - generic [ref=f5e49]:
+            - generic [ref=f5e50]:
+              - generic [ref=f5e51]:
+                - generic [ref=f5e52]: AT
+                - generic [ref=f5e53]:
+                  - paragraph [ref=f5e54]: AgroTerra AI
+                  - heading "Buenos días" [level=1] [ref=f5e55]
+              - button "Notificaciones (3 sin leer)" [ref=f5e56]:
+                - generic [ref=f5e60]: "3"
+            - generic [ref=f5e61]:
+              - paragraph [ref=f5e62]: Tu campo, más inteligente
+              - generic [ref=f5e63]: Conectando…
+            - generic [ref=f5e65]:
+              - generic [ref=f5e66]: Seleccionar parcela activa
+              - combobox "Seleccionar parcela activa" [ref=f5e68] [cursor=pointer]:
+                - option "Parcela Norte — Papa (2,50 ha)" [selected]
+                - option "Parcela Sur — Quinua (1,80 ha)"
+                - option "Parcela Experimental — Maíz (3,20 ha)"
+            - generic [ref=f5e69]:
+              - img "Cultivo de Papa en Parcela Norte" [ref=f5e71]
+              - generic [ref=f5e72]:
+                - generic [ref=f5e73]:
+                  - heading "Parcela Norte" [level=2] [ref=f5e74]
+                  - generic [ref=f5e75]: Disponible
+                - paragraph [ref=f5e76]: La Paz, Bolivia · 2.50 hectáreas
+                - paragraph [ref=f5e77]: "Cultivo registrado: Papa"
+                - generic [ref=f5e78]:
+                  - generic [ref=f5e79]: Datos demostrativos
+                  - button "Ver ficha" [ref=f5e80]
+          - generic [ref=f5e83]:
+            - generic [ref=f5e84]:
+              - generic [ref=f5e85]: Indicadores ambientales de referencia (valores demostrativos)
+              - generic [ref=f5e86]: Nov 2026
+            - region "Revisá el análisis de Parcela Norte" [ref=f5e87]:
+              - generic [ref=f5e93]:
+                - paragraph [ref=f5e94]: Siguiente paso recomendado
+                - heading "Revisá el análisis de Parcela Norte" [level=2] [ref=f5e95]
+                - paragraph [ref=f5e96]: Compará la evolución satelital y detectá cambios antes de revisar el historial.
+              - button "Abrir análisis" [ref=f5e97]
+            - region "Indicadores ambientales" [ref=f5e98]:
+              - generic [ref=f5e99]:
+                - paragraph [ref=f5e101]: Humedad superficial del suelo
+                - generic [ref=f5e106]:
+                  - paragraph [ref=f5e107]: 23 %
+                  - paragraph [ref=f5e108]: "Fuente: SMAP"
+                  - paragraph [ref=f5e109]: Referencia regional
+              - generic [ref=f5e110]:
+                - paragraph [ref=f5e112]: Temperatura superficial
+                - generic [ref=f5e116]:
+                  - paragraph [ref=f5e117]: 31.2 °C
+                  - paragraph [ref=f5e118]: "Fuente: ECOSTRESS"
+                  - paragraph [ref=f5e119]: Observación disponible
+              - generic [ref=f5e120]:
+                - paragraph [ref=f5e122]: Precipitación mensual
+                - generic [ref=f5e126]:
+                  - paragraph [ref=f5e127]: 85.4 mm
+                  - paragraph [ref=f5e128]: "Fuente: GPM"
+                  - paragraph [ref=f5e129]: Acumulado del período
+              - generic [ref=f5e130]:
+                - paragraph [ref=f5e132]: Índice NDVI
+                - generic [ref=f5e137]:
+                  - paragraph [ref=f5e138]: "0.62"
+                  - paragraph [ref=f5e139]: "Fuente: Landsat/MODIS"
+                  - paragraph [ref=f5e140]: Vegetación activa
+            - generic [ref=f5e141]:
+              - region "Accesos rápidos" [ref=f5e142]:
+                - heading "Acciones rápidas" [level=2] [ref=f5e143]
+                - generic [ref=f5e144]:
+                  - button [ref=f5e145]:
+                    - generic [ref=f5e149]:
+                      - paragraph [ref=f5e150]: Ver mapa satelital
+                      - paragraph [ref=f5e151]: Capas y polígonos OSM
+                  - button [ref=f5e152]:
+                    - generic [ref=f5e157]:
+                      - paragraph [ref=f5e158]: Analizar mi parcela
+                      - paragraph [ref=f5e159]: Series y fusión de datos
+                  - button [ref=f5e160]:
+                    - generic [ref=f5e166]:
+                      - paragraph [ref=f5e167]: Consultar historial
+                      - paragraph [ref=f5e168]: Ciclos y rotación agrícola
+                  - button [ref=f5e169]:
+                    - generic [ref=f5e174]:
+                      - paragraph [ref=f5e175]: Revisar alertas
+                      - paragraph [ref=f5e176]: 3 sin leer
+              - region "Resumen ambiental" [ref=f5e177]:
+                - generic [ref=f5e178]:
+                  - generic [ref=f5e179]:
+                    - heading "Resumen ambiental" [level=2] [ref=f5e180]
+                    - paragraph [ref=f5e181]: Evolución demostrativa NDVI y lluvia (últimos 6 meses)
+                  - button "Explorar →" [ref=f5e182]
+                - application [ref=f5e186]:
+                  - generic [ref=f5e205]:
+                    - generic [ref=f5e206]:
+                      - generic [ref=f5e207]: Jun 26
+                      - generic [ref=f5e209]: Jul 26
+                      - generic [ref=f5e211]: Ago 26
+                      - generic [ref=f5e213]: Sep 26
+                      - generic [ref=f5e215]: Oct 26
+                      - generic [ref=f5e217]: Nov 26
+                    - generic [ref=f5e219]:
+                      - generic [ref=f5e220]: "0"
+                      - generic [ref=f5e222]: "0.25"
+                      - generic [ref=f5e224]: "0.5"
+                      - generic [ref=f5e226]: "0.75"
+                      - generic [ref=f5e228]: "1"
+  - generic [aria-hidden] [ref=f5e230]: "0"

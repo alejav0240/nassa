@@ -39,6 +39,8 @@ No hay aislamiento entre agricultores/cuentas. Mantener el MVP en un entorno pri
 | DELETE | `/api/fields/{id}/campaigns/{campaign_id}` | Quitar campaña |
 | POST | `/api/analyze` | Consultar clima y comparar estrategias |
 | POST | `/api/recommendations` | Ordenar cultivos por compatibilidad climática y datos declarados |
+| GET | `/api/data-sources` | Registro de fuentes oficiales y estado de integración |
+| GET | `/api/data-sources/{source_id}/probe` | Verificación puntual de acceso a una fuente |
 | GET | `/api/analyses/{id}` | Recuperar análisis histórico |
 | GET | `/api/fields/{id}/analyses` | Análisis de parcela |
 | POST | `/api/plans` | Guardar estrategia de un análisis |
@@ -114,6 +116,18 @@ El clima sirve para advertencias históricas. El ranking mantiene coeficientes h
 `POST /api/recommendations` recibe `field_id` y un `limit` opcional (1–6). Combina la serie histórica disponible de NASA POWER con los coeficientes heurísticos del catálogo de cultivos y los datos declarados de suelo/riego. Devuelve puntuación, razones, riesgos y calidad de datos para cada opción.
 
 La respuesta es un filtro exploratorio: no incorpora todavía ECOCROP, altitud persistida, variedades, plagas, calendario fenológico ni estadísticas productivas locales. No debe interpretarse como rendimiento esperado ni como recomendación agronómica definitiva.
+
+## Fuentes externas y trazabilidad
+
+El registro de fuentes en `app/services/data_sources.py` incluye NASA POWER, ECOCROP, GAEZ, SoilGrids, FAOSTAT, INE Bolivia, OAP, SIIP, SMAP, GPM, Landsat, MODIS, ECOSTRESS y GEDI. Cada entrada declara agencia, URL oficial, papel científico, resolución, frecuencia, adaptador y limitaciones.
+
+El estado no es ambiguo:
+
+- `connected`: la fuente participa actualmente en un cálculo de la API. Hoy corresponde a NASA POWER.
+- `metadata_available`: el backend puede consultar el catálogo público de metadatos NASA CMR sin descargar datos ni afirmar que existe una observación válida para la parcela.
+- `adapter_available`: existe el punto de integración y su documentación, pero todavía requiere ETL, autenticación, procesamiento raster o validación de formato antes de usarse en recomendaciones.
+
+La interfaz muestra este registro y enlaza a cada fuente oficial. El endpoint `probe` hace una comprobación limitada de disponibilidad; no descarga datasets masivos y no convierte una página accesible en evidencia agronómica.
 
 ## Esquema y actualización
 
