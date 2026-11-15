@@ -523,6 +523,10 @@ export function MapScreen({
           <TileLayer
             attribution={getBaseMapAttribution()}
             url={getBaseMapTileUrl(resolvedTheme)}
+            detectRetina
+            maxZoom={20}
+            minZoom={0}
+            subdomains="abcd"
           />
           <MapController targetCenter={mapCenter} targetZoom={mapZoom} />
 

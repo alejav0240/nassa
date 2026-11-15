@@ -26,6 +26,10 @@ export function PolygonMiniMap({ parcel, heightClass = 'h-44' }: PolygonMiniMapP
         <TileLayer
           attribution={getBaseMapAttribution()}
           url={getBaseMapTileUrl(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light')}
+          detectRetina
+          maxZoom={20}
+          minZoom={0}
+          subdomains="abcd"
         />
         {positions.length >= 3 && (
           <Polygon
