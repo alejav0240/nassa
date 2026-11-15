@@ -1,9 +1,11 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { ThemeToggle } from './components/ThemeToggle';
 import { AnimatePresence, motion } from 'motion/react';
 import { Smartphone, Monitor } from 'lucide-react';
 import { AlertsDrawer } from './components/AlertsDrawer';
+import { ConfirmDialog } from './components/ConfirmDialog';
 import { BottomNav, SideNavRail } from './components/BottomNav';
+import { ParcelFormModal } from './components/ParcelFormModal';
 import { useAgroTerraState } from './hooks/useAgroTerraState';
 const AnalysisScreen = lazy(() => import('./screens/AnalysisScreen').then(m => ({ default: m.AnalysisScreen })));
 import { HomeScreen } from './screens/HomeScreen';
@@ -12,8 +14,11 @@ const ParcelDetailScreen = lazy(() => import('./screens/ParcelDetailScreen').the
 const ParcelsScreen = lazy(() => import('./screens/ParcelsScreen').then(m => ({ default: m.ParcelsScreen })));
 const ProfileScreen = lazy(() => import('./screens/ProfileScreen').then(m => ({ default: m.ProfileScreen })));
 const DesignSystemScreen = lazy(() => import('./screens/DesignSystemScreen').then(m => ({ default: m.DesignSystemScreen })));
+import { Parcel } from './types/agroterra';
 
 export default function App() {
+  const [editingDetailParcel, setEditingDetailParcel] = useState<Parcel | null>(null);
+  const [deletingDetailParcel, setDeletingDetailParcel] = useState<Parcel | null>(null);
   const {
     activeTab,
     analysisSubTab,
@@ -63,18 +68,49 @@ export default function App() {
   const renderScreen = () => {
     if (detailParcel) {
       return (
-        <ParcelDetailScreen
-          parcel={detailParcel}
-          historyRecords={historyRecords}
-          preferences={preferences}
-          onBack={closeParcelDetail}
-          onAddObservation={addObservation}
-          onDeleteObservation={deleteObservation}
-          onOpenAnalysis={() => {
-            setSelectedParcelId(detailParcel.id);
-            navigateTo('analisis', 'satelital');
-          }}
-        />
+        <>
+          <ParcelDetailScreen
+            parcel={detailParcel}
+            historyRecords={historyRecords}
+            preferences={preferences}
+            onBack={closeParcelDetail}
+            onAddObservation={addObservation}
+            onDeleteObservation={deleteObservation}
+            onEdit={() => setEditingDetailParcel(detailParcel)}
+            onDelete={() => setDeletingDetailParcel(detailParcel)}
+            onOpenAnalysis={() => {
+              setSelectedParcelId(detailParcel.id);
+              navigateTo('analisis', 'satelital');
+            }}
+            onOpenHistory={() => {
+              setSelectedParcelId(detailParcel.id);
+              navigateTo('analisis', 'historial');
+            }}
+          />
+          <ParcelFormModal
+            open={Boolean(editingDetailParcel)}
+            initialParcel={editingDetailParcel}
+            onClose={() => setEditingDetailParcel(null)}
+            onSave={(saved) => {
+              updateParcel(saved);
+              setEditingDetailParcel(null);
+            }}
+          />
+          <ConfirmDialog
+            open={Boolean(deletingDetailParcel)}
+            title="Eliminar parcela"
+            message={
+              deletingDetailParcel
+                ? `¿Deseas eliminar "${deletingDetailParcel.name}"? Esta acción solo afecta el almacenamiento local del prototipo.`
+                : ''
+            }
+            onCancel={() => setDeletingDetailParcel(null)}
+            onConfirm={() => {
+              if (deletingDetailParcel) deleteParcel(deletingDetailParcel.id);
+              setDeletingDetailParcel(null);
+            }}
+          />
+        </>
       );
     }
 
@@ -89,6 +125,11 @@ export default function App() {
             backendStatus={backendStatus}
             dataSource={dataSource}
             syncStatus={syncStatus}
+            analysisStatus={analysisStatus}
+            backendAnalysis={backendAnalysis}
+            analysisIsStale={analysisIsStale}
+            analysisError={analysisError}
+            onRunAnalysis={runBackendAnalysis}
             onSelectParcel={setSelectedParcelId}
             onOpenParcelDetail={openParcelDetail}
             onNavigate={navigateTo}

@@ -278,6 +278,11 @@ html, body { background: var(--agro-canvas); color: var(--agro-text); }
 }
 .agro-bottom-nav { background: var(--agro-nav); }
 .agro-side-nav { background: var(--agro-sidebar); }
+.agro-map-canvas { height: calc(100dvh - 160px - env(safe-area-inset-bottom)); }
+.agro-map-canvas.agro-map-canvas--simulated { height: 748px; }
+@media (min-width: 1024px) {
+  .agro-map-canvas { height: calc(100vh - 32px); }
+}
 /* Keep the forest hero legible in both themes. */
 .agro-home-header {
   --agro-surface: #1b3726; --agro-text: #f2f8ec; --agro-muted: #b7cdb4;

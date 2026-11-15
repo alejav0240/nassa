@@ -31,7 +31,7 @@ export interface BackendField {
   hectares: number;
   soil_texture: 'arenosa' | 'franca' | 'arcillosa' | 'desconocida';
   irrigation: boolean;
-  current_crop: 'papa' | 'quinua' | 'haba' | 'cebada' | 'avena' | 'tarwi';
+  current_crop: 'papa' | 'quinua' | 'canahua' | 'cebada' | 'avena' | 'haba' | 'oca' | 'tarwi' | 'maiz' | 'trigo' | 'arveja' | 'arroz' | 'soya';
   soil_ph: number | null;
   geometry_geojson: {
     type: 'Polygon';
@@ -141,6 +141,11 @@ export interface ClimateAnomalies {
 export interface BackendRecommendation {
   id: string;
   label: string;
+  region: string;
+  harvest_days: string;
+  products: string;
+  food_safety_risks: string;
+  notes: string;
   score: number;
   status: 'compatible' | 'revisar' | 'no_priorizar';
   is_current: boolean;
@@ -203,7 +208,7 @@ export const backendApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ field_id: fieldId, priorities }),
     }),
-  recommendCrops: (fieldId: number, limit = 3) =>
+  recommendCrops: (fieldId: number, limit = 6) =>
     request<BackendRecommendations>('/recommendations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -88,10 +88,17 @@ def test_crop_recommendations_use_climate_and_expose_limits(client, monkeypatch)
     assert response.status_code == 200, response.text
     body = response.json()
     assert len(body['recommendations']) == 3
-    assert body['source'] == ['NASA POWER', 'Catálogo heurístico AgroShift AI']
+    assert body['source'] == ['NASA POWER', 'Perfil de suelo declarado', 'Catálogo heurístico AgroShift AI']
     assert body['data_quality']['complete_years'] == [2024]
     assert body['methodology']['limitations']
     assert all({'id', 'label', 'score', 'status', 'reasons', 'risks'} <= set(item) for item in body['recommendations'])
+    assert all({'temperature', 'soil'} <= set(item['criteria']) for item in body['recommendations'])
+
+def test_crop_catalog_contains_bolivian_catalog(client):
+    response = client.get('/api/crops')
+    assert response.status_code == 200
+    ids = {crop['id'] for crop in response.json()['crops']}
+    assert {'papa', 'quinua', 'canahua', 'oca', 'maiz', 'trigo', 'arveja', 'arroz', 'soya'} <= ids
 
 def test_climate_complete_year_and_missing_year():
     payload = power_payload()

@@ -400,9 +400,9 @@ export function MapScreen({
 
   return (
     <div
-      className={`relative w-full overflow-hidden bg-[var(--agro-surface-soft)] select-none ${
+      className={`agro-map-canvas relative w-full overflow-hidden bg-[var(--agro-surface-soft)] select-none ${
         isSimulatedFrame
-          ? 'h-[748px]'
+          ? 'agro-map-canvas--simulated h-[748px]'
           : 'h-[calc(100dvh-64px)] lg:h-[calc(100vh-32px)] lg:rounded-3xl border border-[var(--agro-line)]/90 shadow-xs'
       }`}
     >
@@ -540,8 +540,9 @@ export function MapScreen({
                 setSearchQuery(e.target.value);
                 setSearchOpen(true);
               }}
-              placeholder="Buscar parcela o zona agrícola..."
-              className="flex-1 bg-transparent text-sm text-[var(--agro-text)] placeholder:text-[var(--agro-muted)] focus:outline-none min-w-0"
+               placeholder="Buscar parcela o zona agrícola..."
+               aria-label="Buscar parcela o zona agrícola"
+               className="flex-1 bg-transparent text-sm text-[var(--agro-text)] placeholder:text-[var(--agro-muted)] focus:outline-none min-w-0"
             />
             {searchQuery ? (
               <button
@@ -577,6 +578,24 @@ export function MapScreen({
             <p className="text-[11px] text-[var(--agro-muted)] mt-2 leading-4">
               Tocá una parcela para abrir su ficha 3D o usá <strong>Dibujar</strong> para registrar una nueva.
             </p>
+          </div>
+        )}
+
+        {syncStatus !== 'idle' && (
+          <div
+            role="status"
+            className={`pointer-events-auto max-w-md rounded-2xl border px-3.5 py-2.5 text-xs shadow-md ${
+              syncStatus === 'error'
+                ? 'border-amber-200 bg-amber-50 text-amber-900'
+                : syncStatus === 'saving'
+                ? 'border-sky-200 bg-sky-50 text-sky-900'
+                : 'border-emerald-200 bg-emerald-50 text-emerald-900'
+            }`}
+          >
+            {syncStatus === 'saving' && 'Guardando parcela…'}
+            {syncStatus === 'saved' && 'Parcela guardada y sincronizada.'}
+            {syncStatus === 'error' &&
+              'Parcela guardada localmente. No se pudo sincronizar con el servidor.'}
           </div>
         )}
 
@@ -628,30 +647,34 @@ export function MapScreen({
                 </button>
               </div>
               <div className="max-h-56 overflow-y-auto divide-y divide-slate-100">
-                {searchResults.map((hit) => (
-                  <button
-                    key={hit.id}
-                    type="button"
-                    onClick={() => {
-                      setMapCenter([hit.lat, hit.lng]);
-                      setMapZoom(hit.zoom);
-                      if (hit.parcelId) {
-                         onSelectParcel(hit.parcelId);
-                         onOpenParcelDetail(hit.parcelId);
-                      }
-                      setSearchOpen(false);
-                    }}
-                    className="w-full px-4 py-3 text-left hover:bg-[var(--agro-success-bg)] flex items-center gap-3 transition-colors"
-                  >
-                    <div className="w-8 h-8 rounded-xl bg-[var(--agro-selected)] text-[var(--agro-lime)] flex items-center justify-center shrink-0">
-                      <MapPin className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-[var(--agro-text)] truncate">{hit.label}</p>
-                      <p className="text-[11px] text-[var(--agro-muted)] truncate">{hit.sub}</p>
-                    </div>
-                  </button>
-                ))}
+                {searchResults.length === 0 ? (
+                  <div className="px-4 py-4 text-xs text-[var(--agro-muted)]" role="status">
+                    No encontramos parcelas ni zonas con “{searchQuery.trim()}”. Probá con otro término.
+                  </div>
+                ) : searchResults.map((hit) => (
+                    <button
+                      key={hit.id}
+                      type="button"
+                      onClick={() => {
+                        setMapCenter([hit.lat, hit.lng]);
+                        setMapZoom(hit.zoom);
+                        if (hit.parcelId) {
+                           onSelectParcel(hit.parcelId);
+                           onOpenParcelDetail(hit.parcelId);
+                        }
+                        setSearchOpen(false);
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-[var(--agro-success-bg)] flex items-center gap-3 transition-colors"
+                    >
+                      <div className="w-8 h-8 rounded-xl bg-[var(--agro-selected)] text-[var(--agro-lime)] flex items-center justify-center shrink-0">
+                        <MapPin className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-[var(--agro-text)] truncate">{hit.label}</p>
+                        <p className="text-[11px] text-[var(--agro-muted)] truncate">{hit.sub}</p>
+                      </div>
+                    </button>
+                  ))}
               </div>
             </motion.div>
           )}
@@ -845,7 +868,7 @@ export function MapScreen({
         </AnimatePresence>
 
         {/* Empty State / Selected Parcel Bottom Sheet */}
-        <div className="pointer-events-auto w-full max-w-md lg:max-w-xl">
+         <div className="pointer-events-auto w-full max-w-md lg:max-w-xl max-h-[48dvh] overflow-y-auto no-scrollbar lg:max-h-none lg:overflow-visible">
           {parcels.length === 0 ? (
             <div className="bg-[var(--agro-surface)] backdrop-blur-md rounded-3xl p-4 border border-[var(--agro-line)] shadow-xl text-center space-y-2.5">
               <p className="text-sm font-bold text-[var(--agro-text)]">
@@ -1067,9 +1090,10 @@ export function MapScreen({
                 >
                   <option value="Papa">Papa</option>
                   <option value="Quinua">Quinua</option>
-                  <option value="Maíz">Maíz</option>
                   <option value="Haba">Haba</option>
                   <option value="Cebada">Cebada</option>
+                  <option value="Avena">Avena</option>
+                  <option value="Tarwi">Tarwi</option>
                 </select>
               </div>
               <div>

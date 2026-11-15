@@ -51,6 +51,13 @@ export function formatCoordinates(point: LatLngPoint): string {
 }
 
 /**
+ * Builds a stable OpenStreetMap link for a parcel centroid.
+ */
+export function getOpenStreetMapUrl(point: LatLngPoint): string {
+  return `https://www.openstreetmap.org/?mlat=${point.lat}&mlon=${point.lng}#map=16/${point.lat}/${point.lng}`;
+}
+
+/**
  * Checks whether a parcel is smaller than a satellite sensor's native pixel footprint.
  */
 export function checkSpatialRepresentativeness(
