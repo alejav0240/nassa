@@ -19,8 +19,9 @@ export default async function handler(request) {
   }
 
   const requestUrl = new URL(request.url);
-  const path = requestUrl.searchParams.get('path')?.replace(/^\/+|\/+$/g, '') ?? '';
-  requestUrl.searchParams.delete('path');
+  const path = requestUrl.pathname
+    .replace(/^\/api\/?/, '')
+    .replace(/^\/+|\/+$/g, '');
 
   const target = new URL(`${backendUrl}/api/${path}`);
   target.search = requestUrl.search;
@@ -52,3 +53,7 @@ export default async function handler(request) {
     return json({ detail: `No se pudo conectar con el backend: ${error instanceof Error ? error.message : 'error desconocido'}` }, 502);
   }
 }
+
+export const config = {
+  path: '/api/*',
+};
