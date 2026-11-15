@@ -1,6 +1,7 @@
 import { Ruler, X } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { LatLngPoint, MonitoringStatus, Parcel, ParcelMeasurement } from '../types/agroshift';
+
 import {
   createReferencePolygon,
   formatAreaHa,
@@ -8,6 +9,7 @@ import {
   formatSquareMeters,
 } from '../utils/parcelGeometry';
 import { ParcelScanner } from './ParcelScanner';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 
 interface ParcelFormModalProps {
   open: boolean;
@@ -56,6 +58,7 @@ function isValidDate(value: string) {
   return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
 }
 
+
 export function ParcelFormModal({
   open,
   initialParcel,
@@ -78,6 +81,12 @@ export function ParcelFormModal({
   const [measurement, setMeasurement] = useState<ParcelMeasurement | null>(null);
   const [scannedPolygon, setScannedPolygon] = useState<LatLngPoint[] | null>(null);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useDialogA11y({
+    open,
+    onClose,
+    initialFocusRef: nameInputRef,
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -89,6 +98,7 @@ export function ParcelFormModal({
       setCrop(initialParcel.crop);
       setPlantingDate(isValidDate(initialParcel.plantingDate) ? initialParcel.plantingDate : '');
       setEstimatedHarvestDate(isValidDate(initialParcel.estimatedHarvestDate) ? initialParcel.estimatedHarvestDate : '');
+
       setLat(String(initialParcel.measurement?.centroid.lat ?? initialParcel.centroid.lat));
       setLng(String(initialParcel.measurement?.centroid.lng ?? initialParcel.centroid.lng));
       setMonitoringStatus(initialParcel.monitoringStatus);
@@ -296,6 +306,7 @@ export function ParcelFormModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="parcel-form-title"
+      ref={dialogRef}
     >
       <div className="bg-[var(--agro-surface)] w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90dvh] flex flex-col shadow-xl overflow-hidden">
         <div className="w-10 h-1.5 bg-[var(--agro-canvas)] rounded-full mx-auto mt-3 sm:hidden" />
@@ -332,6 +343,7 @@ export function ParcelFormModal({
             <input
               id="parcel-field-name"
               type="text"
+              ref={nameInputRef}
               value={name}
               onChange={(e) => { setName(e.target.value); clearFieldError('name'); }}
               onFocus={() => setFocusedField('name')}
@@ -368,6 +380,7 @@ export function ParcelFormModal({
                 {CROP_OPTIONS.map((option) => (
                   <option key={option} value={option}>{option === 'Descanso' ? 'En descanso' : option}</option>
                 ))}
+
               </select>
               {fieldMessage('crop')}
             </div>

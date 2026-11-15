@@ -8,7 +8,7 @@ import {
   Undo2,
   X,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   CircleMarker,
   MapContainer,
@@ -28,6 +28,7 @@ import {
   normalizePolygonPoints,
   validateParcelPolygon,
 } from '../utils/parcelGeometry';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 
 interface ParcelScannerProps {
   open: boolean;
@@ -88,6 +89,12 @@ export function ParcelScanner({
   onClose,
   onConfirm,
 }: ParcelScannerProps) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useDialogA11y({
+    open,
+    onClose,
+    initialFocusRef: closeButtonRef,
+  });
   const [points, setPoints] = useState<LatLngPoint[]>([]);
   const [focus, setFocus] = useState<{
     center: [number, number];
@@ -169,6 +176,7 @@ export function ParcelScanner({
       role="dialog"
       aria-modal="true"
       aria-labelledby="parcel-scanner-title"
+      ref={dialogRef}
     >
       <div className="relative h-full w-full sm:max-w-5xl sm:mx-auto sm:h-full bg-[var(--agro-surface)] sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col">
         <div className="absolute top-0 left-0 right-0 z-[500] p-3 sm:p-4 pointer-events-none">
@@ -194,6 +202,7 @@ export function ParcelScanner({
             <button
               type="button"
               onClick={onClose}
+              ref={closeButtonRef}
               aria-label="Cerrar escáner"
               className="min-h-[44px] min-w-[44px] rounded-full text-[var(--agro-muted)] hover:bg-[var(--agro-selected)] flex items-center justify-center shrink-0"
             >

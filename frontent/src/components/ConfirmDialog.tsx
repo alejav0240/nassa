@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import { AlertTriangle } from 'lucide-react';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -17,6 +19,13 @@ export function ConfirmDialog({
   onCancel,
   onConfirm,
 }: ConfirmDialogProps) {
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useDialogA11y({
+    open,
+    onClose: onCancel,
+    initialFocusRef: cancelButtonRef,
+  });
+
   if (!open) return null;
 
   return (
@@ -25,6 +34,7 @@ export function ConfirmDialog({
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="confirm-title"
+      ref={dialogRef}
     >
       <div className="bg-[var(--agro-surface)] w-full max-w-sm rounded-3xl p-5 shadow-xl border border-[var(--agro-line)] space-y-4">
         <div className="flex items-start gap-3">
@@ -42,6 +52,7 @@ export function ConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
+            ref={cancelButtonRef}
             className="flex-1 h-11 rounded-xl border border-[var(--agro-line)] text-sm font-semibold text-[var(--agro-text)] hover:bg-[var(--agro-surface-soft)]"
           >
             Cancelar

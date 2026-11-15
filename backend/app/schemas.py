@@ -4,7 +4,7 @@ from shapely.geometry import shape
 from shapely.validation import explain_validity
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 
-CropId = Literal['papa','quinua','haba','cebada','avena','tarwi']
+CropId = Literal['papa','quinua','canahua','cebada','avena','haba','oca','tarwi','maiz','trigo','arveja','arroz','soya']
 SoilTexture = Literal['arenosa','franca','arcillosa','desconocida']
 
 class StrictModel(BaseModel):
@@ -65,12 +65,17 @@ class AnalyzeRequest(StrictModel):
 
 class RecommendationRequest(StrictModel):
     field_id: int = Field(gt=0)
-    limit: int = Field(default=3, ge=1, le=6)
+    limit: int = Field(default=6, ge=1, le=12)
 
 
 class CropRecommendationRead(BaseModel):
     id: str
     label: str
+    region: str
+    harvest_days: str
+    products: str
+    food_safety_risks: str
+    notes: str
     score: float
     status: Literal['compatible', 'revisar', 'no_priorizar']
     is_current: bool

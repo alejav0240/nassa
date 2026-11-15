@@ -107,9 +107,9 @@ export function SideNavRail({ activeTab, onSelect }: { activeTab: NavTab; onSele
       </div>
 
       <div className="p-3.5 rounded-2xl bg-[var(--agro-surface-soft)] border border-[var(--agro-line)]/80 text-xs text-[var(--agro-muted)] leading-relaxed">
-        <p className="font-semibold text-[var(--agro-text)] mb-1">Prototipo demostrativo</p>
+        <p className="font-semibold text-[var(--agro-text)] mb-1">Datos con procedencia</p>
         <p>
-          Series ambientales y capas temáticas simuladas para evaluación de flujo móvil en Bolivia.
+          El análisis distingue datos disponibles, pendientes de integración y validación local.
         </p>
       </div>
     </aside>

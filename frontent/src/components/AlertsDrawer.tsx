@@ -10,8 +10,9 @@ import {
   Thermometer,
   X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { AlertCategory, AppAlert, UserPreferences } from '../types/agroshift';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 
 interface AlertsDrawerProps {
   open: boolean;
@@ -44,6 +45,12 @@ export function AlertsDrawer({
 }: AlertsDrawerProps) {
   const [filter, setFilter] = useState<'Todas' | AlertCategory>('Todas');
   const [selectedAlert, setSelectedAlert] = useState<AppAlert | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useDialogA11y({
+    open,
+    onClose,
+    initialFocusRef: closeButtonRef,
+  });
 
   if (!open) return null;
 
@@ -80,6 +87,7 @@ export function AlertsDrawer({
       role="dialog"
       aria-modal="true"
       aria-labelledby="alerts-drawer-title"
+      ref={dialogRef}
     >
       <div className="bg-[var(--agro-surface)] w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl h-[86dvh] sm:h-[80dvh] flex flex-col shadow-xl overflow-hidden">
         <div className="w-10 h-1.5 bg-[var(--agro-canvas)] rounded-full mx-auto mt-3 sm:hidden" />
@@ -108,6 +116,7 @@ export function AlertsDrawer({
             <button
               type="button"
               onClick={onClose}
+              ref={closeButtonRef}
               aria-label="Cerrar notificaciones"
               className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-[var(--agro-muted)] hover:bg-[var(--agro-surface-soft)]"
             >

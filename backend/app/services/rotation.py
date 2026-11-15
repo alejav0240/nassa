@@ -2,20 +2,61 @@
 from .nasa import SOURCE_URL
 
 CROPS = {
- 'papa': {'label': 'Papa', 'water': 65, 'soil': 35, 'market': 75, 'min_rain': 350, 'max_frost': 140, 'family': 'solanaceae', 'notes': 'Cultivo con alta sensibilidad a manejo de heladas y enfermedades.'},
- 'quinua': {'label': 'Quinua', 'water': 85, 'soil': 55, 'market': 65, 'min_rain': 200, 'max_frost': 200, 'family': 'amaranthaceae', 'notes': 'Adaptación variable por ecotipo; validar ciclo y salinidad.'},
- 'haba': {'label': 'Haba', 'water': 55, 'soil': 90, 'market': 62, 'min_rain': 400, 'max_frost': 130, 'family': 'fabaceae', 'notes': 'Leguminosa; potencial de fijación de N condicionado por manejo e inoculación.'},
- 'cebada': {'label': 'Cebada', 'water': 75, 'soil': 58, 'market': 60, 'min_rain': 250, 'max_frost': 175, 'family': 'poaceae', 'notes': 'Puede aportar cobertura; se debe evaluar competencia por agua.'},
- 'avena': {'label': 'Avena', 'water': 60, 'soil': 75, 'market': 48, 'min_rain': 350, 'max_frost': 155, 'family': 'poaceae', 'notes': 'Posible cobertura o forraje según disponibilidad de agua.'},
- 'tarwi': {'label': 'Tarwi', 'water': 70, 'soil': 95, 'market': 50, 'min_rain': 300, 'max_frost': 165, 'family': 'fabaceae', 'notes': 'Leguminosa andina; verificar mercado, variedades y manejo.'},
+    'papa': {'label': 'Papa', 'scientific_name': 'Solanum tuberosum', 'region': 'Altiplano y valles', 'harvest_days': '90–180 días', 'products': 'Papa fresca, chuño, tunta, harina y almidón', 'risks': 'Tizón tardío, heladas, sequía y glicoalcaloides en tubérculos verdes.', 'water': 65, 'soil': 75, 'market': 75, 'min_rain': 350, 'max_rain': 800, 'min_temp': 10, 'max_temp': 20, 'ph_min': 5.0, 'ph_max': 6.5, 'soil_textures': {'franca', 'arenosa'}, 'max_frost': 140, 'family': 'solanaceae', 'notes': 'Suelo profundo y bien drenado; validar variedad y manejo de heladas.'},
+    'quinua': {'label': 'Quinua', 'scientific_name': 'Chenopodium quinoa', 'region': 'Altiplano', 'harvest_days': '120–240 días', 'products': 'Grano, harina y productos procesados', 'risks': 'Saponinas; desaponificar antes del consumo. Validar salinidad y ecotipo.', 'water': 85, 'soil': 65, 'market': 65, 'min_rain': 200, 'max_rain': 600, 'min_temp': 8, 'max_temp': 20, 'ph_min': 5.5, 'ph_max': 8.0, 'soil_textures': {'franca', 'arenosa', 'arcillosa'}, 'max_frost': 200, 'family': 'amaranthaceae', 'notes': 'Adaptación variable por ecotipo y tolerancia a sequía.'},
+    'canahua': {'label': 'Cañahua', 'scientific_name': 'Chenopodium pallidicaule', 'region': 'Altiplano', 'harvest_days': '110–180 días', 'products': 'Grano, harina y bebidas', 'risks': 'Heladas intensas, sequía extrema y pérdida de calidad por mala poscosecha.', 'water': 90, 'soil': 60, 'market': 45, 'min_rain': 200, 'max_rain': 500, 'min_temp': 8, 'max_temp': 18, 'ph_min': 5.5, 'ph_max': 8.0, 'soil_textures': {'franca', 'arenosa'}, 'max_frost': 220, 'family': 'amaranthaceae', 'notes': 'Cultivo andino rústico; verificar disponibilidad de semilla local.'},
+    'cebada': {'label': 'Cebada', 'scientific_name': 'Hordeum vulgare', 'region': 'Altiplano y valles', 'harvest_days': '100–180 días', 'products': 'Grano, malta, harina y forraje', 'risks': 'Roya, sequía, granos contaminados y micotoxinas por mala poscosecha.', 'water': 75, 'soil': 70, 'market': 60, 'min_rain': 250, 'max_rain': 600, 'min_temp': 8, 'max_temp': 20, 'ph_min': 6.0, 'ph_max': 8.0, 'soil_textures': {'franca', 'arenosa', 'arcillosa'}, 'max_frost': 175, 'family': 'poaceae', 'notes': 'Puede aportar cobertura; evaluar competencia por agua.'},
+    'avena': {'label': 'Avena', 'scientific_name': 'Avena sativa', 'region': 'Altiplano y valles', 'harvest_days': '90–180 días', 'products': 'Grano, harina y forraje', 'risks': 'Roya, sequía y micotoxinas por mala poscosecha.', 'water': 60, 'soil': 75, 'market': 48, 'min_rain': 350, 'max_rain': 700, 'min_temp': 8, 'max_temp': 20, 'ph_min': 5.5, 'ph_max': 7.5, 'soil_textures': {'franca', 'arenosa'}, 'max_frost': 155, 'family': 'poaceae', 'notes': 'Posible cobertura o forraje según disponibilidad de agua.'},
+    'haba': {'label': 'Haba', 'scientific_name': 'Vicia faba', 'region': 'Altiplano y valles', 'harvest_days': '120–210 días', 'products': 'Haba fresca, seca y harina', 'risks': 'Ascochyta, heladas y favismo en personas susceptibles a G6PD.', 'water': 55, 'soil': 85, 'market': 62, 'min_rain': 400, 'max_rain': 800, 'min_temp': 8, 'max_temp': 20, 'ph_min': 6.0, 'ph_max': 7.5, 'soil_textures': {'franca', 'arcillosa'}, 'max_frost': 130, 'family': 'fabaceae', 'notes': 'Leguminosa; fijación de N condicionada por manejo e inoculación.'},
+    'oca': {'label': 'Oca', 'scientific_name': 'Oxalis tuberosa', 'region': 'Altiplano y valles altos', 'harvest_days': '180–270 días', 'products': 'Oca fresca, deshidratada y mermeladas', 'risks': 'Heladas, pudriciones y oxalatos según variedad y preparación.', 'water': 60, 'soil': 72, 'market': 48, 'min_rain': 350, 'max_rain': 700, 'min_temp': 8, 'max_temp': 18, 'ph_min': 5.0, 'ph_max': 7.0, 'soil_textures': {'franca', 'arenosa'}, 'max_frost': 170, 'family': 'oxalidaceae', 'notes': 'Requiere ciclo largo; validar calendario y manejo de tubérculos.'},
+    'tarwi': {'label': 'Tarwi', 'scientific_name': 'Lupinus mutabilis', 'region': 'Altiplano y valles', 'harvest_days': '150–330 días', 'products': 'Grano, harina y bebidas', 'risks': 'Alcaloides tóxicos; desamargado alimentario validado y alergias a lupino.', 'water': 70, 'soil': 90, 'market': 50, 'min_rain': 300, 'max_rain': 700, 'min_temp': 8, 'max_temp': 20, 'ph_min': 5.0, 'ph_max': 7.5, 'soil_textures': {'franca', 'arenosa'}, 'max_frost': 165, 'family': 'fabaceae', 'notes': 'Leguminosa andina; verificar mercado y variedad.'},
+    'maiz': {'label': 'Maíz', 'scientific_name': 'Zea mays', 'region': 'Valles, Chaco y llanos', 'harvest_days': '90–180 días', 'products': 'Grano, choclo, harina y forraje', 'risks': 'Sequía, heladas, pudriciones y micotoxinas por mala poscosecha.', 'water': 45, 'soil': 70, 'market': 78, 'min_rain': 500, 'max_rain': 1000, 'min_temp': 18, 'max_temp': 30, 'ph_min': 5.5, 'ph_max': 7.5, 'soil_textures': {'franca', 'arcillosa'}, 'max_frost': 20, 'family': 'poaceae', 'notes': 'Requiere ambiente cálido y suficiente agua durante floración.'},
+    'trigo': {'label': 'Trigo', 'scientific_name': 'Triticum aestivum', 'region': 'Valles y llanos', 'harvest_days': '110–180 días', 'products': 'Harina, grano y forraje', 'risks': 'Roya, sequía y micotoxinas por almacenamiento deficiente.', 'water': 60, 'soil': 70, 'market': 70, 'min_rain': 350, 'max_rain': 700, 'min_temp': 12, 'max_temp': 23, 'ph_min': 6.0, 'ph_max': 7.5, 'soil_textures': {'franca', 'arcillosa'}, 'max_frost': 90, 'family': 'poaceae', 'notes': 'Validar variedad, fecha de siembra y riesgo de roya.'},
+    'arveja': {'label': 'Arveja', 'scientific_name': 'Pisum sativum', 'region': 'Valles y zonas altas', 'harvest_days': '60–150 días', 'products': 'Vaina fresca, grano seco y harina', 'risks': 'Oídio, heladas en floración y exceso de humedad.', 'water': 55, 'soil': 78, 'market': 68, 'min_rain': 300, 'max_rain': 700, 'min_temp': 8, 'max_temp': 20, 'ph_min': 6.0, 'ph_max': 7.5, 'soil_textures': {'franca', 'arenosa'}, 'max_frost': 100, 'family': 'fabaceae', 'notes': 'Ciclo corto; requiere buen drenaje y manejo de enfermedades.'},
+    'arroz': {'label': 'Arroz', 'scientific_name': 'Oryza sativa', 'region': 'Llanos tropicales', 'harvest_days': '80–150 días', 'products': 'Grano, harina y subproductos', 'risks': 'Manejo de agua, enfermedades, micotoxinas y contaminación poscosecha.', 'water': 95, 'soil': 55, 'market': 82, 'min_rain': 1000, 'max_rain': 2000, 'min_temp': 20, 'max_temp': 30, 'ph_min': 5.0, 'ph_max': 7.0, 'soil_textures': {'arcillosa', 'franca'}, 'max_frost': 0, 'family': 'poaceae', 'notes': 'No priorizar sin agua controlada y ambiente cálido.'},
+    'soya': {'label': 'Soya', 'scientific_name': 'Glycine max', 'region': 'Llanos', 'harvest_days': '100–160 días', 'products': 'Grano, aceite, harina y alimentos procesados', 'risks': 'Plagas, sequía, alergias y micotoxinas por mala poscosecha.', 'water': 75, 'soil': 72, 'market': 80, 'min_rain': 600, 'max_rain': 1200, 'min_temp': 20, 'max_temp': 30, 'ph_min': 5.5, 'ph_max': 7.5, 'soil_textures': {'franca', 'arcillosa'}, 'max_frost': 5, 'family': 'fabaceae', 'notes': 'Requiere ambiente cálido, drenaje y manejo de inoculación.'},
 }
 
 # Coefficients are openly declared demonstration assumptions, not calibrated measurements.
-CROP_METADATA = {'provenance': 'Parámetros heurísticos ilustrativos del prototipo. Requieren calibración con fuentes agronómicas y expertos locales.', 'source': 'Equipo AgroShift AI'}
+CROP_METADATA = {'provenance': 'Fichas orientativas y parámetros heurísticos del prototipo. Requieren calibración por variedad, localidad y expertos locales.', 'source': 'AgroShift AI; referencias de orientación FAO/CIP declaradas por el producto'}
+
+
+def _range_score(value: float, minimum: float, maximum: float) -> float:
+    if minimum <= value <= maximum:
+        return 100.0
+    distance = minimum - value if value < minimum else value - maximum
+    width = max(maximum - minimum, 1)
+    return round(max(0, 100 - (distance / width) * 100), 1)
+
+
+def _soil_fit(field, crop: dict) -> tuple[float, list[str], list[str]]:
+    reasons: list[str] = []
+    risks: list[str] = []
+    texture = field.soil_texture
+    ph = field.soil_ph
+    texture_score = 60.0
+    ph_score = 60.0
+    if texture == 'desconocida':
+        risks.append('Falta textura de suelo medida; la compatibilidad física queda pendiente.')
+    elif texture in crop['soil_textures']:
+        texture_score = 100.0
+        reasons.append(f"La textura declarada ({texture}) coincide con el perfil orientativo.")
+    else:
+        texture_score = 25.0
+        risks.append(f"La textura declarada ({texture}) no es la preferida para {crop['label']}.")
+    if ph is None:
+        risks.append('Falta pH medido; validar acidez antes de decidir la siembra.')
+    else:
+        ph_score = _range_score(ph, crop['ph_min'], crop['ph_max'])
+        if crop['ph_min'] <= ph <= crop['ph_max']:
+            reasons.append(f"El pH declarado ({ph}) está dentro del rango orientativo {crop['ph_min']}–{crop['ph_max']}.")
+        else:
+            risks.append(f"El pH declarado ({ph}) queda fuera del rango orientativo {crop['ph_min']}–{crop['ph_max']}.")
+    return round((texture_score + ph_score) / 2, 1), reasons, risks
 
 
 def recommend_crops(field, climate: dict, limit: int = 3) -> dict:
-    """Rank crops using observed climate plus transparent prototype coefficients.
+    """Rank crops using observed climate and declared parcel properties.
 
     This is an exploratory compatibility screen, not a yield forecast or an
     agronomic recommendation. Missing soil data is reported as uncertainty
@@ -23,20 +64,26 @@ def recommend_crops(field, climate: dict, limit: int = 3) -> dict:
     """
     rain = climate['annual_rainfall_mm']
     frost = climate['annual_frost_days']
+    mean_temp = climate['mean_temperature_c']
     recommendations = []
     for crop_id, crop in CROPS.items():
-        rainfall_score = min(100, round((rain / crop['min_rain']) * 100, 1)) if crop['min_rain'] else 0
-        frost_score = min(100, round((crop['max_frost'] / max(frost, 1)) * 100, 1))
-        climate_score = round((rainfall_score + frost_score) / 2, 1)
-        soil_score = float(crop['soil'])
+        rainfall_score = _range_score(rain, crop['min_rain'], crop['max_rain'])
+        temperature_score = _range_score(mean_temp, crop['min_temp'], crop['max_temp'])
+        frost_score = min(100, round((crop['max_frost'] / max(frost, 1)) * 100, 1)) if crop['max_frost'] else (100.0 if frost <= 1 else 0.0)
+        climate_score = round((rainfall_score + temperature_score + frost_score) / 3, 1)
+        soil_score, soil_reasons, soil_risks = _soil_fit(field, crop)
         market_score = float(crop['market'])
         score = round(climate_score * 0.55 + soil_score * 0.25 + market_score * 0.20, 1)
-        reasons = []
-        risks = []
-        if rain >= crop['min_rain']:
-            reasons.append(f"La precipitación histórica ({rain} mm/año) supera el umbral orientativo de {crop['min_rain']} mm.")
+        reasons = list(soil_reasons)
+        risks = list(soil_risks)
+        if rainfall_score >= 75:
+            reasons.append(f"La precipitación histórica ({rain} mm/año) está cerca del rango orientativo {crop['min_rain']}–{crop['max_rain']} mm.")
         else:
-            risks.append(f"La precipitación histórica ({rain} mm/año) queda por debajo del umbral orientativo de {crop['min_rain']} mm.")
+            risks.append(f"La precipitación histórica ({rain} mm/año) se aleja del rango orientativo {crop['min_rain']}–{crop['max_rain']} mm.")
+        if temperature_score >= 75:
+            reasons.append(f"La temperatura media histórica ({mean_temp} °C) es compatible con el rango orientativo {crop['min_temp']}–{crop['max_temp']} °C.")
+        else:
+            risks.append(f"La temperatura media histórica ({mean_temp} °C) se aleja del rango orientativo {crop['min_temp']}–{crop['max_temp']} °C.")
         if frost <= crop['max_frost']:
             reasons.append(f"Las heladas aproximadas ({frost} días/año) están dentro del límite ilustrativo de {crop['max_frost']} días.")
         else:
@@ -45,10 +92,6 @@ def recommend_crops(field, climate: dict, limit: int = 3) -> dict:
             reasons.append('La parcela declara disponibilidad de riego, sujeta a validar caudal y calendario.')
         else:
             risks.append('No se declaró riego: validar la distribución mensual de lluvia y la humedad del suelo.')
-        if field.soil_texture == 'desconocida' or field.soil_ph is None:
-            risks.append('Faltan textura y/o pH medidos; la compatibilidad del suelo no está verificada.')
-        else:
-            reasons.append(f"Se incorporó el perfil declarado de suelo ({field.soil_texture}, pH {field.soil_ph}).")
         status = 'compatible' if score >= 70 and not risks else 'revisar' if score >= 50 else 'no_priorizar'
         recommendations.append({
             'id': crop_id,
@@ -56,28 +99,35 @@ def recommend_crops(field, climate: dict, limit: int = 3) -> dict:
             'score': score,
             'status': status,
             'is_current': crop_id == field.current_crop,
+            'region': crop['region'],
+            'harvest_days': crop['harvest_days'],
+            'products': crop['products'],
+            'food_safety_risks': crop['risks'],
+            'notes': crop['notes'],
             'reasons': reasons[:3],
             'risks': risks[:3],
             'criteria': {
                 'climate': {'score': climate_score, 'label': 'Compatibilidad climática'},
-                'rainfall': {'score': rainfall_score, 'observed_mm': rain, 'threshold_mm': crop['min_rain']},
+                'rainfall': {'score': rainfall_score, 'observed_mm': rain, 'minimum_mm': crop['min_rain'], 'maximum_mm': crop['max_rain']},
+                'temperature': {'score': temperature_score, 'observed_c': mean_temp, 'minimum_c': crop['min_temp'], 'maximum_c': crop['max_temp']},
                 'frost': {'score': frost_score, 'observed_days': frost, 'threshold_days': crop['max_frost']},
-                'soil': {'score': soil_score, 'label': 'Coeficiente heurístico de suelo'},
+                'soil': {'score': soil_score, 'texture': field.soil_texture, 'ph': field.soil_ph, 'ph_min': crop['ph_min'], 'ph_max': crop['ph_max'], 'label': 'Textura y pH declarados'},
                 'market': {'score': market_score, 'label': 'Coeficiente heurístico de mercado'},
             },
         })
     recommendations.sort(key=lambda item: item['score'], reverse=True)
     return {
         'field_id': field.id,
-        'source': ['NASA POWER', 'Catálogo heurístico AgroShift AI'],
+        'source': ['NASA POWER', 'Perfil de suelo declarado', 'Catálogo heurístico AgroShift AI'],
         'climate_years': climate['years'],
         'data_quality': climate.get('data_quality'),
         'recommendations': recommendations[:limit],
         'methodology': {
-            'formula': '55% clima + 25% suelo heurístico + 20% mercado heurístico',
+            'formula': '55% clima (lluvia, temperatura y heladas) + 25% textura/pH + 20% mercado heurístico',
             'scope': 'Filtro exploratorio de compatibilidad; no predice rendimiento, ingresos ni éxito agronómico.',
             'limitations': [
-                'Los coeficientes no están calibrados con ECOCROP ni validados localmente en esta versión.',
+                'Los umbrales y coeficientes son orientativos; no están calibrados por variedad ni validados localmente en esta versión.',
+                'La textura y el pH provienen del registro de la parcela, no sustituyen un análisis de laboratorio.',
                 'No se usa altitud porque todavía no es un dato persistido en la API de parcelas.',
                 'La precipitación anual no sustituye balance hídrico mensual ni calendario fenológico.',
                 'Validar semillas, plagas, manejo, mercado y recomendación con especialistas locales.',

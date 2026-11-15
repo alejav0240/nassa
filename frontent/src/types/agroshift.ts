@@ -2,6 +2,8 @@ export type NavTab = 'inicio' | 'mapa' | 'parcelas' | 'analisis' | 'perfil';
 
 export type AnalysisSubTab = 'satelital' | 'fusion' | 'fuentes' | 'insights' | 'historial';
 
+export type SyncStatus = 'idle' | 'saving' | 'saved' | 'error';
+
 export type MonitoringStatus = 'Disponible' | 'Parcial' | 'En revisión';
 
 export type DataQualityLevel =

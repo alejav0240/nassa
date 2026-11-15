@@ -1,12 +1,12 @@
-import { ChevronDown, Droplets, Sprout, WalletCards } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ChevronDown, Droplets, Loader2, RefreshCw, Sprout, WalletCards } from 'lucide-react';
 import { useState } from 'react';
 import { DataSourcesCatalog } from '../components/DataSourcesCatalog';
 import { ClimateAnomaliesSection } from '../components/ClimateAnomaliesSection';
+import { CropRecommendationsPanel } from '../components/CropRecommendationsPanel';
 import {
   AnalysisSubTab,
   CropHistoryRecord,
   Parcel,
-  UserPreferences,
 } from '../types/agroshift';
 import { getParcelAreaHa } from '../utils/parcelGeometry';
 import { FusionTab } from './analysis/FusionTab';
@@ -23,7 +23,6 @@ interface AnalysisScreenProps {
   onSelectParcel: (id: string) => void;
   historyRecords: CropHistoryRecord[];
   onAddHistory: (record: CropHistoryRecord) => void;
-  preferences: UserPreferences;
   analysisStatus: 'idle' | 'loading' | 'ready' | 'error';
   backendAnalysis: BackendAnalysis | null;
   analysisIsStale: boolean;
@@ -32,7 +31,7 @@ interface AnalysisScreenProps {
 }
 
 const SUB_TABS: { id: AnalysisSubTab; label: string }[] = [
-  { id: 'satelital', label: 'Satelital' },
+  { id: 'satelital', label: 'Clima y datos' },
   { id: 'fusion', label: 'Fusión' },
   { id: 'fuentes', label: 'Fuentes' },
   { id: 'insights', label: 'Insights AI' },
@@ -47,7 +46,6 @@ export function AnalysisScreen({
   onSelectParcel,
   historyRecords,
   onAddHistory,
-  preferences,
   analysisStatus,
   backendAnalysis,
   analysisIsStale,
@@ -55,13 +53,44 @@ export function AnalysisScreen({
   onRunAnalysis,
 }: AnalysisScreenProps) {
   const [priorities, setPriorities] = useState({ water: 40, soil: 40, income: 20 });
+
+  const runAnalysis = () => {
+    if (selectedParcel) void onRunAnalysis(selectedParcel.id, priorities);
+  };
+
   if (!selectedParcel) {
     return (
-      <div className="p-6 text-center text-sm text-[var(--agro-muted)]">
-        Registra o selecciona una parcela para explorar los análisis demostrativos.
+      <div className="p-6 flex justify-center">
+        <section className="max-w-md w-full rounded-2xl border border-[var(--agro-line)] bg-[var(--agro-surface)] p-6 text-center space-y-3">
+          <AlertCircle className="w-8 h-8 mx-auto text-[var(--agro-warning-text)]" aria-hidden="true" />
+          <h1 className="text-base font-bold text-[var(--agro-text)]">Selecciona una parcela para empezar</h1>
+          <p className="text-sm text-[var(--agro-muted)]">
+            {parcels.length > 0
+              ? 'Elige una parcela y te mostraremos un escenario orientativo junto con la evidencia que lo respalda.'
+              : 'Registra una parcela antes de consultar datos ambientales reales.'}
+          </p>
+          {parcels.length > 0 && (
+            <button
+              type="button"
+              onClick={() => onSelectParcel(parcels[0].id)}
+              className="min-h-[44px] px-4 rounded-xl agro-primary text-white text-xs font-semibold"
+            >
+              Analizar {parcels[0].name}
+            </button>
+          )}
+        </section>
       </div>
     );
   }
+
+  const primaryStrategy = backendAnalysis?.strategies[0];
+  const confidence = primaryStrategy
+    ? primaryStrategy.score >= 80
+      ? 'Alta'
+      : primaryStrategy.score >= 60
+        ? 'Media'
+        : 'Baja'
+    : null;
 
   return (
     <div className="p-4 lg:p-0 space-y-4 pb-8">
@@ -103,7 +132,14 @@ export function AnalysisScreen({
           }`}
         >
           {analysisStatus === 'loading' && 'Consultando NASA POWER y calculando estrategias…'}
-          {analysisStatus === 'error' && (analysisError ?? 'No se pudo completar el análisis.')}
+          {analysisStatus === 'error' && (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <span>{analysisError ?? 'No se pudo completar el análisis.'}</span>
+              <button type="button" onClick={runAnalysis} className="min-h-[36px] px-3 rounded-lg bg-[var(--agro-danger-text)] text-white font-semibold inline-flex items-center justify-center gap-1.5">
+                <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" /> Reintentar
+              </button>
+            </div>
+          )}
           {analysisStatus === 'ready' && backendAnalysis && (
             <div className="space-y-2">
               <p className="font-bold">Análisis real recibido del backend</p>
@@ -119,10 +155,47 @@ export function AnalysisScreen({
       )}
 
       {analysisIsStale && (
-        <div role="status" className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
-          La parcela cambió desde el último análisis. El resultado visible corresponde a una versión anterior; vuelve a ejecutar el análisis para actualizarlo.
+        <div role="status" className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <span>La parcela cambió desde el último análisis. El resultado visible corresponde a una versión anterior.</span>
+          <button type="button" onClick={runAnalysis} disabled={analysisStatus === 'loading'} className="min-h-[36px] px-3 rounded-lg bg-amber-900 text-white font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-1.5">
+            <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" /> Actualizar análisis
+          </button>
         </div>
       )}
+
+      {/* Primary recommendation and action */}
+      <section className="rounded-2xl border border-emerald-200 bg-[var(--agro-success-bg)] p-4 sm:p-5 space-y-3" aria-live="polite">
+        <div className="flex items-start gap-3">
+          {analysisStatus === 'loading' ? (
+            <Loader2 className="w-5 h-5 text-[var(--agro-success-text)] animate-spin shrink-0 mt-0.5" aria-hidden="true" />
+          ) : (
+            <CheckCircle2 className="w-5 h-5 text-[var(--agro-success-text)] shrink-0 mt-0.5" aria-hidden="true" />
+          )}
+          <div className="min-w-0 flex-1 space-y-1">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--agro-success-text)]">Escenario heurístico · no predicción</p>
+            <h2 className="text-base sm:text-lg font-bold text-[var(--agro-text)]">
+              {primaryStrategy ? primaryStrategy.title : 'Calcula una estrategia para esta parcela'}
+            </h2>
+            <p className="text-xs text-[var(--agro-text)] leading-relaxed">
+              {primaryStrategy
+                ? primaryStrategy.crops.map((crop) => crop.label).join(' → ')
+                : 'Ajusta tus prioridades y ejecuta el análisis para recibir una recomendación contextual.'}
+            </p>
+          </div>
+          {confidence && (
+            <div className="shrink-0 text-right">
+                <p className="text-[11px] text-[var(--agro-muted)]">Puntaje orientativo</p>
+                <p className="text-sm font-bold text-[var(--agro-success-text)]">{confidence}</p>
+              <p className="text-[11px] text-[var(--agro-muted)]">{primaryStrategy?.score}/100</p>
+            </div>
+          )}
+        </div>
+        {primaryStrategy && <p className="text-xs text-[var(--agro-text)] leading-relaxed">{primaryStrategy.explanation}</p>}
+        <button type="button" onClick={runAnalysis} disabled={analysisStatus === 'loading'} className="min-h-[42px] px-4 rounded-xl agro-primary text-white text-xs font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-2">
+          {analysisStatus === 'loading' ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <RefreshCw className="w-4 h-4" aria-hidden="true" />}
+          {analysisStatus === 'loading' ? 'Calculando recomendación…' : primaryStrategy ? 'Actualizar recomendación' : 'Calcular recomendación'}
+        </button>
+      </section>
 
       <section className="rounded-2xl border border-[var(--agro-line)] bg-[var(--agro-surface)] p-4 space-y-3">
         <div>
@@ -141,24 +214,29 @@ export function AnalysisScreen({
             </label>
           ))}
         </div>
-        <button type="button" disabled={analysisStatus === 'loading' || priorities.water + priorities.soil + priorities.income === 0} onClick={() => void onRunAnalysis(selectedParcel.id, priorities)} className="min-h-[40px] px-4 rounded-xl agro-primary text-white text-xs font-semibold disabled:opacity-50">
-          {analysisStatus === 'loading' ? 'Calculando…' : 'Actualizar estrategias'}
+         <button type="button" disabled={analysisStatus === 'loading' || priorities.water + priorities.soil + priorities.income === 0} onClick={runAnalysis} className="min-h-[40px] px-4 rounded-xl agro-primary text-white text-xs font-semibold disabled:opacity-50">
+           {analysisStatus === 'loading' ? 'Calculando…' : 'Actualizar estrategias'}
         </button>
       </section>
 
+      <CropRecommendationsPanel parcel={selectedParcel} />
+
       {backendAnalysis && analysisStatus === 'ready' && (
         <section className="space-y-3">
-          <div className="px-1"><h2 className="text-base font-bold text-[var(--agro-text)]">Estrategias calculadas para esta parcela</h2><p className="text-xs text-[var(--agro-muted)]">NASA POWER + reglas heurísticas transparentes · requiere revisión local</p></div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            {backendAnalysis.strategies.map((strategy) => (
-              <article key={strategy.id} className="rounded-2xl border border-[var(--agro-line)] bg-[var(--agro-surface)] p-4 space-y-2">
-                <div className="flex items-start justify-between gap-2"><h3 className="text-sm font-bold text-[var(--agro-text)]">{strategy.title}</h3><span className="text-lg font-bold text-[var(--agro-lime)]">{strategy.score}</span></div>
-                <p className="text-xs text-[var(--agro-muted)]">{strategy.crops.map((crop) => crop.label).join(' → ')}</p>
-                <p className="text-xs text-[var(--agro-text)] leading-relaxed">{strategy.explanation}</p>
-                <div className="text-[11px] space-y-1"><p><strong>Beneficios:</strong> {strategy.benefits.join(' · ')}</p><p className="text-[var(--agro-warning-text)]"><strong>Riesgos:</strong> {strategy.risks.join(' · ')}</p></div>
-              </article>
-            ))}
-          </div>
+           <div className="px-1"><h2 className="text-base font-bold text-[var(--agro-text)]">Estrategias calculadas para esta parcela</h2><p className="text-xs text-[var(--agro-muted)]">NASA POWER + reglas heurísticas transparentes · requiere revisión local</p></div>
+           <details className="rounded-2xl border border-[var(--agro-line)] bg-[var(--agro-surface)] p-4">
+             <summary className="cursor-pointer text-xs font-semibold text-[var(--agro-text)]">Ver comparación técnica y alternativas</summary>
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-3">
+               {backendAnalysis.strategies.map((strategy) => (
+                 <article key={strategy.id} className="rounded-xl border border-[var(--agro-line)] bg-[var(--agro-surface-soft)] p-4 space-y-2">
+                   <div className="flex items-start justify-between gap-2"><h3 className="text-sm font-bold text-[var(--agro-text)]">{strategy.title}</h3><span className="text-lg font-bold text-[var(--agro-lime)]">{strategy.score}</span></div>
+                   <p className="text-xs text-[var(--agro-muted)]">{strategy.crops.map((crop) => crop.label).join(' → ')}</p>
+                   <p className="text-xs text-[var(--agro-text)] leading-relaxed">{strategy.explanation}</p>
+                   <div className="text-[11px] space-y-1"><p><strong>Beneficios:</strong> {strategy.benefits.join(' · ')}</p><p className="text-[var(--agro-warning-text)]"><strong>Riesgos:</strong> {strategy.risks.join(' · ')}</p></div>
+                 </article>
+               ))}
+             </div>
+           </details>
           <p className="text-[11px] text-[var(--agro-warning-text)] bg-[var(--agro-warning-bg)] rounded-xl p-3">{backendAnalysis.methodology.scope} Fuente: {backendAnalysis.climate.source}; período {backendAnalysis.climate.years.join('–')}.</p>
         </section>
       )}
@@ -185,8 +263,8 @@ export function AnalysisScreen({
       </div>
 
       {/* Active Sub-module */}
-      {subTab === 'satelital' && <div id="analysis-panel-satelital" role="tabpanel"><SatelliteTab parcel={selectedParcel} preferences={preferences} /></div>}
-      {subTab === 'fusion' && <div id="analysis-panel-fusion" role="tabpanel"><FusionTab parcel={selectedParcel} /></div>}
+      {subTab === 'satelital' && <div id="analysis-panel-satelital" role="tabpanel"><SatelliteTab parcel={selectedParcel} analysis={backendAnalysis} analysisStatus={analysisStatus} analysisError={analysisError} onRetry={runAnalysis} /></div>}
+      {subTab === 'fusion' && <div id="analysis-panel-fusion" role="tabpanel"><FusionTab parcel={selectedParcel} analysis={backendAnalysis} analysisStatus={analysisStatus} /></div>}
       {subTab === 'fuentes' && (
         <div id="analysis-panel-fuentes" role="tabpanel" className="space-y-3">
           <div className="px-1">
@@ -200,7 +278,7 @@ export function AnalysisScreen({
           <DataSourcesCatalog />
         </div>
       )}
-      {subTab === 'insights' && <div id="analysis-panel-insights" role="tabpanel" className="space-y-4"><ClimateAnomaliesSection parcel={selectedParcel} /><InsightsTab parcel={selectedParcel} /></div>}
+      {subTab === 'insights' && <div id="analysis-panel-insights" role="tabpanel" className="space-y-4"><ClimateAnomaliesSection parcel={selectedParcel} /><InsightsTab parcel={selectedParcel} analysis={backendAnalysis} analysisStatus={analysisStatus} /></div>}
       {subTab === 'historial' && (
         <div id="analysis-panel-historial" role="tabpanel">
           <HistoryRotationTab

@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import {
   AlertTriangle,
   BarChart3,
+  Box,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
@@ -34,6 +35,8 @@ import {
 } from 'react-leaflet';
 import { ParcelFormModal } from '../components/ParcelFormModal';
 import { ParcelScanner } from '../components/ParcelScanner';
+import { Parcel3DView } from '../components/Parcel3DView';
+import { getBaseMapAttribution, getBaseMapTileUrl } from '../services/mapTiles';
 import { BOLIVIA_LOCATIONS } from '../data/mockData';
 import {
   LatLngPoint,
@@ -236,6 +239,10 @@ export function MapScreen({
   const [mapCenter, setMapCenter] = useState<[number, number]>([initialLat, initialLng]);
   const [mapZoom, setMapZoom] = useState<number>(15);
   const [activeLayer, setActiveLayer] = useState<MapLayerId>('osm');
+  const [viewMode, setViewMode] = useState<'map' | '3d'>('map');
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() =>
+    document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
+  );
   const [layersOpen, setLayersOpen] = useState(false);
   const [sheetCollapsed, setSheetCollapsed] = useState(false);
 
@@ -265,6 +272,14 @@ export function MapScreen({
   // Edit / Register modal from map
   const [parcelFormOpen, setParcelFormOpen] = useState(false);
   const [editingParcel, setEditingParcel] = useState<Parcel | null>(null);
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setResolvedTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
+  }, []);
 
   const currentLayerInfo = MAP_LAYERS.find((l) => l.id === activeLayer) ?? MAP_LAYERS[0];
 
@@ -490,25 +505,26 @@ export function MapScreen({
 
   return (
     <div
-      className={`relative w-full overflow-hidden bg-[var(--agro-surface-soft)] select-none ${
+      className={`agro-map-canvas relative w-full overflow-hidden bg-[var(--agro-surface-soft)] select-none ${
         isSimulatedFrame
-          ? 'h-[748px]'
+          ? 'agro-map-canvas--simulated h-[748px]'
           : 'h-[calc(100dvh-64px)] lg:h-[calc(100vh-32px)] lg:rounded-3xl border border-[var(--agro-line)]/90 shadow-xs'
       }`}
     >
-      {/* Full-bleed Interactive OpenStreetMap */}
-      <MapContainer
-        center={mapCenter}
-        zoom={mapZoom}
-        zoomControl={false}
-        className="w-full h-full z-0"
-        aria-label="Mapa interactivo de parcelas agrícolas"
-      >
-        <TileLayer
-          attribution="&copy; OpenStreetMap contributors"
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <MapController targetCenter={mapCenter} targetZoom={mapZoom} />
+      {/* Geographic map or the existing interactive 3D parcel scene. */}
+      {viewMode === 'map' ? (
+        <MapContainer
+          center={mapCenter}
+          zoom={mapZoom}
+          zoomControl={false}
+          className="w-full h-full z-0"
+          aria-label="Mapa interactivo de parcelas agrícolas"
+        >
+          <TileLayer
+            attribution={getBaseMapAttribution()}
+            url={getBaseMapTileUrl(resolvedTheme)}
+          />
+          <MapController targetCenter={mapCenter} targetZoom={mapZoom} />
 
         {/* Parcel Polygons with Halo Selection Highlight */}
         {parcels.map((parcel, idx) => {
@@ -613,7 +629,16 @@ export function MapScreen({
           />
         )}
 
-      </MapContainer>
+        </MapContainer>
+      ) : selectedParcel ? (
+        <div className="agro-map-3d-host h-full overflow-y-auto bg-[var(--agro-canvas)] p-2 sm:p-4">
+          <Parcel3DView parcel={selectedParcel} />
+        </div>
+      ) : (
+        <div className="h-full grid place-items-center bg-[var(--agro-canvas)] text-sm text-[var(--agro-muted)]">
+          Seleccioná una parcela para abrir la vista 3D.
+        </div>
+      )}
 
       {/* Top Rounded Search Bar & Quick Parcel Switcher */}
       <div className="absolute top-3.5 left-3.5 right-3.5 z-[450] flex flex-col gap-2 pointer-events-none">
@@ -630,8 +655,9 @@ export function MapScreen({
                 setSearchQuery(e.target.value);
                 setSearchOpen(true);
               }}
-              placeholder="Buscar parcela o zona agrícola..."
-              className="flex-1 bg-transparent text-sm text-[var(--agro-text)] placeholder:text-[var(--agro-muted)] focus:outline-none min-w-0"
+               placeholder="Buscar parcela o zona agrícola..."
+               aria-label="Buscar parcela o zona agrícola"
+               className="flex-1 bg-transparent text-sm text-[var(--agro-text)] placeholder:text-[var(--agro-muted)] focus:outline-none min-w-0"
             />
             {searchQuery ? (
               <button
@@ -667,6 +693,24 @@ export function MapScreen({
             <p className="text-[11px] text-[var(--agro-muted)] mt-2 leading-4">
               Tocá una parcela para abrir su ficha 3D o usá <strong>Dibujar</strong> para registrar una nueva.
             </p>
+          </div>
+        )}
+
+        {syncStatus !== 'idle' && (
+          <div
+            role="status"
+            className={`pointer-events-auto max-w-md rounded-2xl border px-3.5 py-2.5 text-xs shadow-md ${
+              syncStatus === 'error'
+                ? 'border-amber-200 bg-amber-50 text-amber-900'
+                : syncStatus === 'saving'
+                ? 'border-sky-200 bg-sky-50 text-sky-900'
+                : 'border-emerald-200 bg-emerald-50 text-emerald-900'
+            }`}
+          >
+            {syncStatus === 'saving' && 'Guardando parcela…'}
+            {syncStatus === 'saved' && 'Parcela guardada y sincronizada.'}
+            {syncStatus === 'error' &&
+              'Parcela guardada localmente. No se pudo sincronizar con el servidor.'}
           </div>
         )}
 
@@ -718,30 +762,34 @@ export function MapScreen({
                 </button>
               </div>
               <div className="max-h-56 overflow-y-auto divide-y divide-slate-100">
-                {searchResults.map((hit) => (
-                  <button
-                    key={hit.id}
-                    type="button"
-                    onClick={() => {
-                      setMapCenter([hit.lat, hit.lng]);
-                      setMapZoom(hit.zoom);
-                      if (hit.parcelId) {
-                         onSelectParcel(hit.parcelId);
-                         onOpenParcelDetail(hit.parcelId);
-                      }
-                      setSearchOpen(false);
-                    }}
-                    className="w-full px-4 py-3 text-left hover:bg-[var(--agro-success-bg)] flex items-center gap-3 transition-colors"
-                  >
-                    <div className="w-8 h-8 rounded-xl bg-[var(--agro-selected)] text-[var(--agro-lime)] flex items-center justify-center shrink-0">
-                      <MapPin className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-[var(--agro-text)] truncate">{hit.label}</p>
-                      <p className="text-[11px] text-[var(--agro-muted)] truncate">{hit.sub}</p>
-                    </div>
-                  </button>
-                ))}
+                {searchResults.length === 0 ? (
+                  <div className="px-4 py-4 text-xs text-[var(--agro-muted)]" role="status">
+                    No encontramos parcelas ni zonas con “{searchQuery.trim()}”. Probá con otro término.
+                  </div>
+                ) : searchResults.map((hit) => (
+                    <button
+                      key={hit.id}
+                      type="button"
+                      onClick={() => {
+                        setMapCenter([hit.lat, hit.lng]);
+                        setMapZoom(hit.zoom);
+                        if (hit.parcelId) {
+                           onSelectParcel(hit.parcelId);
+                           onOpenParcelDetail(hit.parcelId);
+                        }
+                        setSearchOpen(false);
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-[var(--agro-success-bg)] flex items-center gap-3 transition-colors"
+                    >
+                      <div className="w-8 h-8 rounded-xl bg-[var(--agro-selected)] text-[var(--agro-lime)] flex items-center justify-center shrink-0">
+                        <MapPin className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-[var(--agro-text)] truncate">{hit.label}</p>
+                        <p className="text-[11px] text-[var(--agro-muted)] truncate">{hit.sub}</p>
+                      </div>
+                    </button>
+                  ))}
               </div>
             </motion.div>
           )}
@@ -785,10 +833,24 @@ export function MapScreen({
         <motion.button
           type="button"
           whileTap={{ scale: 0.92 }}
-          onClick={() => setLayersOpen((v) => !v)}
+          onClick={() => {
+            setViewMode((current) => current === 'map' ? '3d' : 'map');
+            setLayersOpen(false);
+          }}
+          title={viewMode === 'map' ? 'Vista 3D de parcela' : 'Volver al mapa'}
+          aria-label={viewMode === 'map' ? 'Vista 3D de parcela' : 'Volver al mapa'}
+          className={`w-11 h-11 rounded-2xl border shadow-[0_6px_18px_rgba(15,23,42,0.09)] flex items-center justify-center transition-colors ${viewMode === '3d' ? 'bg-[#166534] border-[#166534] text-white' : 'bg-[var(--agro-surface)] backdrop-blur-md border-[var(--agro-line)]/80 text-[var(--agro-text)] hover:text-[var(--agro-lime)] hover:bg-[var(--agro-selected)]'}`}
+        >
+          <Box className="w-5 h-5" />
+        </motion.button>
+
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.92 }}
+          onClick={() => viewMode === 'map' && setLayersOpen((v) => !v)}
           title="Capas"
           aria-label="Capas"
-          className={`w-11 h-11 rounded-2xl border shadow-[0_6px_18px_rgba(15,23,42,0.09)] flex items-center justify-center transition-colors ${
+          className={`w-11 h-11 rounded-2xl border shadow-[0_6px_18px_rgba(15,23,42,0.09)] flex items-center justify-center transition-colors ${viewMode === '3d' ? 'opacity-40 cursor-not-allowed' : ''} ${
             layersOpen || activeLayer !== 'osm'
               ? 'bg-[#166534] border-[#166534] text-white'
               : 'bg-[var(--agro-surface)] backdrop-blur-md border-[var(--agro-line)]/80 text-[var(--agro-text)] hover:text-[var(--agro-lime)] hover:bg-[var(--agro-selected)]'
@@ -935,7 +997,7 @@ export function MapScreen({
         </AnimatePresence>
 
         {/* Empty State / Selected Parcel Bottom Sheet */}
-        <div className="pointer-events-auto w-full max-w-md lg:max-w-xl">
+         <div className="pointer-events-auto w-full max-w-md lg:max-w-xl max-h-[48dvh] overflow-y-auto no-scrollbar lg:max-h-none lg:overflow-visible">
           {parcels.length === 0 ? (
             <div className="bg-[var(--agro-surface)] backdrop-blur-md rounded-3xl p-4 border border-[var(--agro-line)] shadow-xl text-center space-y-2.5">
               <p className="text-sm font-bold text-[var(--agro-text)]">
@@ -1178,6 +1240,7 @@ export function MapScreen({
                 >
                   <option value="" disabled>Selecciona</option>
                   {DRAWN_PARCEL_CROPS.map((value) => <option key={value} value={value}>{value}</option>)}
+
                 </select>
                 {drawnParcelFieldMessage('crop')}
               </div>
