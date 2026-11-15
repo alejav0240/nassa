@@ -23,6 +23,7 @@ export function useAgroTerraState() {
   const [analysisSubTab, setAnalysisSubTab] = useState<AnalysisSubTab>('satelital');
   const [parcels, setParcels] = useState<Parcel[]>(() => parcelService.getAll());
   const [backendStatus, setBackendStatus] = useState<'checking' | 'connected' | 'offline'>('checking');
+  const [dataSource, setDataSource] = useState<'local-demo' | 'backend' | 'offline'>('local-demo');
   const [syncStatus, setSyncStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [analysisStatus, setAnalysisStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [backendAnalysis, setBackendAnalysis] = useState<BackendAnalysis | null>(null);
@@ -79,12 +80,12 @@ export function useAgroTerraState() {
       if (!active) return;
       if (remoteParcels) {
         setBackendStatus('connected');
-        if (remoteParcels.length > 0) {
-          setParcels(remoteParcels);
-          setSelectedParcelId(remoteParcels[0].id);
-        }
+        setDataSource('backend');
+        setParcels(remoteParcels);
+        setSelectedParcelId(remoteParcels[0]?.id ?? '');
       } else {
         setBackendStatus('offline');
+        setDataSource('offline');
       }
     });
     return () => {
@@ -270,6 +271,7 @@ export function useAgroTerraState() {
     setUserProfile,
     resetAllDemoData,
     backendStatus,
+    dataSource,
     syncStatus,
     analysisStatus,
     backendAnalysis,

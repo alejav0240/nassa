@@ -21,6 +21,7 @@ export default defineConfig(() => {
         '/api': {
           target: process.env.VITE_DEV_API_URL || 'http://localhost:8000',
           changeOrigin: true,
+          ...(process.env.API_KEY ? { headers: { 'X-API-Key': process.env.API_KEY } } : {}),
         },
       },
     },

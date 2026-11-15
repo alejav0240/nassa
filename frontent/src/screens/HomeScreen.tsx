@@ -34,6 +34,7 @@ interface HomeScreenProps {
   onNavigate: (tab: NavTab, subTab?: AnalysisSubTab) => void;
   onOpenAlerts: () => void;
   backendStatus: 'checking' | 'connected' | 'offline';
+  dataSource: 'local-demo' | 'backend' | 'offline';
   syncStatus: 'idle' | 'saving' | 'saved' | 'error';
 }
 
@@ -47,6 +48,7 @@ export function HomeScreen({
   onNavigate,
   onOpenAlerts,
   backendStatus,
+  dataSource,
   syncStatus,
 }: HomeScreenProps) {
   if (!selectedParcel) {
@@ -235,7 +237,9 @@ export function HomeScreen({
               Cultivo registrado: <span className="font-semibold">{selectedParcel.crop}</span>
             </p>
             <div className="mt-2 flex items-center justify-between gap-2">
-              <span className="text-[11px] text-[var(--agro-muted)]">Datos demostrativos</span>
+              <span className="text-[11px] text-[var(--agro-muted)]">
+                {dataSource === 'backend' ? 'Datos sincronizados' : dataSource === 'offline' ? 'Datos locales · sin conexión' : 'Datos demostrativos'}
+              </span>
               <button
                 type="button"
                 onClick={() => onOpenParcelDetail(selectedParcel.id)}

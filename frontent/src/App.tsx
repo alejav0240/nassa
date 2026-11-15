@@ -45,6 +45,7 @@ export default function App() {
     setUserProfile,
     resetAllDemoData,
     backendStatus,
+    dataSource,
     syncStatus,
     analysisStatus,
     backendAnalysis,
@@ -86,6 +87,7 @@ export default function App() {
             unreadAlertsCount={unreadAlertsCount}
             preferences={preferences}
             backendStatus={backendStatus}
+            dataSource={dataSource}
             syncStatus={syncStatus}
             onSelectParcel={setSelectedParcelId}
             onOpenParcelDetail={openParcelDetail}
