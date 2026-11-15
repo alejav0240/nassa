@@ -505,7 +505,7 @@ export function MapScreen({
 
   return (
     <div
-      className={`agro-map-canvas relative w-full overflow-hidden bg-[var(--agro-surface-soft)] select-none ${
+      className={`agro-map-screen agro-map-canvas relative w-full overflow-hidden bg-[var(--agro-surface-soft)] select-none ${
         isSimulatedFrame
           ? 'agro-map-canvas--simulated h-[748px]'
           : 'h-[calc(100dvh-64px)] lg:h-[calc(100vh-32px)] lg:rounded-3xl border border-[var(--agro-line)]/90 shadow-xs'

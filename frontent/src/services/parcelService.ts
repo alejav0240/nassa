@@ -14,14 +14,15 @@ function fallbackPolygon(field: BackendField) {
   ];
 }
 
-function mapBackendField(field: BackendField): Parcel {
+function mapBackendField(field: BackendField, existing?: Parcel): Parcel {
+  if (existing) return { ...existing, backendId: field.id };
   const ring = field.geometry_geojson?.coordinates[0] ?? [];
   const polygon = ring
     .slice(0, -1)
     .map(([lng, lat]) => ({ lat, lng }));
 
   return {
-    id: `backend-${field.id}`,
+    id: field.client_ref || `backend-${field.id}`,
     backendId: field.id,
     name: field.name,
     location: 'Parcela registrada',
@@ -51,13 +52,24 @@ function mapBackendField(field: BackendField): Parcel {
   };
 }
 
-function toBackendPayload(parcel: Parcel): BackendFieldPayload {
+export function getBackendCropId(crop: string): BackendFieldPayload['current_crop'] | null {
+  const normalized = crop.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  // The API stores one crop, so do not silently collapse mixed-crop/fallow labels.
+  if (/[/+]/.test(normalized)) return null;
+  const match = normalized.match(/\b(papa|quinua|canahua|cebada|avena|haba|oca|tarwi|maiz|trigo|arveja|arroz|soya)\b/);
+  return (match?.[1] as BackendFieldPayload['current_crop'] | undefined) ?? null;
+}
+
+function toBackendPayload(parcel: Parcel): BackendFieldPayload | null {
+  const currentCrop = getBackendCropId(parcel.crop);
+  if (!currentCrop) return null;
   const coordinates = parcel.polygon.map((point) => [point.lng, point.lat]);
   const ring = coordinates.length > 0 && coordinates[0][0] === coordinates.at(-1)?.[0] && coordinates[0][1] === coordinates.at(-1)?.[1]
     ? coordinates
     : [...coordinates, coordinates[0]];
 
   return {
+    client_ref: parcel.id,
     name: parcel.name,
     latitude: parcel.centroid.lat,
     longitude: parcel.centroid.lng,
@@ -66,25 +78,54 @@ function toBackendPayload(parcel: Parcel): BackendFieldPayload {
       ? parcel.indicators.soilTexture as BackendFieldPayload['soil_texture']
       : 'desconocida',
     irrigation: false,
-    current_crop: parcel.crop.toLowerCase() as BackendFieldPayload['current_crop'],
+    current_crop: currentCrop,
     soil_ph: parcel.indicators.soilPh > 0 ? parcel.indicators.soilPh : null,
     geometry_geojson: ring.length >= 4 ? { type: 'Polygon', coordinates: [ring] } : null,
   };
 }
 
+function matchesPayload(field: BackendField, payload: BackendFieldPayload): boolean {
+  return field.name === payload.name
+    && field.latitude === payload.latitude
+    && field.longitude === payload.longitude
+    && field.hectares === payload.hectares
+    && field.soil_texture === payload.soil_texture
+    && field.irrigation === payload.irrigation
+    && field.current_crop === payload.current_crop
+    && field.soil_ph === payload.soil_ph
+    && JSON.stringify(field.geometry_geojson) === JSON.stringify(payload.geometry_geojson);
+}
+
 export const parcelService = {
-  async loadRemote(): Promise<Parcel[] | null> {
+  async loadRemote(localParcels: Parcel[]): Promise<Parcel[] | null> {
     try {
       const fields = await backendApi.listFields();
-      return fields.map(mapBackendField);
+      const matchedLocalIds = new Set<string>();
+      const mapped = fields.map((field) => {
+        let local = localParcels.find((parcel) => parcel.backendId === field.id
+          || (field.client_ref && parcel.id === field.client_ref));
+        if (!local && !field.client_ref) {
+          const candidates = localParcels.filter((parcel) => {
+            const payload = toBackendPayload(parcel);
+            return !parcel.backendId && payload !== null && matchesPayload(field, payload);
+          });
+          if (candidates.length === 1) local = candidates[0];
+        }
+        if (local) matchedLocalIds.add(local.id);
+        return mapBackendField(field, local);
+      });
+      // Never let an empty/incomplete remote list erase locally stored parcels.
+      return [...mapped, ...localParcels.filter((parcel) => !matchedLocalIds.has(parcel.id))];
     } catch {
       return null;
     }
   },
 
   async createRemote(parcel: Parcel): Promise<Parcel | null> {
+    const payload = toBackendPayload(parcel);
+    if (!payload) return null;
     try {
-      return mapBackendField(await backendApi.createField(toBackendPayload(parcel)));
+      return mapBackendField(await backendApi.createField(payload), parcel);
     } catch {
       return null;
     }
@@ -92,8 +133,10 @@ export const parcelService = {
 
   async updateRemote(parcel: Parcel): Promise<Parcel | null> {
     if (!parcel.backendId) return parcel;
+    const payload = toBackendPayload(parcel);
+    if (!payload) return null;
     try {
-      return mapBackendField(await backendApi.updateField(parcel.backendId, toBackendPayload(parcel)));
+      return mapBackendField(await backendApi.updateField(parcel.backendId, payload), parcel);
     } catch {
       return null;
     }

@@ -16,6 +16,12 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 Documentación interactiva: http://localhost:8000/docs. Pruebas: `python -m pytest -q` desde `backend/`. Las pruebas usan bases temporales, sin tocar datos de usuario ni consultar NASA.
 
+En Windows PowerShell, para mantener el backend accesible solo desde esta computadora:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
 ## Configuración
 
 - `DATABASE_URL`: por defecto `sqlite:///./agroshift.db`.
@@ -31,6 +37,7 @@ No hay aislamiento entre agricultores/cuentas. Mantener el MVP en un entorno pri
 | Método | Ruta | Función |
 |---|---|---|
 | GET | `/api/health` | Vida del proceso |
+| GET | `/health` | Liveness sencillo del proceso, independiente de DB/NASA/ML |
 | GET | `/api/ready` | Conexión a base de datos |
 | GET | `/api/crops` | Catálogo y procedencia de coeficientes |
 | GET, POST | `/api/fields` | Listar/crear parcelas |

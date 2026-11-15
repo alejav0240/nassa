@@ -45,12 +45,13 @@ export function Parcel3DView({ parcel }: Parcel3DViewProps) {
   const [hour, setHour] = useState(14);
   const [layers, setLayers] = useState({ rain: true, clouds: true, soil: true, sway: true, snow: true });
   const [zoom, setZoom] = useState(1);
+  const [cameraResetKey, setCameraResetKey] = useState(0);
   const selectedCrop = crops[crop];
   const plantCount = Math.max(24, Math.round(parcel.areaHa * 65));
   const hourLabel = `${String(hour).padStart(2, '0')}:00`;
 
   const toggleLayer = (key: keyof typeof layers) => setLayers((current) => ({ ...current, [key]: !current[key] }));
-  const reset = () => { setCrop(cropKey(parcel.crop)); setClimate('rain'); setGrowth(65); setWind(18); setHour(14); setLayers({ rain: true, clouds: true, soil: true, sway: true, snow: true }); setZoom(1); };
+  const reset = () => { setCrop(cropKey(parcel.crop)); setClimate('rain'); setGrowth(65); setWind(18); setHour(14); setLayers({ rain: true, clouds: true, soil: true, sway: true, snow: true }); setZoom(1); setCameraResetKey((key) => key + 1); };
 
   return (
     <section className="terrain-shell rounded-3xl border border-[var(--agro-line)]/90 bg-[var(--agro-surface)] shadow-xs overflow-hidden" aria-label="Vista del terreno y simulación ambiental">
@@ -63,13 +64,13 @@ export function Parcel3DView({ parcel }: Parcel3DViewProps) {
         <div className="terrain-metric"><span>Cultivo actual</span><strong>{selectedCrop.name} <small>{crop === 'papa' ? 'Solanum tuberosum' : selectedCrop.description}</small></strong><em>● {plantCount} plantas 3D ilustrativas</em></div>
         <div className="terrain-metric"><span>Desarrollo del cultivo</span><strong>{growth}<small>% simulado</small></strong><em>Etapa visual de crecimiento</em></div>
         <div className="terrain-metric"><span>Velocidad del viento</span><strong>{wind}<small> km/h</small></strong><em>Desplazamiento visual de plantas</em></div>
-        <div className="terrain-metric"><span>Hora solar</span><strong>{hourLabel}<small> h</small></strong><em>Iluminación y sombras dinámicas</em></div>
+        <div className="terrain-metric"><span>Hora de iluminación</span><strong>{hourLabel}<small> h</small></strong><em>Iluminación y sombras dinámicas</em></div>
       </div>
 
       <div className="grid lg:grid-cols-[minmax(0,1fr)_290px] gap-4 p-4 lg:p-5">
         <div className="min-w-0">
           <div className="rounded-2xl border border-[var(--agro-line)] overflow-hidden relative bg-gradient-to-b from-[#b9d2d5] via-[#d9e6d9] to-[#a5c58d]">
-            <Suspense fallback={<div className="h-[330px] sm:h-[515px] grid place-items-center text-xs text-[var(--agro-muted)]" role="status">Preparando escena 3D…</div>}><TerrainScene crop={crop} weather={climate} growth={growth} wind={wind} hour={hour} layers={layers} zoom={zoom} /></Suspense>
+            <Suspense fallback={<div className="h-[330px] sm:h-[515px] grid place-items-center text-xs text-[var(--agro-muted)]" role="status">Preparando escena 3D…</div>}><TerrainScene crop={crop} weather={climate} growth={growth} wind={wind} hour={hour} layers={layers} zoom={zoom} cameraResetKey={cameraResetKey} /></Suspense>
             <div className="absolute right-3 top-14 grid gap-1.5"><button type="button" onClick={() => setZoom((value) => Math.min(1.15, value + .05))} className="w-9 h-9 rounded-xl bg-white/90 text-[#42634e] shadow-sm grid place-items-center" aria-label="Acercar"><Plus className="w-4 h-4" /></button><button type="button" onClick={() => setZoom((value) => Math.max(.9, value - .05))} className="w-9 h-9 rounded-xl bg-white/90 text-[#42634e] shadow-sm grid place-items-center" aria-label="Alejar"><Minus className="w-4 h-4" /></button><button type="button" onClick={() => setZoom(1)} className="w-9 h-9 rounded-xl bg-white/90 text-[#42634e] shadow-sm grid place-items-center" aria-label="Restablecer zoom"><Expand className="w-4 h-4" /></button></div>
             <div className="absolute bottom-3 left-3 rounded-xl bg-white/90 px-3 py-2 text-[10px] text-[#607568] shadow-sm">Arrastra para rotar · rueda para acercar</div>
           </div>

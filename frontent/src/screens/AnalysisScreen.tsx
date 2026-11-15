@@ -2,6 +2,7 @@ import { AlertCircle, CheckCircle2, ChevronDown, Droplets, Loader2, RefreshCw, S
 import { useState } from 'react';
 import { DataSourcesCatalog } from '../components/DataSourcesCatalog';
 import { ClimateAnomaliesSection } from '../components/ClimateAnomaliesSection';
+import { AmbientIntelligenceBackground } from '../components/AmbientIntelligenceBackground';
 import { CropRecommendationsPanel } from '../components/CropRecommendationsPanel';
 import {
   AnalysisSubTab,
@@ -93,11 +94,12 @@ export function AnalysisScreen({
     : null;
 
   return (
-    <div className="p-4 lg:p-0 space-y-4 pb-8">
+    <div className="analysis-screen p-4 lg:p-0 space-y-4 pb-8">
+      <AmbientIntelligenceBackground variant="analysis" />
       {/* Header + Parcel Selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="analysis-screen-header flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-[var(--agro-text)]">Centro de Análisis</h1>
+          <div><p className="screen-eyebrow">AGROSHIFT AI / INTELIGENCIA CIENTÍFICA</p><h1 className="text-xl font-bold text-[var(--agro-text)]">Centro de Análisis</h1></div>
           <p className="text-xs text-[var(--agro-muted)]">
             Evidencia climática y escenarios de rotación · {selectedParcel.name}
           </p>
@@ -278,7 +280,7 @@ export function AnalysisScreen({
           <DataSourcesCatalog />
         </div>
       )}
-      {subTab === 'insights' && <div id="analysis-panel-insights" role="tabpanel" className="space-y-4"><ClimateAnomaliesSection parcel={selectedParcel} /><InsightsTab parcel={selectedParcel} analysis={backendAnalysis} analysisStatus={analysisStatus} /></div>}
+      {subTab === 'insights' && <div id="analysis-panel-insights" role="tabpanel" className="analysis-insights-panel space-y-4"><ClimateAnomaliesSection parcel={selectedParcel} /><InsightsTab parcel={selectedParcel} analysis={backendAnalysis} analysisStatus={analysisStatus} analysisError={analysisError} onRetry={runAnalysis} /></div>}
       {subTab === 'historial' && (
         <div id="analysis-panel-historial" role="tabpanel">
           <HistoryRotationTab

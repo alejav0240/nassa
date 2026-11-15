@@ -56,7 +56,7 @@ export function Field({ label, hint, error, ...props }: InputHTMLAttributes<HTML
   );
 }
 
-export function MetricCard({ label, value, source, tone = 'success', icon }: { label: string; value: string; source?: string; tone?: 'success' | 'info' | 'warning'; icon?: ReactNode }) {
+export function MetricCard({ label, value, source, status, tone = 'success', icon }: { label: string; value: string; source?: string; status?: string; tone?: 'success' | 'info' | 'warning'; icon?: ReactNode }) {
   return (
     <Card className="ds-metric-card">
       <div className="ds-metric-card__top">
@@ -65,6 +65,7 @@ export function MetricCard({ label, value, source, tone = 'success', icon }: { l
       </div>
       <strong>{value}</strong>
       {source && <small className="ds-muted">{source}</small>}
+      {status && <span className="ds-metric-card__status">{status}</span>}
     </Card>
   );
 }

@@ -5,7 +5,8 @@ import secrets
 from fastapi import FastAPI, Depends, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select, delete, text
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 from .config import settings
 from .database import Base, engine, get_db
@@ -22,6 +23,13 @@ from .services.data_sources import list_sources, probe_source
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    # Additive migration for databases created before client_ref existed.
+    # Nullable keeps all existing rows valid; the unique index permits many NULLs.
+    if 'client_ref' not in {column['name'] for column in inspect(engine).get_columns('fields')}:
+        with engine.begin() as connection:
+            connection.execute(text('ALTER TABLE fields ADD COLUMN client_ref VARCHAR(120)'))
+    with engine.begin() as connection:
+        connection.execute(text('CREATE UNIQUE INDEX IF NOT EXISTS uq_fields_client_ref ON fields (client_ref)'))
     from .models import PERFORMANCE_INDEXES
     for index in PERFORMANCE_INDEXES:
         index.create(bind=engine, checkfirst=True)
@@ -116,6 +124,12 @@ def health():
     """Verifica que el servicio esté disponible."""
     return {'status': 'ok', 'service': 'AgroShift AI', 'version': '0.2.0'}
 
+@app.get('/health', tags=['Health'], response_model=HealthResponse,
+         summary='Comprobar que el proceso API está disponible')
+def root_health():
+    """Process liveness only; does not require database, NASA or ML readiness."""
+    return {'status': 'ok', 'service': 'AgroShift AI', 'version': '0.2.0'}
+
 @app.get(
     '/api/crops',
     tags=['Crops'],
@@ -179,9 +193,24 @@ def list_fields(limit: int = Query(100, ge=1, le=100), offset: int = Query(0, ge
 )
 def create_field(payload: FieldCreate, db: Session = Depends(get_db)):
     """Crea y persiste una parcela agrícola."""
-    field = Field(**payload.model_dump())
+    values = payload.model_dump()
+    client_ref = values.get('client_ref')
+    if client_ref:
+        existing = db.scalar(select(Field).where(Field.client_ref == client_ref))
+        if existing:
+            if all(getattr(existing, key) == value for key, value in values.items() if key != 'client_ref'):
+                return existing
+            raise HTTPException(409, 'La referencia local ya está asociada a otra versión de la parcela')
+    field = Field(**values)
     db.add(field)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        existing = db.scalar(select(Field).where(Field.client_ref == client_ref)) if client_ref else None
+        if existing and all(getattr(existing, key) == value for key, value in values.items() if key != 'client_ref'):
+            return existing
+        raise HTTPException(409, 'No se pudo registrar la parcela por una referencia duplicada') from exc
     db.refresh(field)
     return field
 
@@ -292,7 +321,7 @@ def get_analysis(analysis_id: int, db: Session = Depends(get_db)):
 
 @app.middleware('http')
 async def protect_api(request: Request, call_next):
-    if settings.api_key and request.method != 'OPTIONS' and request.url.path != '/api/health':
+    if settings.api_key and request.method != 'OPTIONS' and request.url.path not in ('/api/health', '/health'):
         supplied = request.headers.get('X-API-Key', '')
         if not secrets.compare_digest(supplied.encode(), settings.api_key.encode()):
             from fastapi.responses import JSONResponse
@@ -310,9 +339,18 @@ def ready(db: Session = Depends(get_db)):
 @app.put('/api/fields/{field_id}', response_model=FieldRead)
 def update_field(field_id: int, payload: FieldCreate, db: Session = Depends(get_db)):
     field = get_field(field_id, db)
-    for key, value in payload.model_dump().items():
+    values = payload.model_dump()
+    if field.client_ref and values.get('client_ref') not in (None, field.client_ref):
+        raise HTTPException(409, 'La parcela está vinculada a otra identidad local')
+    for key, value in values.items():
+        if key == 'client_ref' and value is None:
+            continue
         setattr(field, key, value)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(409, 'La referencia local ya está vinculada a otra parcela') from exc
     db.refresh(field)
     return field
 

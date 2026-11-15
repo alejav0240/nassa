@@ -1,4 +1,5 @@
 import { BarChart3, Home, Layers, Map as MapIcon, User } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
 import { NavTab } from '../types/agroshift';
 
 interface BottomNavProps {
@@ -15,7 +16,10 @@ const NAV_ITEMS: { id: NavTab; label: string; icon: typeof Home }[] = [
   { id: 'perfil', label: 'Perfil', icon: User },
 ];
 
+const sectionLabel = (tab: NavTab) => NAV_ITEMS.find((item) => item.id === tab)?.label ?? 'Inicio';
+
 export function BottomNav({ activeTab, onSelect, isSimulatedFrame }: BottomNavProps) {
+  const reduceMotion = useReducedMotion();
   return (
     <nav
       aria-label="Navegación principal"
@@ -23,37 +27,33 @@ export function BottomNav({ activeTab, onSelect, isSimulatedFrame }: BottomNavPr
         isSimulatedFrame
           ? 'sticky bottom-0 left-0 right-0'
           : 'fixed bottom-0 left-0 right-0 lg:hidden'
-      } z-40 bg-[var(--agro-surface)] backdrop-blur-md border-t border-[var(--agro-line)] px-1 pb-[env(safe-area-inset-bottom)]`}
+      } z-40 px-1 pb-[env(safe-area-inset-bottom)]`}
     >
       <div className="grid grid-cols-5 items-center h-16 max-w-lg mx-auto">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
           return (
-            <button
+            <motion.button
               key={item.id}
               type="button"
               onClick={() => onSelect(item.id)}
               aria-current={isActive ? 'page' : undefined}
-              className={`min-h-[44px] flex flex-col items-center justify-center gap-0.5 px-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 rounded-xl ${
-                isActive ? 'text-[var(--agro-lime)]' : 'text-[var(--agro-muted)] hover:text-[var(--agro-text)]'
-              }`}
+              className="agro-nav-link agro-nav-link--mobile"
+              whileHover={reduceMotion ? undefined : { y: -1 }}
+              whileTap={reduceMotion ? undefined : { scale: 0.96 }}
+              transition={{ duration: reduceMotion ? 0 : 0.16 }}
             >
+              {isActive && <motion.span layoutId={reduceMotion ? undefined : 'agro-nav-active-mobile'} className="agro-nav-indicator agro-nav-indicator--mobile" transition={{ type: 'spring', stiffness: 480, damping: 38 }} aria-hidden="true" />}
               <div
-                className={`flex items-center justify-center w-10 h-7 rounded-full transition-colors ${
-                  isActive ? 'bg-[var(--agro-selected)] text-[var(--agro-lime)]' : 'bg-transparent'
-                }`}
+                className="agro-nav-icon"
               >
                 <Icon className="w-[20px] h-[20px]" strokeWidth={isActive ? 2.4 : 1.8} />
               </div>
-              <span
-                className={`text-[10px] tracking-tight whitespace-nowrap truncate max-w-full ${
-                  isActive ? 'font-semibold text-[var(--agro-lime)]' : 'font-medium text-[var(--agro-muted)]'
-                }`}
-              >
+              <span className="agro-nav-label">
                 {item.label}
               </span>
-            </button>
+            </motion.button>
           );
         })}
       </div>
@@ -62,54 +62,57 @@ export function BottomNav({ activeTab, onSelect, isSimulatedFrame }: BottomNavPr
 }
 
 export function SideNavRail({ activeTab, onSelect }: { activeTab: NavTab; onSelect: (tab: NavTab) => void }) {
+  const reduceMotion = useReducedMotion();
   return (
     <aside
       aria-label="Navegación de escritorio"
-      className="agro-side-nav hidden lg:flex flex-col w-60 shrink-0 bg-[var(--agro-surface)] border-r border-[var(--agro-line)] min-h-screen sticky top-0 h-screen p-4 justify-between"
+      className="agro-side-nav hidden lg:flex flex-col w-60 shrink-0 min-h-screen sticky top-0 h-screen p-4 justify-between"
     >
       <div>
-        <div className="flex items-center gap-2.5 px-3 py-2 mb-6">
-          <div className="w-9 h-9 rounded-xl bg-[#166534] text-white flex items-center justify-center font-bold text-sm tracking-tight shadow-sm">
-            AT
+        <div className="flex items-center gap-2.5 px-3 py-2 mb-7">
+          <div className="agro-brand-mark w-9 h-9 rounded-xl text-white flex items-center justify-center font-bold text-sm tracking-tight" aria-hidden="true">
+            AS
           </div>
           <div>
             <p className="text-base font-bold text-[var(--agro-text)] leading-tight whitespace-nowrap">
               AgroShift AI
             </p>
             <p className="text-[11px] text-[var(--agro-muted)] whitespace-nowrap">
-              Monitoreo Geoespacial
+              Inteligencia agrícola
             </p>
           </div>
         </div>
 
+        <p className="agro-nav-eyebrow px-3 mb-2">ESPACIO DE TRABAJO</p>
         <div className="space-y-1">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
-              <button
+              <motion.button
                 key={item.id}
                 type="button"
                 onClick={() => onSelect(item.id)}
                 aria-current={isActive ? 'page' : undefined}
-                className={`w-full min-h-[44px] flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
-                  isActive
-                    ? 'bg-[var(--agro-selected)] text-[var(--agro-lime)] font-semibold'
-                    : 'text-[var(--agro-muted)] hover:bg-[var(--agro-surface-soft)] hover:text-[var(--agro-text)] font-medium'
-                }`}
+                className="agro-nav-link agro-nav-link--desktop w-full"
+                whileHover={reduceMotion ? undefined : { x: 3 }}
+                whileTap={reduceMotion ? undefined : { scale: 0.985 }}
+                transition={{ duration: reduceMotion ? 0 : 0.16 }}
               >
+                {isActive && <motion.span layoutId={reduceMotion ? undefined : 'agro-nav-active-desktop'} className="agro-nav-indicator agro-nav-indicator--desktop" transition={{ type: 'spring', stiffness: 480, damping: 38 }} aria-hidden="true" />}
                 <Icon className="w-5 h-5 shrink-0" strokeWidth={isActive ? 2.3 : 1.8} />
                 <span className="whitespace-nowrap">{item.label}</span>
-              </button>
+              </motion.button>
             );
           })}
         </div>
       </div>
 
-      <div className="p-3.5 rounded-2xl bg-[var(--agro-surface-soft)] border border-[var(--agro-line)]/80 text-xs text-[var(--agro-muted)] leading-relaxed">
-        <p className="font-semibold text-[var(--agro-text)] mb-1">Datos con procedencia</p>
+      <div className="agro-nav-context p-3.5 rounded-2xl text-xs leading-relaxed">
+        <p className="agro-nav-eyebrow mb-1">UBICACIÓN ACTUAL</p>
+        <p className="font-semibold text-[var(--agro-text)] mb-2">{sectionLabel(activeTab)}</p>
         <p>
-          El análisis distingue datos disponibles, pendientes de integración y validación local.
+          El análisis distingue datos disponibles, pendientes de integración y validación local. Los indicadores demostrativos se identifican junto a sus datos.
         </p>
       </div>
     </aside>

@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 
@@ -7,6 +7,9 @@ interface ConfirmDialogProps {
   title: string;
   message: string;
   confirmLabel?: string;
+  details?: ReactNode;
+  tone?: 'danger' | 'primary';
+  confirmDisabled?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }
@@ -16,6 +19,9 @@ export function ConfirmDialog({
   title,
   message,
   confirmLabel = 'Eliminar',
+  details,
+  tone = 'danger',
+  confirmDisabled = false,
   onCancel,
   onConfirm,
 }: ConfirmDialogProps) {
@@ -38,7 +44,7 @@ export function ConfirmDialog({
     >
       <div className="bg-[var(--agro-surface)] w-full max-w-sm rounded-3xl p-5 shadow-xl border border-[var(--agro-line)] space-y-4">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-full bg-[var(--agro-danger-bg)] text-[var(--agro-danger-text)] flex items-center justify-center shrink-0">
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${tone === 'danger' ? 'bg-[var(--agro-danger-bg)] text-[var(--agro-danger-text)]' : 'bg-[var(--agro-lime)]/15 text-[var(--agro-lime)]'}`}>
             <AlertTriangle className="w-5 h-5" />
           </div>
           <div>
@@ -48,6 +54,7 @@ export function ConfirmDialog({
             <p className="text-sm text-[var(--agro-muted)] mt-1 leading-relaxed">{message}</p>
           </div>
         </div>
+        {details}
         <div className="flex items-center gap-3 pt-1">
           <button
             type="button"
@@ -60,7 +67,8 @@ export function ConfirmDialog({
           <button
             type="button"
             onClick={onConfirm}
-            className="flex-1 h-11 rounded-xl bg-[var(--agro-danger-text)] hover:bg-red-700 text-white text-sm font-semibold transition-colors"
+            disabled={confirmDisabled}
+            className={`flex-1 h-11 rounded-xl text-white text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${tone === 'danger' ? 'bg-[var(--agro-danger-text)] hover:bg-red-700' : 'bg-[var(--agro-accent-strong,var(--agro-lime))] hover:brightness-110'}`}
           >
             {confirmLabel}
           </button>

@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, Info } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Info, LoaderCircle, RefreshCw } from 'lucide-react';
 import type { BackendAnalysis } from '../../services/apiClient';
 import type { Parcel } from '../../types/agroshift';
 
@@ -6,12 +6,39 @@ interface InsightsTabProps {
   parcel: Parcel;
   analysis: BackendAnalysis | null;
   analysisStatus: 'idle' | 'loading' | 'ready' | 'error';
+  analysisError: string | null;
+  onRetry: () => void;
 }
 
-export function InsightsTab({ parcel, analysis, analysisStatus }: InsightsTabProps) {
+export function InsightsTab({ parcel, analysis, analysisStatus, analysisError, onRetry }: InsightsTabProps) {
   const climate = analysis && analysis.field_id === parcel.backendId && analysisStatus === 'ready' ? analysis.climate : null;
 
   if (!climate) {
+    if (analysisStatus === 'error') {
+      return (
+        <section className="analysis-insight-state analysis-insight-state--error rounded-2xl border p-5 space-y-3" role="alert">
+          <div className="flex items-start gap-3">
+            <span className="analysis-insight-state__icon"><AlertTriangle className="w-5 h-5" aria-hidden="true" /></span>
+            <div className="min-w-0 space-y-1">
+              <h2 className="text-sm font-bold text-[var(--agro-text)]">No se pudo completar el análisis</h2>
+              <p className="text-xs text-[var(--agro-muted)] leading-relaxed">{analysisError ?? 'El servicio de análisis no devolvió resultados.'}</p>
+              <p className="text-xs text-[var(--agro-muted)] leading-relaxed">Los Insights requieren respuesta del backend y datos climáticos disponibles. No se mostrarán valores simulados.</p>
+            </div>
+          </div>
+          <button type="button" onClick={onRetry} className="analysis-insight-retry"><RefreshCw size={15} aria-hidden="true" />Volver a ejecutar análisis</button>
+        </section>
+      );
+    }
+
+    if (analysisStatus === 'loading') {
+      return (
+        <section className="analysis-insight-state rounded-2xl border p-5 space-y-2" role="status">
+          <div className="flex items-center gap-2"><LoaderCircle className="w-4 h-4 animate-spin text-[var(--agro-info-text)]" aria-hidden="true" /><h2 className="text-sm font-bold text-[var(--agro-text)]">Preparando Insights con datos disponibles</h2></div>
+          <p className="text-xs text-[var(--agro-muted)] leading-relaxed">Esperando la respuesta del análisis climático para {parcel.name}.</p>
+        </section>
+      );
+    }
+
     return (
       <section className="rounded-2xl border border-[var(--agro-line)] bg-[var(--agro-surface)] p-5 space-y-2">
         <div className="flex items-center gap-2"><Info className="w-4 h-4 text-[var(--agro-info-text)]" aria-hidden="true" /><h2 className="text-sm font-bold text-[var(--agro-text)]">Interpretación basada en evidencia</h2></div>

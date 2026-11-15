@@ -1,6 +1,6 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useRef, useState } from 'react';
 import { ThemeToggle } from './components/ThemeToggle';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Smartphone, Monitor } from 'lucide-react';
 import { AlertsDrawer } from './components/AlertsDrawer';
 import { ConfirmDialog } from './components/ConfirmDialog';
@@ -17,6 +17,8 @@ const DesignSystemScreen = lazy(() => import('./screens/DesignSystemScreen').the
 import { Parcel } from './types/agroshift';
 
 export default function App() {
+  const reduceMotion = useReducedMotion();
+  const simulatedScrollRef = useRef<HTMLDivElement>(null);
   const [editingDetailParcel, setEditingDetailParcel] = useState<Parcel | null>(null);
   const [deletingDetailParcel, setDeletingDetailParcel] = useState<Parcel | null>(null);
   const {
@@ -33,6 +35,7 @@ export default function App() {
     closeParcelDetail,
     createParcel,
     updateParcel,
+    syncLocalParcel,
     deleteParcel,
     addObservation,
     deleteObservation,
@@ -134,6 +137,7 @@ export default function App() {
             onOpenParcelDetail={openParcelDetail}
             onNavigate={navigateTo}
             onOpenAlerts={() => setAlertsDrawerOpen(true)}
+            scrollContainer={isSimulated ? simulatedScrollRef : undefined}
           />
         );
       case 'mapa':
@@ -169,6 +173,8 @@ export default function App() {
             onCreateParcel={createParcel}
             onUpdateParcel={updateParcel}
             onDeleteParcel={deleteParcel}
+            onSyncParcel={syncLocalParcel}
+            syncStatus={syncStatus}
             onNavigate={navigateTo}
           />
         );
@@ -222,15 +228,15 @@ export default function App() {
         </div>
 
         <div className="w-[390px] max-w-full h-[844px] max-h-[88vh] bg-[var(--agro-canvas)] rounded-[36px] border-[8px] border-slate-900 shadow-2xl overflow-hidden flex flex-col relative">
-          <div className="flex-1 overflow-y-auto no-scrollbar">
+          <div ref={simulatedScrollRef} className="flex-1 overflow-y-auto no-scrollbar">
             <ThemeToggle />
             <AnimatePresence mode="wait">
               <motion.div
                 key={screenKey}
-                initial={{ opacity: 0, y: 6 }}
+                initial={reduceMotion ? false : { opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.14 }}
+                exit={reduceMotion ? undefined : { opacity: 0 }}
+                transition={{ duration: reduceMotion ? 0 : 0.14 }}
               >
                 <Suspense fallback={<p role="status" className="p-6">Cargando…</p>}>{renderScreen()}</Suspense>
               </motion.div>
@@ -260,16 +266,16 @@ export default function App() {
     <div className="agro-theme min-h-screen bg-[var(--agro-canvas)] text-[var(--agro-text)] flex">
       <SideNavRail activeTab={activeTab} onSelect={(tab) => navigateTo(tab)} />
 
-      <main className="flex-1 min-w-0 pb-20 lg:pb-6 lg:p-5">
-        <div className="max-w-5xl mx-auto">
+      <main id="main-content" className="agro-main flex-1 min-w-0 pb-20 lg:pb-6 lg:p-6">
+        <div className="agro-screen-frame max-w-[1480px] mx-auto">
           <ThemeToggle />
             <AnimatePresence mode="wait">
             <motion.div
               key={screenKey}
-              initial={{ opacity: 0, y: 6 }}
+              initial={reduceMotion ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.14 }}
+              exit={reduceMotion ? undefined : { opacity: 0 }}
+              transition={{ duration: reduceMotion ? 0 : 0.14 }}
             >
               <Suspense fallback={<p role="status" className="p-6">Cargando…</p>}>{renderScreen()}</Suspense>
             </motion.div>

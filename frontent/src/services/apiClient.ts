@@ -7,6 +7,20 @@ export interface ApiRequestOptions {
   delayMs?: number;
 }
 
+export type ApiErrorKind = 'network' | 'timeout' | 'gateway' | 'http';
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly kind: ApiErrorKind,
+    public readonly status?: number,
+    options?: ErrorOptions,
+  ) {
+    super(message, options);
+    this.name = 'ApiError';
+  }
+}
+
 function apiBaseUrl(value?: string): string {
   const base = value?.trim().replace(/\/+$/, '') || '/api';
   return base.endsWith('/api') ? base : `${base}/api`;
@@ -25,6 +39,7 @@ export interface BackendHealth {
 
 export interface BackendField {
   id: number;
+  client_ref?: string | null;
   name: string;
   latitude: number;
   longitude: number;
@@ -40,6 +55,7 @@ export interface BackendField {
 }
 
 export interface BackendFieldPayload {
+  client_ref?: string | null;
   name: string;
   latitude: number;
   longitude: number;
@@ -170,36 +186,94 @@ export interface BackendRecommendations {
   methodology: { formula: string; scope: string; limitations: string[] };
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function request<T>(path: string, init?: RequestInit, timeoutMs = 0): Promise<T> {
   const url = `${API_CONFIG.baseUrl}${path}`;
   let response: Response;
+  const controller = new AbortController();
+  const timeout = timeoutMs > 0 ? setTimeout(() => controller.abort(), timeoutMs) : undefined;
   try {
     response = await fetch(url, {
       ...init,
+      signal: controller.signal,
       headers: {
         Accept: 'application/json',
         ...(init?.headers || {}),
       },
     });
   } catch (cause) {
-    throw new Error(`No se pudo conectar con la API (${url}). Comprueba FastAPI y el proxy de Vite.`, { cause });
+    const timedOut = cause instanceof Error && cause.name === 'AbortError';
+    throw new ApiError(
+      timedOut
+        ? `La API no respondió en ${Math.round(timeoutMs / 1000)} segundos.`
+        : `No se pudo conectar con la API (${url}). Comprueba FastAPI y el proxy de Vite.`,
+      timedOut ? 'timeout' : 'network',
+      undefined,
+      { cause },
+    );
+  } finally {
+    if (timeout !== undefined) clearTimeout(timeout);
   }
 
   if (!response.ok) {
-    let message = `Error HTTP ${response.status}`;
+    const gatewayFailure = response.status === 502 || response.status === 504;
+    let message = response.status === 504
+      ? 'El proxy agotó el tiempo de espera al consultar FastAPI (HTTP 504).'
+      : response.status === 502
+        ? 'El proxy recibió HTTP 502. FastAPI no respondió en la dirección configurada.'
+      : `Error HTTP ${response.status}`;
     try {
-      const body = await response.json();
-      if (typeof body.detail === 'string') message = body.detail;
+      const body: unknown = await response.json();
+      if (body && typeof body === 'object' && 'detail' in body && typeof body.detail === 'string') {
+        message = body.detail;
+      }
     } catch {
       // Keep the HTTP fallback message.
     }
-    throw new Error(message);
+    throw new ApiError(message, gatewayFailure ? 'gateway' : 'http', response.status);
   }
-  return response.json() as Promise<T>;
+  try {
+    return await response.json() as T;
+  } catch (cause) {
+    throw new ApiError('La API respondió, pero el cuerpo no contiene JSON válido.', 'http', response.status, { cause });
+  }
+}
+
+function isClimateAnomalies(value: unknown): value is ClimateAnomalies {
+  if (!value || typeof value !== 'object') return false;
+  const result = value as Partial<ClimateAnomalies>;
+  return result.availability === 'ready'
+    && typeof result.model_id === 'string'
+    && typeof result.version === 'string'
+    && typeof result.source === 'string'
+    && Array.isArray(result.reference_period)
+    && Array.isArray(result.evaluation_period)
+    && typeof result.observations?.evaluation === 'number'
+    && typeof result.data_quality?.missing_pct === 'number'
+    && typeof result.data_quality?.missing_or_invalid_days === 'number'
+    && typeof result.evaluation?.flagged_days === 'number'
+    && typeof result.evaluation?.flagged_pct === 'number'
+    && Array.isArray(result.anomalies)
+    && result.anomalies.every((row) => Boolean(row)
+      && typeof row.date === 'string'
+      && typeof row.score === 'number'
+      && typeof row.explanation === 'string'
+      && typeof row.observed?.rain_30d_mm === 'number'
+      && typeof row.observed?.tmin_c === 'number'
+      && typeof row.observed?.frost_7d === 'number'
+      && typeof row.observed?.dry_spell_days === 'number')
+    && Array.isArray(result.limitations);
+}
+
+async function getClimateAnomalies(fieldId?: number): Promise<ClimateAnomalies> {
+  const response = await request<unknown>(`/ml/climate-anomalies${fieldId ? `?field_id=${fieldId}` : ''}`, undefined, 20_000);
+  if (!isClimateAnomalies(response)) {
+    throw new ApiError('La API devolvió una estructura incompatible para el análisis de anomalías.', 'http', 200);
+  }
+  return response;
 }
 
 export const backendApi = {
-  climateAnomalies: (fieldId?: number) => request<ClimateAnomalies>(`/ml/climate-anomalies${fieldId ? `?field_id=${fieldId}` : ''}`),
+  climateAnomalies: (fieldId?: number) => getClimateAnomalies(fieldId),
   health: () => request<BackendHealth>('/health'),
   listFields: () => request<BackendField[]>('/fields?limit=100'),
   analyzeField: (fieldId: number, priorities = { water: 40, soil: 40, income: 20 }) =>

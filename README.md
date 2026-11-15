@@ -16,6 +16,7 @@ docker compose ps
 - Web: http://localhost:3000
 - API/OpenAPI: http://localhost:8000/docs
 - Salud: http://localhost:8000/api/health
+- Liveness compatible: http://127.0.0.1:8000/health
 
 Selecciona una ubicación en el mapa, completa la ficha del terreno y pulsa **Analizar estrategias**. La primera consulta puede tardar, según NASA. Sin conexión a NASA POWER, el análisis responde un error visible: **no se generan datos climáticos falsos**.
 
@@ -38,6 +39,24 @@ npm run dev
 ```
 
 Vite usa `/api` como ruta base. En Docker, Nginx reenvía `/api/*` al FastAPI interno y puede inyectar `API_KEY` sin exponerla al navegador.
+
+### Desarrollo local en Windows / PowerShell
+
+Abre dos terminales desde la raíz del repositorio. En la primera, inicia FastAPI solo en loopback (no queda expuesto a la red):
+
+```powershell
+Set-Location .\backend
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+En la segunda, inicia Vite:
+
+```powershell
+Set-Location .\frontent
+npm.cmd run dev -- --host 127.0.0.1
+```
+
+Abre http://127.0.0.1:3000. Vite reenvía `/api` al backend local. Si todavía no existe el entorno virtual, créalo e instala `backend/requirements.txt`; instala las dependencias frontend con `npm.cmd ci` desde `frontent/`. Ejecuta backend con `python -m pytest -q` desde `backend/`; frontend con `npm.cmd run lint`, `npm.cmd test` y `npm.cmd run build` desde `frontent/`. Publicar el código en GitHub no despliega ni inicia el backend.
 
 ## Estructura
 
@@ -70,6 +89,7 @@ agroshift-ai/
 La documentación actualizada del backend, endpoints de campañas y planes, configuración y pruebas está en [backend/README.md](backend/README.md).
 
 - `GET /api/health`
+- `GET /health` (liveness sencillo, sin comprobar DB, NASA ni ML)
 - `GET /api/crops`
 - `POST /api/fields`
 - `GET /api/fields`

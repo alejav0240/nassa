@@ -9,6 +9,9 @@ def utcnow():
 class Field(Base):
     __tablename__ = 'fields'
     id: Mapped[int] = mapped_column(primary_key=True)
+    # Stable client-side identity makes create retries idempotent without
+    # changing the public numeric field id used by existing API clients.
+    client_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
     name: Mapped[str] = mapped_column(String(120))
     latitude: Mapped[float] = mapped_column(Float)
     longitude: Mapped[float] = mapped_column(Float)

@@ -115,12 +115,13 @@ export function useAgroShiftState() {
 
   useEffect(() => {
     let active = true;
-    void parcelService.loadRemote().then((remoteParcels) => {
+    void parcelService.loadRemote(parcelService.getAll()).then((remoteParcels) => {
       if (!active) return;
       if (remoteParcels) {
         setBackendStatus('connected');
         setDataSource('backend');
         setParcels(remoteParcels);
+        parcelService.saveAll(remoteParcels);
         setSelectedParcelId((current) => remoteParcels.some((parcel) => parcel.id === current)
           ? current
           : remoteParcels[0]?.id ?? '');
@@ -153,8 +154,7 @@ export function useAgroShiftState() {
     setSyncStatus('saved');
     if (operation === 'create' && result && typeof result !== 'boolean') {
       setParcels((current) => {
-        const withoutLocal = current.filter((item) => item.id !== parcel.id);
-        const next = [result, ...withoutLocal];
+        const next = current.map((item) => item.id === parcel.id ? result : item);
         parcelService.saveAll(next);
         return next;
       });
@@ -240,13 +240,15 @@ export function useAgroShiftState() {
     const updated = parcelService.create(parcel);
     setParcels(updated);
     setSelectedParcelId(parcel.id);
-    void syncParcel('create', parcel);
-  }, [syncParcel]);
+  }, []);
 
   const updateParcel = useCallback((parcel: Parcel) => {
     const updated = parcelService.update(parcel);
     setParcels(updated);
-    void syncParcel('update', parcel);
+  }, []);
+
+  const syncLocalParcel = useCallback((parcel: Parcel) => {
+    void syncParcel(parcel.backendId ? 'update' : 'create', parcel);
   }, [syncParcel]);
 
   const deleteParcel = useCallback(
@@ -337,6 +339,7 @@ export function useAgroShiftState() {
     closeParcelDetail,
     createParcel,
     updateParcel,
+    syncLocalParcel,
     deleteParcel,
     addObservation,
     deleteObservation,

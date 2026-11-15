@@ -77,11 +77,12 @@ export function ProfileScreen({
   };
 
   return (
-    <div className="p-4 lg:p-0 space-y-4 pb-8">
+    <div className="profile-screen p-4 lg:p-0 space-y-4 pb-8">
       <div>
+        <p className="screen-eyebrow">AGROSHIFT AI / PREFERENCIAS</p>
         <h1 className="text-xl font-bold text-[var(--agro-text)]">Perfil y Configuración</h1>
         <p className="text-xs text-[var(--agro-muted)]">
-          Preferencias del prototipo AgroShift AI
+          Personaliza tu espacio de inteligencia agrícola.
         </p>
       </div>
 

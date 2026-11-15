@@ -19,7 +19,7 @@ export default defineConfig(() => {
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
       proxy: {
         '/api': {
-          target: process.env.VITE_DEV_API_URL || 'http://localhost:8000',
+          target: process.env.VITE_DEV_API_URL || 'http://127.0.0.1:8000',
           changeOrigin: true,
           ...(process.env.API_KEY ? { headers: { 'X-API-Key': process.env.API_KEY } } : {}),
         },
