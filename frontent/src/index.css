@@ -226,6 +226,26 @@ html, body { background: var(--agro-canvas); color: var(--agro-text); }
 .terrain-metric em::first-letter { color: #368952; }
 .terrain-shell input[type='range'] { height: 5px; cursor: pointer; accent-color: #408b58; }
 .terrain-shell [role='switch'] { min-height: 20px; }
+:root[data-theme="dark"] .terrain-shell {
+  --agro-canvas: #101d16;
+  --agro-surface: #1b2d22;
+  --agro-surface-soft: #15271c;
+  --agro-text: #edf7ed;
+  --agro-muted: #a8bca9;
+  --agro-line: #35513e;
+  --agro-lime: #8fd46a;
+  --agro-success-bg: #244732;
+  --agro-success-text: #b5e6ae;
+  box-shadow: 0 5px 22px rgba(0,0,0,.22);
+}
+:root[data-theme="dark"] .terrain-shell > div:first-child,
+:root[data-theme="dark"] .terrain-metrics,
+:root[data-theme="dark"] .terrain-metric { background: var(--agro-surface); }
+:root[data-theme="dark"] .terrain-metric strong { color: var(--agro-text); }
+:root[data-theme="dark"] .terrain-metric span { color: var(--agro-muted); }
+:root[data-theme="dark"] .terrain-metric em,
+:root[data-theme="dark"] .terrain-metric strong small { color: #91a895; }
+:root[data-theme="dark"] .terrain-shell .bg-gradient-to-b { background: linear-gradient(#203b3c, #29413a 55%, #1c3522); }
 @media (max-width: 760px) {
   .terrain-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; padding: 0 10px 12px; }
   .terrain-metric { padding: 13px; }
