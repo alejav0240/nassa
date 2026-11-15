@@ -1,109 +1,91 @@
-import { CheckCircle2, MapPin, Ruler, Sprout } from 'lucide-react';
+import {
+  CheckCircle2,
+  Expand,
+  Info,
+  MapPin,
+  Minus,
+  Plus,
+  RotateCcw,
+  Sprout,
+} from 'lucide-react';
+import { useState } from 'react';
 import { Parcel } from '../types/agroterra';
 import { formatCoordinates } from '../utils/geo';
+import { TerrainScene } from './TerrainScene';
 
 interface Parcel3DViewProps {
   parcel: Parcel;
 }
 
-function projectPolygon(parcel: Parcel) {
-  const points = parcel.polygon.length >= 3 ? parcel.polygon : [parcel.centroid];
-  const lngs = points.map((point) => point.lng);
-  const lats = points.map((point) => point.lat);
-  const minLng = Math.min(...lngs);
-  const maxLng = Math.max(...lngs);
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const lngRange = Math.max(maxLng - minLng, 0.0001);
-  const latRange = Math.max(maxLat - minLat, 0.0001);
+type CropKey = 'papa' | 'quinua' | 'haba' | 'cebada';
+type WeatherKey = 'sun' | 'rain' | 'wind' | 'cloud';
 
-  return points
-    .map((point) => {
-      const x = 90 + ((point.lng - minLng) / lngRange) * 420;
-      const y = 55 + (1 - (point.lat - minLat) / latRange) * 245;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(' ');
-}
+const crops: Record<CropKey, { name: string; emoji: string; description: string; color: string }> = {
+  papa: { name: 'Papa', emoji: '🥔', description: 'Hojas amplias y flores pequeñas.', color: '#73a94f' },
+  quinua: { name: 'Quinua', emoji: '🌾', description: 'Panículas de grano en tallos ramificados.', color: '#b88b4a' },
+  haba: { name: 'Haba', emoji: '🫘', description: 'Hojas ovaladas y vainas verdes.', color: '#4f8b4d' },
+  cebada: { name: 'Cebada', emoji: '🌿', description: 'Espigas doradas con aristas.', color: '#c5a353' },
+};
+
+const weather: Record<WeatherKey, { label: string; icon: string }> = {
+  sun: { label: 'Soleado', icon: '☀️' },
+  rain: { label: 'Lluvia', icon: '🌧️' },
+  wind: { label: 'Viento', icon: '💨' },
+  cloud: { label: 'Nubes', icon: '☁️' },
+};
 
 export function Parcel3DView({ parcel }: Parcel3DViewProps) {
-  const polygonPoints = projectPolygon(parcel);
-  const vertexCount = parcel.polygon.length;
+  const [crop, setCrop] = useState<CropKey>('papa');
+  const [climate, setClimate] = useState<WeatherKey>('rain');
+  const [growth, setGrowth] = useState(65);
+  const [wind, setWind] = useState(18);
+  const [hour, setHour] = useState(14);
+  const [layers, setLayers] = useState({ rain: true, clouds: true, soil: true, sway: true });
+  const [zoom, setZoom] = useState(1);
+  const selectedCrop = crops[crop];
+  const plantCount = Math.max(24, Math.round(parcel.areaHa * 65));
+  const hourLabel = `${String(hour).padStart(2, '0')}:00`;
+
+  const toggleLayer = (key: keyof typeof layers) => setLayers((current) => ({ ...current, [key]: !current[key] }));
+  const reset = () => { setCrop('papa'); setClimate('rain'); setGrowth(65); setWind(18); setHour(14); setLayers({ rain: true, clouds: true, soil: true, sway: true }); setZoom(1); };
 
   return (
-    <section className="rounded-3xl border border-[var(--agro-line)]/90 bg-[var(--agro-surface)] shadow-xs overflow-hidden">
-      <div className="grid lg:grid-cols-[minmax(170px,0.72fr)_minmax(320px,1.6fr)_minmax(190px,0.82fr)] gap-4 p-4 lg:p-5 items-stretch">
-        <aside className="order-2 lg:order-1 space-y-3" aria-label="Información de ubicación">
-          <div className="rounded-2xl bg-[var(--agro-surface-soft)] border border-[var(--agro-line)] p-3.5 h-full">
-            <div className="w-9 h-9 rounded-xl bg-[var(--agro-success-bg)] text-[var(--agro-lime)] flex items-center justify-center mb-3">
-              <MapPin className="w-4 h-4" />
-            </div>
-            <p className="text-[10px] uppercase tracking-wide font-bold text-[var(--agro-muted)]">Ubicación</p>
-            <p className="text-sm font-bold text-[var(--agro-text)] mt-1 leading-5">{parcel.location}</p>
-            <p className="text-xs text-[var(--agro-muted)] mt-1">{parcel.department}</p>
-            <p className="text-[11px] text-[var(--agro-muted)] font-mono mt-4 leading-5 break-words">
-              {formatCoordinates(parcel.centroid)}
-            </p>
-          </div>
-        </aside>
+    <section className="terrain-shell rounded-3xl border border-[var(--agro-line)]/90 bg-[var(--agro-surface)] shadow-xs overflow-hidden" aria-label="Vista del terreno y simulación ambiental">
+      <div className="p-4 lg:p-5 border-b border-[var(--agro-line)]/70 flex flex-wrap items-center justify-between gap-3">
+        <div><p className="text-[10px] uppercase tracking-[.14em] font-extrabold text-[var(--agro-lime)]">Monitoreo y simulación</p><h2 className="text-lg font-bold text-[var(--agro-text)] mt-1">Gemelo digital de tu parcela 🌱</h2><p className="text-xs text-[var(--agro-muted)] mt-1">Explora el relieve, los surcos y una representación visual del cultivo.</p></div>
+        <div className="flex gap-2"><button type="button" onClick={reset} className="min-h-[40px] px-3 rounded-xl border border-[var(--agro-line)] text-xs font-bold text-[var(--agro-muted)] inline-flex items-center gap-1.5"><RotateCcw className="w-3.5 h-3.5" />Restablecer</button><span className="rounded-full bg-[var(--agro-success-bg)] px-3 py-2 text-[10px] font-bold text-[var(--agro-success-text)]">SIMULACIÓN ACTIVA</span></div>
+      </div>
 
-        <div className="order-1 lg:order-2 min-w-0 rounded-2xl bg-gradient-to-b from-[#e9f5e6] via-[#d8edda] to-[#bdd9c0] border border-[var(--agro-line)] p-3 relative overflow-hidden min-h-[300px] flex items-center justify-center">
-          <div className="absolute inset-x-8 bottom-5 h-12 rounded-[50%] bg-[#547e5b]/20 blur-xl" />
-          <div className="relative w-full max-w-[580px] perspective-[1100px]">
-            <div className="transform-gpu rotate-x-[55deg] rotate-z-[-4deg] transition-transform duration-500 hover:rotate-x-[48deg]">
-              <svg viewBox="0 0 600 380" className="w-full h-auto drop-shadow-[0_26px_18px_rgba(22,74,38,0.25)]" role="img" aria-label={`Diagrama referencial de la forma de ${parcel.name}`}>
-                <defs>
-                  <linearGradient id={`parcel-top-${parcel.id}`} x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor="#8fca78" />
-                    <stop offset="55%" stopColor="#4da56a" />
-                    <stop offset="100%" stopColor="#28734c" />
-                  </linearGradient>
-                  <linearGradient id={`parcel-side-${parcel.id}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#2f8050" />
-                    <stop offset="100%" stopColor="#164b34" />
-                  </linearGradient>
-                  <pattern id={`parcel-lines-${parcel.id}`} width="18" height="18" patternUnits="userSpaceOnUse" patternTransform="rotate(28)">
-                    <path d="M 0 0 V 18" stroke="#d8f3b8" strokeOpacity="0.34" strokeWidth="2" />
-                  </pattern>
-                </defs>
-                <polygon points={polygonPoints} transform="translate(0 26)" fill={`url(#parcel-side-${parcel.id})`} stroke="#164b34" strokeWidth="5" strokeLinejoin="round" />
-                <polygon points={polygonPoints} fill={`url(#parcel-top-${parcel.id})`} stroke="#e3f7c8" strokeWidth="4" strokeLinejoin="round" />
-                <polygon points={polygonPoints} fill={`url(#parcel-lines-${parcel.id})`} opacity="0.72" />
-              </svg>
-            </div>
+      <div className="terrain-metrics" aria-label="Indicadores del escenario">
+        <div className="terrain-metric"><span>Cultivo actual</span><strong>{selectedCrop.name} <small>{crop === 'papa' ? 'Solanum tuberosum' : selectedCrop.description}</small></strong><em>● {plantCount} plantas 3D ilustrativas</em></div>
+        <div className="terrain-metric"><span>Desarrollo del cultivo</span><strong>{growth}<small>% simulado</small></strong><em>Etapa visual de crecimiento</em></div>
+        <div className="terrain-metric"><span>Velocidad del viento</span><strong>{wind}<small> km/h</small></strong><em>Desplazamiento visual de plantas</em></div>
+        <div className="terrain-metric"><span>Hora solar</span><strong>{hourLabel}<small> h</small></strong><em>Iluminación y sombras dinámicas</em></div>
+      </div>
+
+      <div className="grid lg:grid-cols-[minmax(0,1fr)_290px] gap-4 p-4 lg:p-5">
+        <div className="min-w-0">
+          <div className="rounded-2xl border border-[var(--agro-line)] overflow-hidden relative bg-gradient-to-b from-[#b9d2d5] via-[#d9e6d9] to-[#a5c58d]">
+            <TerrainScene crop={crop} weather={climate} growth={growth} wind={wind} hour={hour} layers={layers} zoom={zoom} />
+            <div className="absolute right-3 top-14 grid gap-1.5"><button type="button" onClick={() => setZoom((value) => Math.min(1.15, value + .05))} className="w-9 h-9 rounded-xl bg-white/90 text-[#42634e] shadow-sm grid place-items-center" aria-label="Acercar"><Plus className="w-4 h-4" /></button><button type="button" onClick={() => setZoom((value) => Math.max(.9, value - .05))} className="w-9 h-9 rounded-xl bg-white/90 text-[#42634e] shadow-sm grid place-items-center" aria-label="Alejar"><Minus className="w-4 h-4" /></button><button type="button" onClick={() => setZoom(1)} className="w-9 h-9 rounded-xl bg-white/90 text-[#42634e] shadow-sm grid place-items-center" aria-label="Restablecer zoom"><Expand className="w-4 h-4" /></button></div>
+            <div className="absolute bottom-3 left-3 rounded-xl bg-white/90 px-3 py-2 text-[10px] text-[#607568] shadow-sm">Arrastra para rotar · rueda para acercar</div>
           </div>
-          <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 text-[10px] font-bold text-[var(--agro-success-text)]">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--agro-surface)] backdrop-blur px-2.5 py-1.5">Diagrama de forma</span>
-            <span className="rounded-full bg-[var(--agro-surface)] backdrop-blur px-2.5 py-1.5">N ↑</span>
-          </div>
-          <p className="absolute bottom-3 left-3 right-3 text-center text-[10px] font-medium text-[var(--agro-success-text)]">
-            Representación referencial · no muestra relieve ni pendiente
-          </p>
+          <div className="grid grid-cols-3 gap-2 mt-3"><div className="rounded-xl bg-[var(--agro-surface-soft)] p-3"><p className="text-[10px] text-[var(--agro-muted)]">Etapa del cultivo</p><strong className="text-sm text-[var(--agro-text)]">{growth < 30 ? 'Emergencia' : growth < 75 ? 'Desarrollo vegetativo' : 'Maduración'}</strong><div className="h-1 rounded-full bg-[var(--agro-line)] mt-2"><span className="block h-full rounded-full bg-[var(--agro-lime)]" style={{ width: `${growth}%` }} /></div></div><div className="rounded-xl bg-[var(--agro-surface-soft)] p-3"><p className="text-[10px] text-[var(--agro-muted)]">Condición climática</p><strong className="text-sm text-[var(--agro-text)]">{weather[climate].label}</strong></div><div className="rounded-xl bg-[var(--agro-surface-soft)] p-3"><p className="text-[10px] text-[var(--agro-muted)]">Iluminación</p><strong className="text-sm text-[var(--agro-text)]">{hourLabel}</strong></div></div>
         </div>
 
-        <aside className="order-3 space-y-3" aria-label="Resumen del área">
-          <div className="rounded-2xl bg-[#166534] text-white p-3.5">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-[10px] uppercase tracking-wide font-bold text-emerald-100">Área seleccionada</p>
-              <CheckCircle2 className="w-4 h-4 text-emerald-200" />
-            </div>
-            <p className="text-2xl font-bold font-mono tabular-nums mt-2">{parcel.areaHa.toFixed(2)} <span className="text-sm font-sans font-medium">ha</span></p>
-            <p className="text-xs text-emerald-100 mt-1">Polígono referencial · {vertexCount} vértices</p>
-          </div>
-          <div className="rounded-2xl bg-[var(--agro-surface-soft)] border border-[var(--agro-line)] p-3.5">
-            <div className="flex items-center gap-2 text-[var(--agro-lime)]">
-              <Sprout className="w-4 h-4" />
-              <p className="text-[10px] uppercase tracking-wide font-bold text-[var(--agro-muted)]">Cultivo actual</p>
-            </div>
-            <p className="text-sm font-bold text-[var(--agro-text)] mt-2">{parcel.crop}</p>
-            <p className="text-xs text-[var(--agro-muted)] mt-1">Altitud: ~{parcel.elevationM} m s. n. m.</p>
-          </div>
-          <div className="hidden sm:flex rounded-2xl bg-[var(--agro-surface-soft)] border border-[var(--agro-line)] p-3.5 items-center gap-2">
-            <Ruler className="w-4 h-4 text-[var(--agro-muted)]" />
-            <p className="text-[11px] text-[var(--agro-muted)] leading-4">La geometría es una representación visual de referencia.</p>
-          </div>
+        <aside className="rounded-2xl border border-[var(--agro-line)] bg-[var(--agro-surface-soft)] p-4 space-y-5" aria-label="Controles del modelo">
+          <div className="flex items-center justify-between"><h3 className="text-sm font-bold text-[var(--agro-text)]">Control ambiental</h3><span className="text-[10px] text-[var(--agro-muted)]">INTERACTIVO</span></div>
+          <div><p className="text-[11px] font-bold text-[var(--agro-muted)] mb-2">Tipo de cultivo</p><div className="grid grid-cols-2 gap-2">{(Object.keys(crops) as CropKey[]).map((key) => <button key={key} type="button" onClick={() => setCrop(key)} aria-pressed={crop === key} className={`text-left rounded-xl border p-2.5 transition ${crop === key ? 'border-[var(--agro-lime)] bg-[var(--agro-success-bg)]' : 'border-[var(--agro-line)] bg-[var(--agro-surface)]'}`}><span className="text-xl">{crops[key].emoji}</span><strong className="block text-xs text-[var(--agro-text)] mt-1">{crops[key].name}</strong><small className="block text-[10px] text-[var(--agro-muted)] truncate">{crops[key].description}</small></button>)}</div></div>
+          <div><p className="text-[11px] font-bold text-[var(--agro-muted)] mb-2">Condiciones del clima</p><div className="grid grid-cols-4 gap-1.5">{(Object.keys(weather) as WeatherKey[]).map((key) => <button key={key} type="button" onClick={() => setClimate(key)} aria-pressed={climate === key} className={`rounded-lg border p-2 text-[10px] font-bold ${climate === key ? 'border-[var(--agro-lime)] bg-[var(--agro-success-bg)] text-[var(--agro-success-text)]' : 'border-[var(--agro-line)] text-[var(--agro-muted)]'}`}>{weather[key].icon}<span className="block mt-1">{weather[key].label}</span></button>)}</div></div>
+          <label className="block text-[11px] font-bold text-[var(--agro-muted)]">Etapa de crecimiento <output className="float-right text-[var(--agro-text)]">{growth}%</output><input className="w-full mt-3 accent-[var(--agro-lime)]" type="range" min="10" max="100" value={growth} onChange={(event) => setGrowth(Number(event.target.value))} /></label>
+          <label className="block text-[11px] font-bold text-[var(--agro-muted)]">Intensidad del viento <output className="float-right text-[var(--agro-text)]">{wind} km/h</output><input className="w-full mt-3 accent-[var(--agro-lime)]" type="range" min="0" max="80" value={wind} onChange={(event) => setWind(Number(event.target.value))} /></label>
+          <label className="block text-[11px] font-bold text-[var(--agro-muted)]">Hora del día <output className="float-right text-[var(--agro-text)]">{hourLabel}</output><input className="w-full mt-3 accent-[var(--agro-lime)]" type="range" min="6" max="19" value={hour} onChange={(event) => setHour(Number(event.target.value))} /></label>
+          <div className="space-y-1">{([['rain', 'Mostrar lluvia'], ['clouds', 'Mostrar nubes'], ['soil', 'Suelo y surcos'], ['sway', 'Animar el viento']] as const).map(([key, label]) => <div key={key} className="flex items-center justify-between py-2 border-b border-[var(--agro-line)]/60 text-[11px] text-[var(--agro-muted)]"><span>{label}</span><button type="button" onClick={() => toggleLayer(key)} role="switch" aria-checked={layers[key]} className={`w-9 h-5 rounded-full p-1 ${layers[key] ? 'bg-[var(--agro-lime)]' : 'bg-[var(--agro-line)]'}`}><span className={`block w-3 h-3 bg-white rounded-full transition-transform ${layers[key] ? 'translate-x-4' : ''}`} /></button></div>)}</div>
         </aside>
       </div>
+
+      <div className="grid md:grid-cols-3 gap-3 px-4 lg:px-5 pb-4"><div className="rounded-2xl bg-[#166534] text-white p-3.5"><div className="flex justify-between"><p className="text-[10px] uppercase font-bold text-emerald-100">Área seleccionada</p><CheckCircle2 className="w-4 h-4 text-emerald-200" /></div><p className="text-2xl font-bold mt-2">{parcel.areaHa.toFixed(2)} <small className="text-sm font-normal">ha</small></p><p className="text-xs text-emerald-100 mt-1">Polígono referencial · {parcel.polygon.length} vértices</p></div><div className="rounded-2xl bg-[var(--agro-surface-soft)] p-3.5"><div className="flex items-center gap-2"><Sprout className="w-4 h-4 text-[var(--agro-lime)]" /><p className="text-[10px] uppercase font-bold text-[var(--agro-muted)]">Cultivo actual</p></div><p className="text-sm font-bold text-[var(--agro-text)] mt-2">{selectedCrop.emoji} {selectedCrop.name}</p><p className="text-xs text-[var(--agro-muted)] mt-1">{plantCount} plantas 3D ilustrativas</p></div><div className="rounded-2xl bg-[var(--agro-surface-soft)] p-3.5"><div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-[var(--agro-lime)]" /><p className="text-[10px] uppercase font-bold text-[var(--agro-muted)]">Ubicación</p></div><p className="text-sm font-bold text-[var(--agro-text)] mt-2">{parcel.location}, {parcel.department}</p><p className="text-[11px] font-mono text-[var(--agro-muted)] mt-1 break-words">{formatCoordinates(parcel.centroid)}</p></div></div>
+      <div className="flex items-start gap-2 px-4 lg:px-5 pb-4 text-[10px] text-[var(--agro-muted)]"><Info className="w-3.5 h-3.5 shrink-0" />La escena, el relieve y los valores son una simulación visual. No representan observaciones meteorológicas ni predicciones agronómicas.</div>
     </section>
   );
 }
