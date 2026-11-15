@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { InstallAppCard } from '../components/InstallAppCard';
 import {
   AlertCategory,
   Parcel,
@@ -147,6 +148,8 @@ export function ProfileScreen({
           </div>
         )}
       </section>
+
+      <InstallAppCard />
 
       {/* Registered Parcels Summary */}
       <section className="bg-[var(--agro-surface)] rounded-2xl p-4 border border-[var(--agro-line)]/90 space-y-2.5">
