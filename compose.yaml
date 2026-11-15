@@ -30,7 +30,10 @@ services:
     networks: [internal]
 
   web:
-    build: ./frontent
+    build:
+      context: ./frontent
+      args:
+        VITE_CARTO_API_KEY: ${VITE_CARTO_API_KEY:-}
     restart: unless-stopped
     depends_on: [api]
     environment:

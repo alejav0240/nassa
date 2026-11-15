@@ -24,6 +24,8 @@ export default defineConfig(() => {
           ...(process.env.API_KEY ? { headers: { 'X-API-Key': process.env.API_KEY } } : {}),
         },
       },
+      // Required when the dev server is accessed through the current Cloudflare tunnel.
+      allowedHosts: ['calendars-works-logan-dylan.trycloudflare.com'],
     },
   };
 });

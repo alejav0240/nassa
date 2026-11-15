@@ -1,5 +1,6 @@
 import { MapContainer, Polygon, TileLayer } from 'react-leaflet';
 import { Parcel } from '../types/agroterra';
+import { getBaseMapAttribution, getBaseMapTileUrl } from '../services/mapTiles';
 
 interface PolygonMiniMapProps {
   parcel: Parcel;
@@ -23,8 +24,8 @@ export function PolygonMiniMap({ parcel, heightClass = 'h-44' }: PolygonMiniMapP
         className="w-full h-full"
       >
         <TileLayer
-          attribution="&copy; OpenStreetMap"
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution={getBaseMapAttribution()}
+          url={getBaseMapTileUrl(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light')}
         />
         {positions.length >= 3 && (
           <Polygon

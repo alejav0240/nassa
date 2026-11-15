@@ -1,5 +1,5 @@
 import { Ruler, X } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { LatLngPoint, MonitoringStatus, Parcel, ParcelMeasurement } from '../types/agroterra';
 import {
   createReferencePolygon,
@@ -8,6 +8,7 @@ import {
   formatSquareMeters,
 } from '../utils/parcelGeometry';
 import { ParcelScanner } from './ParcelScanner';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 
 interface ParcelFormModalProps {
   open: boolean;
@@ -21,6 +22,8 @@ const CROP_IMAGES: Record<string, string> = {
   Quinua: '/src/assets/images/parcel_quinua_bolivia_1794679428951.jpg',
   Maíz: '/src/assets/images/parcel_maiz_bolivia_1794679429595.jpg',
 };
+
+const SUPPORTED_CROPS = ['Papa', 'Quinua', 'Haba', 'Cebada', 'Avena', 'Tarwi'];
 
 export function ParcelFormModal({
   open,
@@ -42,6 +45,12 @@ export function ParcelFormModal({
   const [measurement, setMeasurement] = useState<ParcelMeasurement | null>(null);
   const [scannedPolygon, setScannedPolygon] = useState<LatLngPoint[] | null>(null);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useDialogA11y({
+    open,
+    onClose,
+    initialFocusRef: nameInputRef,
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -50,7 +59,7 @@ export function ParcelFormModal({
       setLocation(initialParcel.location);
       setDepartment(initialParcel.department);
       setAreaHa(String(initialParcel.measurement?.areaHa ?? initialParcel.areaHa));
-      setCrop(initialParcel.crop);
+      setCrop(SUPPORTED_CROPS.includes(initialParcel.crop) ? initialParcel.crop : 'Papa');
       setPlantingDate(initialParcel.plantingDate);
       setEstimatedHarvestDate(initialParcel.estimatedHarvestDate);
       setLat(String(initialParcel.measurement?.centroid.lat ?? initialParcel.centroid.lat));
@@ -186,6 +195,7 @@ export function ParcelFormModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="parcel-form-title"
+      ref={dialogRef}
     >
       <div className="bg-[var(--agro-surface)] w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90dvh] flex flex-col shadow-xl overflow-hidden">
         <div className="w-10 h-1.5 bg-[var(--agro-canvas)] rounded-full mx-auto mt-3 sm:hidden" />
@@ -216,6 +226,7 @@ export function ParcelFormModal({
             </label>
             <input
               type="text"
+              ref={nameInputRef}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ej. Parcela Altiplano Este"
@@ -236,11 +247,10 @@ export function ParcelFormModal({
               >
                 <option value="Papa">Papa</option>
                 <option value="Quinua">Quinua</option>
-                <option value="Maíz">Maíz</option>
                 <option value="Haba">Haba</option>
                 <option value="Cebada">Cebada</option>
-                <option value="Soya">Soya</option>
-                <option value="Descanso">En descanso</option>
+                <option value="Avena">Avena</option>
+                <option value="Tarwi">Tarwi</option>
               </select>
             </div>
             <div>
@@ -279,6 +289,7 @@ export function ParcelFormModal({
                   type="button"
                   onClick={() => {
                     setMeasurement(null);
+                    setScannedPolygon(null);
                   }}
                   className="min-h-[42px] px-3.5 rounded-xl border border-[var(--agro-line)] text-xs font-semibold text-[var(--agro-text)] hover:bg-[var(--agro-soft)]"
                 >

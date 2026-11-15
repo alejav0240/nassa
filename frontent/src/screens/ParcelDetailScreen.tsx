@@ -1,7 +1,13 @@
 import {
   ArrowLeft,
+  BarChart3,
   Calendar,
   Check,
+  CheckCircle2,
+  Copy,
+  Edit3,
+  ExternalLink,
+  History,
   Info,
   LoaderCircle,
   MapPin,
@@ -23,7 +29,7 @@ import {
   Parcel,
   UserPreferences,
 } from '../types/agroterra';
-import { formatCoordinates } from '../utils/geo';
+import { formatCoordinates, getOpenStreetMapUrl } from '../utils/geo';
 import {
   formatAreaHa,
   formatPerimeter,
@@ -38,6 +44,9 @@ interface ParcelDetailScreenProps {
   onAddObservation: (parcelId: string, obs: FieldObservation) => void;
   onDeleteObservation: (parcelId: string, obsId: string) => void;
   onOpenAnalysis: () => void;
+  onOpenHistory: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }
 
 type DetailTab = 'resumen' | 'satelitales' | 'historial' | 'suelo' | 'observaciones';
@@ -50,6 +59,9 @@ export function ParcelDetailScreen({
   onAddObservation,
   onDeleteObservation,
   onOpenAnalysis,
+  onOpenHistory,
+  onEdit,
+  onDelete,
 }: ParcelDetailScreenProps) {
   const [tab, setTab] = useState<DetailTab>('resumen');
   const [noteText, setNoteText] = useState('');
@@ -57,6 +69,7 @@ export function ParcelDetailScreen({
   const [recommendationStatus, setRecommendationStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [recommendations, setRecommendations] = useState<BackendRecommendations | null>(null);
   const [recommendationError, setRecommendationError] = useState<string | null>(null);
+  const [locationCopied, setLocationCopied] = useState(false);
 
   const hasIndicators = parcel.indicatorsAvailable !== false;
   const indicators = hasIndicators ? satelliteService.getIndicatorsForParcel(parcel) : [];
@@ -89,6 +102,19 @@ export function ParcelDetailScreen({
     } catch (error) {
       setRecommendationStatus('error');
       setRecommendationError(error instanceof Error ? error.message : 'No se pudo evaluar la parcela.');
+    }
+  };
+
+  const locationPoint = parcel.measurement?.centroid ?? parcel.centroid;
+  const locationText = `${locationPoint.lat}, ${locationPoint.lng}`;
+
+  const handleCopyLocation = async () => {
+    try {
+      await navigator.clipboard.writeText(locationText);
+      setLocationCopied(true);
+      window.setTimeout(() => setLocationCopied(false), 2200);
+    } catch {
+      setLocationCopied(false);
     }
   };
 
@@ -131,6 +157,87 @@ export function ParcelDetailScreen({
           <div><p className="text-[10px] text-[var(--agro-muted)]">Cultivo</p><p className="text-sm font-bold text-[var(--agro-text)] mt-0.5 truncate">{parcel.crop}</p></div>
           <div><p className="text-[10px] text-[var(--agro-muted)]">Geometría</p><p className="text-sm font-bold text-[var(--agro-text)] mt-0.5">{parcel.polygon.length} vértices</p></div>
         </div>
+      </section>
+
+      <section
+        className="rounded-3xl border border-[var(--agro-line)]/90 bg-[var(--agro-surface)] p-4 shadow-xs space-y-3"
+        aria-labelledby="parcel-actions-title"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 id="parcel-actions-title" className="text-sm font-bold text-[var(--agro-text)]">
+              Acciones de parcela
+            </h2>
+            <p className="text-[11px] text-[var(--agro-muted)] mt-0.5">
+              Gestiona esta parcela sin volver al listado.
+            </p>
+          </div>
+          <MapPin className="w-4 h-4 text-[var(--agro-lime)]" aria-hidden="true" />
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <button
+            type="button"
+            onClick={onEdit}
+            className="min-h-[44px] rounded-xl border border-[var(--agro-line)] bg-[var(--agro-surface-soft)] px-3 text-xs font-semibold text-[var(--agro-text)] inline-flex items-center justify-center gap-1.5 hover:bg-[var(--agro-canvas)]"
+          >
+            <Edit3 className="w-4 h-4" />
+            Editar
+          </button>
+          <button
+            type="button"
+            onClick={onOpenAnalysis}
+            className="min-h-[44px] rounded-xl bg-[#166534] px-3 text-xs font-semibold text-white inline-flex items-center justify-center gap-1.5 hover:bg-[#14532d]"
+          >
+            <BarChart3 className="w-4 h-4" />
+            Análisis
+          </button>
+          <button
+            type="button"
+            onClick={onOpenHistory}
+            className="min-h-[44px] rounded-xl border border-[var(--agro-line)] bg-[var(--agro-surface-soft)] px-3 text-xs font-semibold text-[var(--agro-text)] inline-flex items-center justify-center gap-1.5 hover:bg-[var(--agro-canvas)]"
+          >
+            <History className="w-4 h-4" />
+            Historial
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            className="min-h-[44px] rounded-xl border border-red-200 bg-[var(--agro-danger-bg)] px-3 text-xs font-semibold text-[var(--agro-danger-text)] inline-flex items-center justify-center gap-1.5 hover:bg-red-100"
+          >
+            <Trash2 className="w-4 h-4" />
+            Eliminar
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-2 rounded-2xl bg-[var(--agro-surface-soft)] p-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wide font-bold text-[var(--agro-muted)]">Ubicación</p>
+            <p className="mt-1 break-words text-xs font-mono tabular-nums text-[var(--agro-text)]">
+              {formatCoordinates(locationPoint)}
+            </p>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <button
+              type="button"
+              onClick={() => void handleCopyLocation()}
+              className="min-h-[40px] rounded-xl border border-[var(--agro-line)] bg-[var(--agro-surface)] px-3 text-xs font-semibold text-[var(--agro-text)] inline-flex items-center justify-center gap-1.5 hover:bg-[var(--agro-canvas)]"
+            >
+              {locationCopied ? <CheckCircle2 className="w-4 h-4 text-[var(--agro-lime)]" /> : <Copy className="w-4 h-4" />}
+              {locationCopied ? 'Copiada' : 'Copiar'}
+            </button>
+            <a
+              href={getOpenStreetMapUrl(locationPoint)}
+              target="_blank"
+              rel="noreferrer"
+              className="min-h-[40px] rounded-xl border border-[var(--agro-line)] bg-[var(--agro-surface)] px-3 text-xs font-semibold text-[var(--agro-text)] inline-flex items-center justify-center gap-1.5 hover:bg-[var(--agro-canvas)]"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Ver mapa
+            </a>
+          </div>
+        </div>
+        <p className="sr-only" aria-live="polite">{locationCopied ? 'Ubicación copiada al portapapeles.' : ''}</p>
       </section>
 
       {/* Referencial shape visualization + core metadata */}

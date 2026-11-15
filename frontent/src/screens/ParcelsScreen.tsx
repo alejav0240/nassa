@@ -7,6 +7,7 @@ import {
   Plus,
   Search,
   Trash2,
+  WifiOff,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -63,14 +64,20 @@ export function ParcelsScreen({
     });
   }, [parcels, cropFilter, search]);
 
+  const hasActiveFilters = Boolean(search.trim()) || cropFilter !== 'Todos';
+
   return (
-    <div className="p-4 lg:p-0 space-y-4 pb-8">
+    <div className="p-4 lg:p-0 space-y-4 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-8">
       {/* Screen Header */}
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-[var(--agro-text)]">Mis parcelas</h1>
           <p className="text-xs text-[var(--agro-muted)]">
             {parcels.length} parcelas registradas · Almacenamiento local
+          </p>
+          <p role="status" className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-[var(--agro-muted)]">
+            <WifiOff className="h-3.5 w-3.5" aria-hidden="true" />
+            Disponibles sin conexión
           </p>
         </div>
         <button
@@ -119,14 +126,39 @@ export function ParcelsScreen({
 
       {/* Parcel Cards Grid */}
       {filtered.length === 0 ? (
-        <div className="bg-[var(--agro-surface)] rounded-2xl p-8 border border-[var(--agro-line)] text-center space-y-2">
+        <section aria-live="polite" className="bg-[var(--agro-surface)] rounded-2xl p-8 border border-[var(--agro-line)] text-center space-y-2">
           <p className="text-sm font-semibold text-[var(--agro-text)]">
-            No se encontraron parcelas con esos criterios
+            {hasActiveFilters ? 'No encontramos parcelas con esos filtros' : 'Todavía no tenés parcelas registradas'}
           </p>
           <p className="text-xs text-[var(--agro-muted)]">
-            Ajusta el filtro o registra una nueva parcela agrícola.
+            {hasActiveFilters
+              ? 'Probá con otro nombre, ubicación o cultivo.'
+              : 'Registrá tu primera parcela para empezar a monitorearla sin conexión.'}
           </p>
-        </div>
+          {hasActiveFilters ? (
+            <button
+              type="button"
+              onClick={() => {
+                setSearch('');
+                setCropFilter('Todos');
+              }}
+              className="min-h-[40px] px-3.5 rounded-xl border border-[var(--agro-line)] text-xs font-semibold text-[var(--agro-text)] hover:bg-[var(--agro-surface-soft)]"
+            >
+              Limpiar filtros
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setEditingParcel(null);
+                setModalOpen(true);
+              }}
+              className="min-h-[40px] px-3.5 rounded-xl agro-primary text-xs font-semibold text-white"
+            >
+              Registrar primera parcela
+            </button>
+          )}
+        </section>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
           {filtered.map((parcel) => {
