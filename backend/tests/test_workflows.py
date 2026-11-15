@@ -78,6 +78,21 @@ def test_nasa_failure_not_saved(client, monkeypatch):
     assert client.post('/api/analyze', json={'field_id': fid}).status_code == 503
     assert client.get(f'/api/fields/{fid}/analyses').json() == []
 
+def test_crop_recommendations_use_climate_and_expose_limits(client, monkeypatch):
+    climate = summarize_power(power_payload(), 2024, 2024)
+    async def fake(*args):
+        return deepcopy(climate)
+    monkeypatch.setattr('app.main.fetch_power', fake)
+    fid = client.post('/api/fields', json=FIELD).json()['id']
+    response = client.post('/api/recommendations', json={'field_id': fid, 'limit': 3})
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert len(body['recommendations']) == 3
+    assert body['source'] == ['NASA POWER', 'Catálogo heurístico AgroShift AI']
+    assert body['data_quality']['complete_years'] == [2024]
+    assert body['methodology']['limitations']
+    assert all({'id', 'label', 'score', 'status', 'reasons', 'risks'} <= set(item) for item in body['recommendations'])
+
 def test_climate_complete_year_and_missing_year():
     payload = power_payload()
     result = summarize_power(payload, 2023, 2024)

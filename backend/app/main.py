@@ -9,11 +9,11 @@ from sqlalchemy.orm import Session
 from .config import settings
 from .database import Base, engine, get_db
 from .models import Field, ClimateCache, Analysis, Campaign, Plan
-from .schemas import FieldCreate, FieldRead, AnalyzeRequest, AnalysisRead, CampaignCreate, CampaignRead, PlanCreate, PlanRead, PlanUpdate
+from .schemas import FieldCreate, FieldRead, AnalyzeRequest, AnalysisRead, RecommendationRequest, RecommendationsRead, CampaignCreate, CampaignRead, PlanCreate, PlanRead, PlanUpdate
 from .schemas import CropsResponse, ErrorResponse, HealthResponse
 from .services.nasa import fetch_power
 from .services.climate_cache import get_climate
-from .services.rotation import CROPS, CROP_METADATA, evaluate
+from .services.rotation import CROPS, CROP_METADATA, evaluate, recommend_crops
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -109,6 +109,31 @@ def create_field(payload: FieldCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(field)
     return field
+
+
+@app.post(
+    '/api/recommendations',
+    tags=['Analyses'],
+    response_model=RecommendationsRead,
+    summary='Sugerir cultivos compatibles',
+    description=(
+        'Ordena cultivos usando el clima histórico disponible y coeficientes heurísticos '
+        'transparentes. No predice rendimiento ni sustituye validación agronómica local.'
+    ),
+    responses={
+        404: {'model': ErrorResponse, 'description': 'La parcela no existe.'},
+        503: {'model': ErrorResponse, 'description': 'NASA POWER no está disponible o devolvió una respuesta inválida.'},
+    },
+)
+def recommend(payload: RecommendationRequest, db: Session = Depends(get_db)):
+    field = db.get(Field, payload.field_id)
+    if not field:
+        raise HTTPException(404, 'Parcela no encontrada')
+    grid_lat = round(field.latitude * 2) / 2
+    grid_lon = round(field.longitude * 2) / 2
+    climate = get_climate(db, grid_lat, grid_lon, settings.climate_start_year,
+                          settings.climate_end_year, settings.nasa_timeout_seconds, fetch_power)
+    return recommend_crops(field, climate, payload.limit)
 
 @app.get(
     '/api/fields/{field_id}',

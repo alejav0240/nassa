@@ -63,6 +63,31 @@ class AnalyzeRequest(StrictModel):
     priorities: Priorities = Field(default_factory=Priorities)
 
 
+class RecommendationRequest(StrictModel):
+    field_id: int = Field(gt=0)
+    limit: int = Field(default=3, ge=1, le=6)
+
+
+class CropRecommendationRead(BaseModel):
+    id: str
+    label: str
+    score: float
+    status: Literal['compatible', 'revisar', 'no_priorizar']
+    is_current: bool
+    reasons: list[str]
+    risks: list[str]
+    criteria: dict[str, Any]
+
+
+class RecommendationsRead(BaseModel):
+    field_id: int
+    source: list[str]
+    climate_years: list[int]
+    data_quality: dict[str, Any] | None = None
+    recommendations: list[CropRecommendationRead]
+    methodology: dict[str, Any]
+
+
 class CoordinateRead(BaseModel):
     latitude: float
     longitude: float

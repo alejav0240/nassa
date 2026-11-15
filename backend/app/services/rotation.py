@@ -13,6 +13,78 @@ CROPS = {
 # Coefficients are openly declared demonstration assumptions, not calibrated measurements.
 CROP_METADATA = {'provenance': 'Parámetros heurísticos ilustrativos del prototipo. Requieren calibración con fuentes agronómicas y expertos locales.', 'source': 'Equipo AgroShift AI'}
 
+
+def recommend_crops(field, climate: dict, limit: int = 3) -> dict:
+    """Rank crops using observed climate plus transparent prototype coefficients.
+
+    This is an exploratory compatibility screen, not a yield forecast or an
+    agronomic recommendation. Missing soil data is reported as uncertainty
+    instead of being replaced by an assumed measurement.
+    """
+    rain = climate['annual_rainfall_mm']
+    frost = climate['annual_frost_days']
+    recommendations = []
+    for crop_id, crop in CROPS.items():
+        rainfall_score = min(100, round((rain / crop['min_rain']) * 100, 1)) if crop['min_rain'] else 0
+        frost_score = min(100, round((crop['max_frost'] / max(frost, 1)) * 100, 1))
+        climate_score = round((rainfall_score + frost_score) / 2, 1)
+        soil_score = float(crop['soil'])
+        market_score = float(crop['market'])
+        score = round(climate_score * 0.55 + soil_score * 0.25 + market_score * 0.20, 1)
+        reasons = []
+        risks = []
+        if rain >= crop['min_rain']:
+            reasons.append(f"La precipitación histórica ({rain} mm/año) supera el umbral orientativo de {crop['min_rain']} mm.")
+        else:
+            risks.append(f"La precipitación histórica ({rain} mm/año) queda por debajo del umbral orientativo de {crop['min_rain']} mm.")
+        if frost <= crop['max_frost']:
+            reasons.append(f"Las heladas aproximadas ({frost} días/año) están dentro del límite ilustrativo de {crop['max_frost']} días.")
+        else:
+            risks.append(f"Las heladas aproximadas ({frost} días/año) superan el límite ilustrativo de {crop['max_frost']} días.")
+        if field.irrigation:
+            reasons.append('La parcela declara disponibilidad de riego, sujeta a validar caudal y calendario.')
+        else:
+            risks.append('No se declaró riego: validar la distribución mensual de lluvia y la humedad del suelo.')
+        if field.soil_texture == 'desconocida' or field.soil_ph is None:
+            risks.append('Faltan textura y/o pH medidos; la compatibilidad del suelo no está verificada.')
+        else:
+            reasons.append(f"Se incorporó el perfil declarado de suelo ({field.soil_texture}, pH {field.soil_ph}).")
+        status = 'compatible' if score >= 70 and not risks else 'revisar' if score >= 50 else 'no_priorizar'
+        recommendations.append({
+            'id': crop_id,
+            'label': crop['label'],
+            'score': score,
+            'status': status,
+            'is_current': crop_id == field.current_crop,
+            'reasons': reasons[:3],
+            'risks': risks[:3],
+            'criteria': {
+                'climate': {'score': climate_score, 'label': 'Compatibilidad climática'},
+                'rainfall': {'score': rainfall_score, 'observed_mm': rain, 'threshold_mm': crop['min_rain']},
+                'frost': {'score': frost_score, 'observed_days': frost, 'threshold_days': crop['max_frost']},
+                'soil': {'score': soil_score, 'label': 'Coeficiente heurístico de suelo'},
+                'market': {'score': market_score, 'label': 'Coeficiente heurístico de mercado'},
+            },
+        })
+    recommendations.sort(key=lambda item: item['score'], reverse=True)
+    return {
+        'field_id': field.id,
+        'source': ['NASA POWER', 'Catálogo heurístico AgroShift AI'],
+        'climate_years': climate['years'],
+        'data_quality': climate.get('data_quality'),
+        'recommendations': recommendations[:limit],
+        'methodology': {
+            'formula': '55% clima + 25% suelo heurístico + 20% mercado heurístico',
+            'scope': 'Filtro exploratorio de compatibilidad; no predice rendimiento, ingresos ni éxito agronómico.',
+            'limitations': [
+                'Los coeficientes no están calibrados con ECOCROP ni validados localmente en esta versión.',
+                'No se usa altitud porque todavía no es un dato persistido en la API de parcelas.',
+                'La precipitación anual no sustituye balance hídrico mensual ni calendario fenológico.',
+                'Validar semillas, plagas, manejo, mercado y recomendación con especialistas locales.',
+            ],
+        },
+    }
+
 def evaluate(field, climate: dict, priorities: dict) -> dict:
     existing = field.current_crop
     # Preserve current baseline; distinct conservative and soil-support scenarios.
