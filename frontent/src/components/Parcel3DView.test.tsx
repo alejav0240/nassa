@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Parcel } from '../types/agroterra';
 import { Parcel3DView } from './Parcel3DView';
+import { cropWindFlexibility, getWindMotion } from './terrainWind';
 
 vi.mock('./TerrainScene', () => ({
   TerrainScene: () => <div data-testid="terrain-scene" aria-label="mock terrain" />,
@@ -32,5 +33,20 @@ describe('Parcel3DView', () => {
     expect(screen.getByText('80%')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('switch', { name: 'Mostrar lluvia' }));
     expect(screen.getByRole('switch', { name: 'Mostrar lluvia' })).toHaveAttribute('aria-checked', 'false');
+  });
+});
+
+describe('TerrainScene wind motion', () => {
+  it('keeps wind motion disabled when sway or reduced motion is active', () => {
+    expect(getWindMotion(2, 80, false, false, 7, cropWindFlexibility.papa)).toEqual({ x: 0, z: 0 });
+    expect(getWindMotion(2, 80, true, true, 7, cropWindFlexibility.papa)).toEqual({ x: 0, z: 0 });
+  });
+
+  it('varies plant response by flexibility and gust phase', () => {
+    const rigid = getWindMotion(2, 80, true, false, 7, .5);
+    const flexible = getWindMotion(2, 80, true, false, 7, 1.2);
+    const later = getWindMotion(3, 80, true, false, 7, 1.2);
+    expect(Math.abs(flexible.z)).toBeGreaterThan(Math.abs(rigid.z));
+    expect(later).not.toEqual(flexible);
   });
 });
