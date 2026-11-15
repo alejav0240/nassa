@@ -186,7 +186,7 @@ export function useAgroTerraState() {
     [parcels, selectedParcelId, detailParcelId]
   );
 
-  const runBackendAnalysis = useCallback(async (parcelId: string) => {
+  const runBackendAnalysis = useCallback(async (parcelId: string, priorities = { water: 40, soil: 40, income: 20 }) => {
     const parcel = parcels.find((item) => item.id === parcelId);
     if (!parcel?.backendId) {
       setAnalysisError('Esta parcela todavía no está registrada en el backend.');
@@ -196,7 +196,7 @@ export function useAgroTerraState() {
     setAnalysisStatus('loading');
     setAnalysisError(null);
     try {
-      const result = await backendApi.analyzeField(parcel.backendId);
+      const result = await backendApi.analyzeField(parcel.backendId, priorities);
       setBackendAnalysis(result);
       setAnalysisFingerprint(JSON.stringify(parcel));
       setAnalysisStatus('ready');

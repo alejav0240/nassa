@@ -146,6 +146,7 @@ export default function App() {
             backendAnalysis={backendAnalysis}
             analysisIsStale={analysisIsStale}
             analysisError={analysisError}
+            onRunAnalysis={runBackendAnalysis}
           />
         );
       case 'perfil':

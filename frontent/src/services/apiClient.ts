@@ -108,6 +108,15 @@ export interface BackendAnalysis {
   history_note?: string;
 }
 
+export interface BackendCampaign {
+  id: number;
+  field_id: number;
+  crop: BackendField['current_crop'];
+  start_date: string;
+  end_date: string;
+  notes: string;
+}
+
 export interface ClimateAnomalies {
   availability: 'ready';
   model_id: string;
@@ -214,6 +223,13 @@ export const backendApi = {
     }),
   deleteField: (id: number) =>
     request<void>(`/fields/${id}`, { method: 'DELETE' }),
+  listCampaigns: (fieldId: number) => request<BackendCampaign[]>(`/fields/${fieldId}/campaigns`),
+  createCampaign: (fieldId: number, payload: Omit<BackendCampaign, 'id' | 'field_id'>) =>
+    request<BackendCampaign>(`/fields/${fieldId}/campaigns`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
 };
 
 export async function withSimulatedTransport<T>(

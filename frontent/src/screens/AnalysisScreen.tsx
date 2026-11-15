@@ -1,4 +1,5 @@
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Droplets, Sprout, WalletCards } from 'lucide-react';
+import { useState } from 'react';
 import { DataSourcesCatalog } from '../components/DataSourcesCatalog';
 import { ClimateAnomaliesSection } from '../components/ClimateAnomaliesSection';
 import {
@@ -27,6 +28,7 @@ interface AnalysisScreenProps {
   backendAnalysis: BackendAnalysis | null;
   analysisIsStale: boolean;
   analysisError: string | null;
+  onRunAnalysis: (parcelId: string, priorities: { water: number; soil: number; income: number }) => Promise<void>;
 }
 
 const SUB_TABS: { id: AnalysisSubTab; label: string }[] = [
@@ -50,7 +52,9 @@ export function AnalysisScreen({
   backendAnalysis,
   analysisIsStale,
   analysisError,
+  onRunAnalysis,
 }: AnalysisScreenProps) {
+  const [priorities, setPriorities] = useState({ water: 40, soil: 40, income: 20 });
   if (!selectedParcel) {
     return (
       <div className="p-6 text-center text-sm text-[var(--agro-muted)]">
@@ -66,7 +70,7 @@ export function AnalysisScreen({
         <div>
           <h1 className="text-xl font-bold text-[var(--agro-text)]">Centro de Análisis</h1>
           <p className="text-xs text-[var(--agro-muted)]">
-            Datos demostrativos multisensor · {selectedParcel.name}
+            Evidencia climática y escenarios de rotación · {selectedParcel.name}
           </p>
         </div>
 
@@ -118,6 +122,45 @@ export function AnalysisScreen({
         <div role="status" className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
           La parcela cambió desde el último análisis. El resultado visible corresponde a una versión anterior; vuelve a ejecutar el análisis para actualizarlo.
         </div>
+      )}
+
+      <section className="rounded-2xl border border-[var(--agro-line)] bg-[var(--agro-surface)] p-4 space-y-3">
+        <div>
+          <h2 className="text-sm font-bold text-[var(--agro-text)]">Prioridades del agricultor</h2>
+          <p className="text-xs text-[var(--agro-muted)]">Ajustá los pesos y volvé a ejecutar el escenario. No son predicciones de rendimiento.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {([
+            ['water', 'Agua', Droplets],
+            ['soil', 'Suelo', Sprout],
+            ['income', 'Ingreso / mercado', WalletCards],
+          ] as const).map(([key, label, Icon]) => (
+            <label key={key} className="space-y-1 text-xs text-[var(--agro-text)]">
+              <span className="flex items-center justify-between font-semibold"><span className="flex items-center gap-1.5"><Icon className="w-3.5 h-3.5 text-[var(--agro-lime)]" />{label}</span><output>{priorities[key]}</output></span>
+              <input aria-label={`Prioridad ${label}`} type="range" min="0" max="100" value={priorities[key]} onChange={(e) => setPriorities((current) => ({ ...current, [key]: Number(e.target.value) }))} className="w-full accent-emerald-700" />
+            </label>
+          ))}
+        </div>
+        <button type="button" disabled={analysisStatus === 'loading' || priorities.water + priorities.soil + priorities.income === 0} onClick={() => void onRunAnalysis(selectedParcel.id, priorities)} className="min-h-[40px] px-4 rounded-xl agro-primary text-white text-xs font-semibold disabled:opacity-50">
+          {analysisStatus === 'loading' ? 'Calculando…' : 'Actualizar estrategias'}
+        </button>
+      </section>
+
+      {backendAnalysis && analysisStatus === 'ready' && (
+        <section className="space-y-3">
+          <div className="px-1"><h2 className="text-base font-bold text-[var(--agro-text)]">Estrategias calculadas para esta parcela</h2><p className="text-xs text-[var(--agro-muted)]">NASA POWER + reglas heurísticas transparentes · requiere revisión local</p></div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            {backendAnalysis.strategies.map((strategy) => (
+              <article key={strategy.id} className="rounded-2xl border border-[var(--agro-line)] bg-[var(--agro-surface)] p-4 space-y-2">
+                <div className="flex items-start justify-between gap-2"><h3 className="text-sm font-bold text-[var(--agro-text)]">{strategy.title}</h3><span className="text-lg font-bold text-[var(--agro-lime)]">{strategy.score}</span></div>
+                <p className="text-xs text-[var(--agro-muted)]">{strategy.crops.map((crop) => crop.label).join(' → ')}</p>
+                <p className="text-xs text-[var(--agro-text)] leading-relaxed">{strategy.explanation}</p>
+                <div className="text-[11px] space-y-1"><p><strong>Beneficios:</strong> {strategy.benefits.join(' · ')}</p><p className="text-[var(--agro-warning-text)]"><strong>Riesgos:</strong> {strategy.risks.join(' · ')}</p></div>
+              </article>
+            ))}
+          </div>
+          <p className="text-[11px] text-[var(--agro-warning-text)] bg-[var(--agro-warning-bg)] rounded-xl p-3">{backendAnalysis.methodology.scope} Fuente: {backendAnalysis.climate.source}; período {backendAnalysis.climate.years.join('–')}.</p>
+        </section>
       )}
 
       {/* Sub-navigation Tabs */}

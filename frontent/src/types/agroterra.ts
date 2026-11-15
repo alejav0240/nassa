@@ -173,9 +173,9 @@ export interface CropHistoryRecord {
   harvestDate: string;
   observations: string;
   avgNdvi: number | null;
-  totalPrecipitationMm: number;
-  avgTempC: number;
-  avgMoisturePct: number;
+  totalPrecipitationMm: number | null;
+  avgTempC: number | null;
+  avgMoisturePct: number | null;
 }
 
 export interface RotationScenario {

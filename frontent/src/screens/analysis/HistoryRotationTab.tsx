@@ -1,5 +1,5 @@
 import { Calendar, Plus, RefreshCw, Sprout } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -10,6 +10,7 @@ import {
   YAxis,
 } from 'recharts';
 import { historyService } from '../../services/historyService';
+import { backendApi } from '../../services/apiClient';
 import { CropHistoryRecord, Parcel } from '../../types/agroterra';
 
 interface HistoryRotationTabProps {
@@ -30,11 +31,39 @@ export function HistoryRotationTab({
   const [plantingDate, setPlantingDate] = useState('2026-09-10');
   const [harvestDate, setHarvestDate] = useState('2027-03-20');
   const [observations, setObservations] = useState('');
+  const [campaignSync, setCampaignSync] = useState<'idle' | 'loading' | 'saved' | 'error'>('idle');
 
   const parcelHistory = useMemo(
     () => allHistory.filter((h) => h.parcelId === parcel.id),
     [allHistory, parcel.id]
   );
+
+  useEffect(() => {
+    if (!parcel.backendId) return;
+    let active = true;
+    setCampaignSync('loading');
+    void backendApi.listCampaigns(parcel.backendId).then((campaigns) => {
+      if (!active) return;
+      campaigns.forEach((campaign) => onAddHistory({
+        id: `backend-campaign-${campaign.id}`,
+        parcelId: parcel.id,
+        season: `${campaign.start_date.slice(0, 4)}–${campaign.end_date.slice(0, 4)}`,
+        crop: campaign.crop,
+        isFallow: false,
+        plantingDate: campaign.start_date,
+        harvestDate: campaign.end_date,
+        observations: campaign.notes || 'Campaña sincronizada desde el backend.',
+        avgNdvi: null,
+        totalPrecipitationMm: null,
+        avgTempC: null,
+        avgMoisturePct: null,
+      }));
+      setCampaignSync('saved');
+    }).catch(() => {
+      if (active) setCampaignSync('error');
+    });
+    return () => { active = false; };
+  }, [parcel.backendId, parcel.id, onAddHistory]);
 
   const scenarios = useMemo(() => historyService.getRotationScenarios(), []);
   const [selectedScenarioId, setSelectedScenarioId] = useState(scenarios[0].id);
@@ -42,7 +71,7 @@ export function HistoryRotationTab({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const record: CropHistoryRecord = {
+      const record: CropHistoryRecord = {
       id: `hist-${Date.now()}`,
       parcelId: parcel.id,
       season: season.trim() || '2026–2027',
@@ -51,12 +80,23 @@ export function HistoryRotationTab({
       plantingDate,
       harvestDate,
       observations: observations.trim() || 'Registro demostrativo de campaña.',
-      avgNdvi: isFallow ? 0.21 : 0.54,
-      totalPrecipitationMm: 430,
-      avgTempC: 27.4,
-      avgMoisturePct: 21,
-    };
-    onAddHistory(record);
+        avgNdvi: null,
+        totalPrecipitationMm: null,
+        avgTempC: null,
+        avgMoisturePct: null,
+      };
+      onAddHistory(record);
+      if (parcel.backendId) {
+        const normalizedCrop = crop.trim().toLowerCase();
+        const backendCrop = normalizedCrop === 'quinua' ? 'quinua' : normalizedCrop === 'haba' ? 'haba' : normalizedCrop === 'cebada' ? 'cebada' : normalizedCrop === 'avena' ? 'avena' : normalizedCrop === 'tarwi' ? 'tarwi' : 'papa';
+        setCampaignSync('loading');
+        void backendApi.createCampaign(parcel.backendId, {
+          crop: backendCrop,
+          start_date: plantingDate,
+          end_date: harvestDate,
+          notes: `${isFallow ? 'Descanso / barbecho' : ''} ${observations.trim()}`.trim(),
+        }).then(() => setCampaignSync('saved')).catch(() => setCampaignSync('error'));
+      }
     setObservations('');
     setShowForm(false);
   };
@@ -80,6 +120,14 @@ export function HistoryRotationTab({
           Registrar ciclo
         </button>
       </div>
+
+      {campaignSync !== 'idle' && (
+        <p role={campaignSync === 'error' ? 'alert' : 'status'} className={`text-[11px] rounded-xl px-3 py-2 ${campaignSync === 'error' ? 'bg-[var(--agro-danger-bg)] text-[var(--agro-danger-text)]' : 'bg-[var(--agro-surface-soft)] text-[var(--agro-muted)]'}`}>
+          {campaignSync === 'loading' && 'Sincronizando campañas con el backend…'}
+          {campaignSync === 'saved' && 'Historial sincronizado. Las métricas no disponibles se muestran como N/D.'}
+          {campaignSync === 'error' && 'No se pudo sincronizar el historial. El registro local conserva el cambio y permite reintentar.'}
+        </p>
+      )}
 
       {/* Add History Form */}
       {showForm && (
@@ -216,9 +264,9 @@ export function HistoryRotationTab({
                   <p className="text-xs text-[var(--agro-text)]">{item.observations}</p>
                   <div className="pt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-mono text-[var(--agro-muted)] tabular-nums">
                     <span>NDVI prom: {item.avgNdvi ?? 'N/D'}</span>
-                    <span>Lluvia: {item.totalPrecipitationMm} mm</span>
-                    <span>Temp: {item.avgTempC} °C</span>
-                    <span>Humedad: {item.avgMoisturePct} %</span>
+                    <span>Lluvia: {item.totalPrecipitationMm == null ? 'N/D' : `${item.totalPrecipitationMm} mm`}</span>
+                    <span>Temp: {item.avgTempC == null ? 'N/D' : `${item.avgTempC} °C`}</span>
+                    <span>Humedad: {item.avgMoisturePct == null ? 'N/D' : `${item.avgMoisturePct} %`}</span>
                   </div>
                 </div>
               </div>
