@@ -7,7 +7,6 @@ import {
   AnalysisSubTab,
   CropHistoryRecord,
   Parcel,
-  UserPreferences,
 } from '../types/agroterra';
 import { getParcelAreaHa } from '../utils/parcelGeometry';
 import { FusionTab } from './analysis/FusionTab';
@@ -24,7 +23,6 @@ interface AnalysisScreenProps {
   onSelectParcel: (id: string) => void;
   historyRecords: CropHistoryRecord[];
   onAddHistory: (record: CropHistoryRecord) => void;
-  preferences: UserPreferences;
   analysisStatus: 'idle' | 'loading' | 'ready' | 'error';
   backendAnalysis: BackendAnalysis | null;
   analysisIsStale: boolean;
@@ -33,7 +31,7 @@ interface AnalysisScreenProps {
 }
 
 const SUB_TABS: { id: AnalysisSubTab; label: string }[] = [
-  { id: 'satelital', label: 'Satelital' },
+  { id: 'satelital', label: 'Clima y datos' },
   { id: 'fusion', label: 'Fusión' },
   { id: 'fuentes', label: 'Fuentes' },
   { id: 'insights', label: 'Insights AI' },
@@ -48,7 +46,6 @@ export function AnalysisScreen({
   onSelectParcel,
   historyRecords,
   onAddHistory,
-  preferences,
   analysisStatus,
   backendAnalysis,
   analysisIsStale,
@@ -69,8 +66,8 @@ export function AnalysisScreen({
           <h1 className="text-base font-bold text-[var(--agro-text)]">Selecciona una parcela para empezar</h1>
           <p className="text-sm text-[var(--agro-muted)]">
             {parcels.length > 0
-              ? 'Elige una parcela y te mostraremos la recomendación, su confianza y la evidencia que la respalda.'
-              : 'Registra una parcela antes de explorar los análisis demostrativos.'}
+              ? 'Elige una parcela y te mostraremos un escenario orientativo junto con la evidencia que lo respalda.'
+              : 'Registra una parcela antes de consultar datos ambientales reales.'}
           </p>
           {parcels.length > 0 && (
             <button
@@ -175,7 +172,7 @@ export function AnalysisScreen({
             <CheckCircle2 className="w-5 h-5 text-[var(--agro-success-text)] shrink-0 mt-0.5" aria-hidden="true" />
           )}
           <div className="min-w-0 flex-1 space-y-1">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--agro-success-text)]">Siguiente mejor paso</p>
+            <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--agro-success-text)]">Escenario heurístico · no predicción</p>
             <h2 className="text-base sm:text-lg font-bold text-[var(--agro-text)]">
               {primaryStrategy ? primaryStrategy.title : 'Calcula una estrategia para esta parcela'}
             </h2>
@@ -187,8 +184,8 @@ export function AnalysisScreen({
           </div>
           {confidence && (
             <div className="shrink-0 text-right">
-              <p className="text-[11px] text-[var(--agro-muted)]">Confianza</p>
-              <p className="text-sm font-bold text-[var(--agro-success-text)]">{confidence}</p>
+                <p className="text-[11px] text-[var(--agro-muted)]">Puntaje orientativo</p>
+                <p className="text-sm font-bold text-[var(--agro-success-text)]">{confidence}</p>
               <p className="text-[11px] text-[var(--agro-muted)]">{primaryStrategy?.score}/100</p>
             </div>
           )}
@@ -266,8 +263,8 @@ export function AnalysisScreen({
       </div>
 
       {/* Active Sub-module */}
-      {subTab === 'satelital' && <div id="analysis-panel-satelital" role="tabpanel"><SatelliteTab parcel={selectedParcel} preferences={preferences} /></div>}
-      {subTab === 'fusion' && <div id="analysis-panel-fusion" role="tabpanel"><FusionTab parcel={selectedParcel} /></div>}
+      {subTab === 'satelital' && <div id="analysis-panel-satelital" role="tabpanel"><SatelliteTab parcel={selectedParcel} analysis={backendAnalysis} analysisStatus={analysisStatus} analysisError={analysisError} onRetry={runAnalysis} /></div>}
+      {subTab === 'fusion' && <div id="analysis-panel-fusion" role="tabpanel"><FusionTab parcel={selectedParcel} analysis={backendAnalysis} analysisStatus={analysisStatus} /></div>}
       {subTab === 'fuentes' && (
         <div id="analysis-panel-fuentes" role="tabpanel" className="space-y-3">
           <div className="px-1">
@@ -281,7 +278,7 @@ export function AnalysisScreen({
           <DataSourcesCatalog />
         </div>
       )}
-      {subTab === 'insights' && <div id="analysis-panel-insights" role="tabpanel" className="space-y-4"><ClimateAnomaliesSection parcel={selectedParcel} /><InsightsTab parcel={selectedParcel} /></div>}
+      {subTab === 'insights' && <div id="analysis-panel-insights" role="tabpanel" className="space-y-4"><ClimateAnomaliesSection parcel={selectedParcel} /><InsightsTab parcel={selectedParcel} analysis={backendAnalysis} analysisStatus={analysisStatus} /></div>}
       {subTab === 'historial' && (
         <div id="analysis-panel-historial" role="tabpanel">
           <HistoryRotationTab

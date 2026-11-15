@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import {
   AlertTriangle,
   BarChart3,
+  Box,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
@@ -34,6 +35,8 @@ import {
 } from 'react-leaflet';
 import { ParcelFormModal } from '../components/ParcelFormModal';
 import { ParcelScanner } from '../components/ParcelScanner';
+import { Parcel3DView } from '../components/Parcel3DView';
+import { getBaseMapAttribution, getBaseMapTileUrl } from '../services/mapTiles';
 import { BOLIVIA_LOCATIONS } from '../data/mockData';
 import {
   LatLngPoint,
@@ -226,6 +229,10 @@ export function MapScreen({
   const [mapCenter, setMapCenter] = useState<[number, number]>([initialLat, initialLng]);
   const [mapZoom, setMapZoom] = useState<number>(15);
   const [activeLayer, setActiveLayer] = useState<MapLayerId>('osm');
+  const [viewMode, setViewMode] = useState<'map' | '3d'>('map');
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() =>
+    document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
+  );
   const [layersOpen, setLayersOpen] = useState(false);
   const [sheetCollapsed, setSheetCollapsed] = useState(false);
 
@@ -252,6 +259,14 @@ export function MapScreen({
   // Edit / Register modal from map
   const [parcelFormOpen, setParcelFormOpen] = useState(false);
   const [editingParcel, setEditingParcel] = useState<Parcel | null>(null);
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setResolvedTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
+  }, []);
 
   const currentLayerInfo = MAP_LAYERS.find((l) => l.id === activeLayer) ?? MAP_LAYERS[0];
 
@@ -406,19 +421,20 @@ export function MapScreen({
           : 'h-[calc(100dvh-64px)] lg:h-[calc(100vh-32px)] lg:rounded-3xl border border-[var(--agro-line)]/90 shadow-xs'
       }`}
     >
-      {/* Full-bleed Interactive OpenStreetMap */}
-      <MapContainer
-        center={mapCenter}
-        zoom={mapZoom}
-        zoomControl={false}
-        className="w-full h-full z-0"
-        aria-label="Mapa interactivo de parcelas agrícolas"
-      >
-        <TileLayer
-          attribution="&copy; OpenStreetMap contributors"
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <MapController targetCenter={mapCenter} targetZoom={mapZoom} />
+      {/* Geographic map or the existing interactive 3D parcel scene. */}
+      {viewMode === 'map' ? (
+        <MapContainer
+          center={mapCenter}
+          zoom={mapZoom}
+          zoomControl={false}
+          className="w-full h-full z-0"
+          aria-label="Mapa interactivo de parcelas agrícolas"
+        >
+          <TileLayer
+            attribution={getBaseMapAttribution()}
+            url={getBaseMapTileUrl(resolvedTheme)}
+          />
+          <MapController targetCenter={mapCenter} targetZoom={mapZoom} />
 
         {/* Parcel Polygons with Halo Selection Highlight */}
         {parcels.map((parcel, idx) => {
@@ -523,7 +539,16 @@ export function MapScreen({
           />
         )}
 
-      </MapContainer>
+        </MapContainer>
+      ) : selectedParcel ? (
+        <div className="agro-map-3d-host h-full overflow-y-auto bg-[var(--agro-canvas)] p-2 sm:p-4">
+          <Parcel3DView parcel={selectedParcel} />
+        </div>
+      ) : (
+        <div className="h-full grid place-items-center bg-[var(--agro-canvas)] text-sm text-[var(--agro-muted)]">
+          Seleccioná una parcela para abrir la vista 3D.
+        </div>
+      )}
 
       {/* Top Rounded Search Bar & Quick Parcel Switcher */}
       <div className="absolute top-3.5 left-3.5 right-3.5 z-[450] flex flex-col gap-2 pointer-events-none">
@@ -718,10 +743,24 @@ export function MapScreen({
         <motion.button
           type="button"
           whileTap={{ scale: 0.92 }}
-          onClick={() => setLayersOpen((v) => !v)}
+          onClick={() => {
+            setViewMode((current) => current === 'map' ? '3d' : 'map');
+            setLayersOpen(false);
+          }}
+          title={viewMode === 'map' ? 'Vista 3D de parcela' : 'Volver al mapa'}
+          aria-label={viewMode === 'map' ? 'Vista 3D de parcela' : 'Volver al mapa'}
+          className={`w-11 h-11 rounded-2xl border shadow-[0_6px_18px_rgba(15,23,42,0.09)] flex items-center justify-center transition-colors ${viewMode === '3d' ? 'bg-[#166534] border-[#166534] text-white' : 'bg-[var(--agro-surface)] backdrop-blur-md border-[var(--agro-line)]/80 text-[var(--agro-text)] hover:text-[var(--agro-lime)] hover:bg-[var(--agro-selected)]'}`}
+        >
+          <Box className="w-5 h-5" />
+        </motion.button>
+
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.92 }}
+          onClick={() => viewMode === 'map' && setLayersOpen((v) => !v)}
           title="Capas"
           aria-label="Capas"
-          className={`w-11 h-11 rounded-2xl border shadow-[0_6px_18px_rgba(15,23,42,0.09)] flex items-center justify-center transition-colors ${
+          className={`w-11 h-11 rounded-2xl border shadow-[0_6px_18px_rgba(15,23,42,0.09)] flex items-center justify-center transition-colors ${viewMode === '3d' ? 'opacity-40 cursor-not-allowed' : ''} ${
             layersOpen || activeLayer !== 'osm'
               ? 'bg-[#166534] border-[#166534] text-white'
               : 'bg-[var(--agro-surface)] backdrop-blur-md border-[var(--agro-line)]/80 text-[var(--agro-text)] hover:text-[var(--agro-lime)] hover:bg-[var(--agro-selected)]'

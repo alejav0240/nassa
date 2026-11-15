@@ -1,15 +1,5 @@
-import { Calendar, Plus, RefreshCw, Sprout } from 'lucide-react';
+import { Calendar, Plus, Sprout } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
-import { historyService } from '../../services/historyService';
 import { backendApi } from '../../services/apiClient';
 import { CropHistoryRecord, Parcel } from '../../types/agroterra';
 
@@ -64,10 +54,6 @@ export function HistoryRotationTab({
     });
     return () => { active = false; };
   }, [parcel.backendId, parcel.id, onAddHistory]);
-
-  const scenarios = useMemo(() => historyService.getRotationScenarios(), []);
-  const [selectedScenarioId, setSelectedScenarioId] = useState(scenarios[0].id);
-  const activeScenario = scenarios.find((s) => s.id === selectedScenarioId) ?? scenarios[0];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -233,7 +219,7 @@ export function HistoryRotationTab({
 
       {/* Visual Timeline */}
       <section className="bg-[var(--agro-surface)] rounded-2xl p-4 border border-[var(--agro-line)]/90 space-y-3">
-        <h3 className="text-sm font-bold text-[var(--agro-text)]">Línea de tiempo de cultivos</h3>
+        <h3 className="text-sm font-bold text-[var(--agro-text)]">Línea de tiempo registrada</h3>
         {parcelHistory.length === 0 ? (
           <p className="text-xs text-[var(--agro-muted)] py-3">
             No hay registros históricos todavía para esta parcela. Registra el primer ciclo arriba.
@@ -275,89 +261,6 @@ export function HistoryRotationTab({
         )}
       </section>
 
-      {/* Season Comparison Chart */}
-      {parcelHistory.length > 0 && (
-        <section className="bg-[var(--agro-surface)] rounded-2xl p-4 border border-[var(--agro-line)]/90 space-y-2.5">
-          <h3 className="text-sm font-bold text-[var(--agro-text)]">
-            Comparación entre temporadas (valores demostrativos)
-          </h3>
-          <div className="h-44 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={[...parcelHistory].reverse()} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                <XAxis dataKey="season" tick={{ fontSize: 10, fill: '#64748b' }} />
-                <YAxis yAxisId="ndvi" domain={[0, 1]} tick={{ fontSize: 10, fill: '#166534' }} />
-                <YAxis yAxisId="rain" orientation="right" tick={{ fontSize: 10, fill: '#0284C7' }} />
-                <Tooltip contentStyle={{ borderRadius: '12px', fontSize: '12px' }} />
-                <Bar yAxisId="ndvi" dataKey="avgNdvi" name="NDVI promedio" fill="#16A34A" radius={[4, 4, 0, 0]} />
-                <Bar
-                  yAxisId="rain"
-                  dataKey="totalPrecipitationMm"
-                  name="Precipitación acum. (mm)"
-                  fill="#0284C7"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-      )}
-
-      {/* Crop Rotation Exploration */}
-      <section className="bg-[var(--agro-surface)] rounded-2xl p-4 border border-[var(--agro-line)]/90 space-y-3">
-        <div className="flex items-center gap-2">
-          <RefreshCw className="w-4 h-4 text-[var(--agro-lime)]" />
-          <h3 className="text-sm font-bold text-[var(--agro-text)]">Exploración de rotación agrícola</h3>
-        </div>
-
-        <div className="flex gap-2 overflow-x-auto no-scrollbar">
-          {scenarios.map((sc) => (
-            <button
-              key={sc.id}
-              type="button"
-              onClick={() => setSelectedScenarioId(sc.id)}
-              className={`min-h-[38px] px-3 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${
-                selectedScenarioId === sc.id
-                  ? 'bg-[#166534] text-white'
-                  : 'bg-[var(--agro-surface-soft)] text-[var(--agro-text)] hover:bg-[var(--agro-canvas)]'
-              }`}
-            >
-              {sc.title.split(':')[0]}
-            </button>
-          ))}
-        </div>
-
-        <div className="bg-[var(--agro-surface-soft)] rounded-xl p-3.5 space-y-2.5">
-          <p className="text-xs font-bold text-[var(--agro-text)]">{activeScenario.title}</p>
-          <p className="text-[11px] text-[var(--agro-muted)]">{activeScenario.targetRegion}</p>
-
-          <div className="flex items-center gap-1.5 flex-wrap py-1">
-            {activeScenario.sequence.map((step, idx) => (
-              <React.Fragment key={step}>
-                <span className="px-2.5 py-1 rounded-lg bg-[var(--agro-surface)] border border-[var(--agro-line)] text-xs font-semibold text-[var(--agro-text)]">
-                  {idx + 1}. {step}
-                </span>
-                {idx < activeScenario.sequence.length - 1 && (
-                  <span className="text-[var(--agro-muted)] text-xs">→</span>
-                )}
-              </React.Fragment>
-            ))}
-          </div>
-
-          <p className="text-xs text-[var(--agro-text)] leading-relaxed">{activeScenario.summary}</p>
-          <div className="text-[11px] text-[var(--agro-muted)] space-y-1">
-            <p>
-              <strong>Balance hídrico referencial:</strong> {activeScenario.waterNote}
-            </p>
-            <p>
-              <strong>Cobertura y suelo:</strong> {activeScenario.soilNote}
-            </p>
-          </div>
-          <p className="text-[11px] font-medium text-[var(--agro-warning-text)] bg-[var(--agro-warning-bg)] p-2.5 rounded-lg">
-            {activeScenario.caveat}
-          </p>
-        </div>
-      </section>
     </div>
   );
 }

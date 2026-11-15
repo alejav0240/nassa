@@ -1,66 +1,51 @@
-import { BrainCircuit, ShieldCheck } from 'lucide-react';
-import { useMemo } from 'react';
-import { QualityIndicator } from '../../components/QualityBadgeText';
-import { fusionService } from '../../services/fusionService';
-import { Parcel } from '../../types/agroterra';
+import { AlertTriangle, CheckCircle2, Info } from 'lucide-react';
+import type { BackendAnalysis } from '../../services/apiClient';
+import type { Parcel } from '../../types/agroterra';
 
 interface InsightsTabProps {
   parcel: Parcel;
+  analysis: BackendAnalysis | null;
+  analysisStatus: 'idle' | 'loading' | 'ready' | 'error';
 }
 
-export function InsightsTab({ parcel }: InsightsTabProps) {
-  const insights = useMemo(() => fusionService.getSimulatedInsights(parcel.id), [parcel.id]);
+export function InsightsTab({ parcel, analysis, analysisStatus }: InsightsTabProps) {
+  const climate = analysis && analysis.field_id === parcel.backendId && analysisStatus === 'ready' ? analysis.climate : null;
+
+  if (!climate) {
+    return (
+      <section className="rounded-2xl border border-[var(--agro-line)] bg-[var(--agro-surface)] p-5 space-y-2">
+        <div className="flex items-center gap-2"><Info className="w-4 h-4 text-[var(--agro-info-text)]" aria-hidden="true" /><h2 className="text-sm font-bold text-[var(--agro-text)]">Interpretación basada en evidencia</h2></div>
+        <p className="text-xs text-[var(--agro-muted)] leading-relaxed">Ejecutá un análisis NASA POWER para generar observaciones climáticas reales. No mostramos narrativas simuladas ni diagnósticos sin datos.</p>
+      </section>
+    );
+  }
+
+  const rainfall = climate.annual_rainfall_mm;
+  const temperature = climate.mean_temperature_c;
+  const frost = climate.annual_frost_days;
 
   return (
     <div className="space-y-4">
-      <div className="bg-[#166534] text-white rounded-2xl p-4 space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <BrainCircuit className="w-5 h-5 text-emerald-200" />
-            <h2 className="text-base font-bold">AgroTerra Insights</h2>
-          </div>
-          <span className="text-[11px] font-semibold bg-white/15 px-2.5 py-1 rounded-lg">
-            Simulación para demostración
-          </span>
-        </div>
-        <p className="text-xs text-emerald-50/90 leading-relaxed">
-          Vista demostrativa de cómo un motor futuro de análisis explicable sintetizaría señales
-          ambientales para <strong>{parcel.name}</strong>, sin emitir diagnósticos definitivos ni
-          porcentajes de confianza no calibrados.
-        </p>
+      <section className="rounded-2xl border border-emerald-200 bg-[var(--agro-success-bg)] p-4 space-y-2">
+        <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-[var(--agro-success-text)]" aria-hidden="true" /><h2 className="text-sm font-bold text-[var(--agro-text)]">Lectura climática de {parcel.name}</h2></div>
+        <p className="text-xs text-[var(--agro-text)] leading-relaxed">Estos datos provienen de {climate.source}, período {climate.years.join('–')}. Son referencias de cuadrícula y no sustituyen observaciones de campo.</p>
+      </section>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <InsightCard title="Lluvia histórica" value={`${rainfall.toFixed(1)} mm/año`} detail="Promedio del período completo" />
+        <InsightCard title="Temperatura media" value={`${temperature.toFixed(1)} °C`} detail="Promedio climático" />
+        <InsightCard title="Heladas" value={`${frost.toFixed(0)} días/año`} detail="Estimación histórica" />
       </div>
 
-      <div className="space-y-3">
-        {insights.map((item) => (
-          <article
-            key={item.id}
-            className="bg-[var(--agro-surface)] rounded-2xl p-4 border border-[var(--agro-line)]/90 space-y-2.5"
-          >
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <h3 className="text-sm font-bold text-[var(--agro-text)]">{item.title}</h3>
-              <QualityIndicator quality={item.quality} />
-            </div>
+      <section className="rounded-2xl border border-amber-200 bg-[var(--agro-warning-bg)] p-4 space-y-2">
+        <div className="flex items-start gap-2"><AlertTriangle className="w-4 h-4 text-[var(--agro-warning-text)] shrink-0 mt-0.5" aria-hidden="true" /><div><h2 className="text-xs font-bold text-[var(--agro-warning-text)]">Limitaciones de interpretación</h2><ul className="list-disc pl-4 mt-1 space-y-1 text-xs text-[var(--agro-warning-text)] leading-relaxed">{climate.limitations.map((item) => <li key={item}>{item}</li>)}</ul></div></div>
+      </section>
 
-            <p className="text-sm text-[var(--agro-text)] leading-relaxed">{item.message}</p>
-
-            <div className="pt-2 border-t border-[var(--agro-line)] flex items-center justify-between gap-2 text-[11px] text-[var(--agro-muted)] flex-wrap">
-              <span>
-                {item.sourceSummary} · {item.referenceDate}
-              </span>
-              <span className="font-semibold text-[var(--agro-warning-text)]">{item.validationState}</span>
-            </div>
-          </article>
-        ))}
-      </div>
-
-      <div className="bg-[var(--agro-surface-soft)] rounded-2xl p-3.5 flex items-start gap-2.5 text-xs text-[var(--agro-muted)]">
-        <ShieldCheck className="w-4 h-4 text-[var(--agro-lime)] shrink-0 mt-0.5" />
-        <p className="leading-relaxed">
-          Criterio de prudencia científica: estos textos ilustran salidas narrativas para
-          demostración y requieren calibración con datos locales y criterio agronómico antes de
-          orientar decisiones productivas.
-        </p>
-      </div>
+      <p className="text-[11px] text-[var(--agro-muted)]">Calidad: {climate.data_quality.policy}. Años completos: {climate.data_quality.complete_years.join(', ') || 'N/D'}.</p>
     </div>
   );
+}
+
+function InsightCard({ title, value, detail }: { title: string; value: string; detail: string }) {
+  return <article className="rounded-2xl border border-[var(--agro-line)] bg-[var(--agro-surface)] p-4"><p className="text-xs text-[var(--agro-muted)]">{title}</p><p className="text-xl font-bold text-[var(--agro-text)] mt-1 tabular-nums">{value}</p><p className="text-[11px] text-[var(--agro-muted)] mt-1">{detail}</p></article>;
 }

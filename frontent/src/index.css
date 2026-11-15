@@ -280,6 +280,27 @@ html, body { background: var(--agro-canvas); color: var(--agro-text); }
 .agro-side-nav { background: var(--agro-sidebar); }
 .agro-map-canvas { height: calc(100dvh - 160px - env(safe-area-inset-bottom)); }
 .agro-map-canvas.agro-map-canvas--simulated { height: 748px; }
+.agro-map-canvas .leaflet-container { background: var(--agro-canvas); }
+.agro-map-canvas .leaflet-control-attribution {
+  color: var(--agro-muted) !important;
+  background: color-mix(in srgb, var(--agro-surface) 88%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--agro-line) 70%, transparent);
+}
+.agro-map-canvas .leaflet-control-attribution a { color: var(--agro-lime) !important; }
+.agro-map-canvas .leaflet-bar a {
+  color: var(--agro-text) !important;
+  background: var(--agro-surface) !important;
+  border-color: var(--agro-line) !important;
+}
+.agro-map-canvas .leaflet-bar a:hover { background: var(--agro-selected) !important; }
+.agro-map-canvas .leaflet-tooltip,
+.agro-map-canvas .agro-map-tooltip {
+  color: var(--agro-text) !important;
+  background: color-mix(in srgb, var(--agro-surface) 94%, transparent) !important;
+  border-color: var(--agro-line) !important;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--agro-canvas) 28%, transparent) !important;
+}
+.agro-map-3d-host { scrollbar-color: var(--agro-line) var(--agro-canvas); }
 @media (min-width: 1024px) {
   .agro-map-canvas { height: calc(100vh - 32px); }
 }

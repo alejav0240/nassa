@@ -182,7 +182,6 @@ export default function App() {
             onSelectParcel={setSelectedParcelId}
             historyRecords={historyRecords}
             onAddHistory={addHistoryRecord}
-            preferences={preferences}
             analysisStatus={analysisStatus}
             backendAnalysis={backendAnalysis}
             analysisIsStale={analysisIsStale}
