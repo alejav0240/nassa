@@ -8,10 +8,10 @@ import {
   RotateCcw,
   Sprout,
 } from 'lucide-react';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { Parcel } from '../types/agroterra';
 import { formatCoordinates } from '../utils/geo';
-import { TerrainScene } from './TerrainScene';
+const TerrainScene = lazy(() => import('./TerrainScene').then((module) => ({ default: module.TerrainScene })));
 
 interface Parcel3DViewProps {
   parcel: Parcel;
@@ -34,8 +34,10 @@ const weather: Record<WeatherKey, { label: string; icon: string }> = {
   cloud: { label: 'Nubes', icon: '☁️' },
 };
 
+const cropKey = (value: string): CropKey => (Object.hasOwn(crops, value) ? value as CropKey : 'papa');
+
 export function Parcel3DView({ parcel }: Parcel3DViewProps) {
-  const [crop, setCrop] = useState<CropKey>('papa');
+  const [crop, setCrop] = useState<CropKey>(() => cropKey(parcel.crop));
   const [climate, setClimate] = useState<WeatherKey>('rain');
   const [growth, setGrowth] = useState(65);
   const [wind, setWind] = useState(18);
@@ -47,7 +49,7 @@ export function Parcel3DView({ parcel }: Parcel3DViewProps) {
   const hourLabel = `${String(hour).padStart(2, '0')}:00`;
 
   const toggleLayer = (key: keyof typeof layers) => setLayers((current) => ({ ...current, [key]: !current[key] }));
-  const reset = () => { setCrop('papa'); setClimate('rain'); setGrowth(65); setWind(18); setHour(14); setLayers({ rain: true, clouds: true, soil: true, sway: true }); setZoom(1); };
+  const reset = () => { setCrop(cropKey(parcel.crop)); setClimate('rain'); setGrowth(65); setWind(18); setHour(14); setLayers({ rain: true, clouds: true, soil: true, sway: true }); setZoom(1); };
 
   return (
     <section className="terrain-shell rounded-3xl border border-[var(--agro-line)]/90 bg-[var(--agro-surface)] shadow-xs overflow-hidden" aria-label="Vista del terreno y simulación ambiental">
@@ -66,7 +68,7 @@ export function Parcel3DView({ parcel }: Parcel3DViewProps) {
       <div className="grid lg:grid-cols-[minmax(0,1fr)_290px] gap-4 p-4 lg:p-5">
         <div className="min-w-0">
           <div className="rounded-2xl border border-[var(--agro-line)] overflow-hidden relative bg-gradient-to-b from-[#b9d2d5] via-[#d9e6d9] to-[#a5c58d]">
-            <TerrainScene crop={crop} weather={climate} growth={growth} wind={wind} hour={hour} layers={layers} zoom={zoom} />
+            <Suspense fallback={<div className="h-[330px] sm:h-[515px] grid place-items-center text-xs text-[var(--agro-muted)]" role="status">Preparando escena 3D…</div>}><TerrainScene crop={crop} weather={climate} growth={growth} wind={wind} hour={hour} layers={layers} zoom={zoom} /></Suspense>
             <div className="absolute right-3 top-14 grid gap-1.5"><button type="button" onClick={() => setZoom((value) => Math.min(1.15, value + .05))} className="w-9 h-9 rounded-xl bg-white/90 text-[#42634e] shadow-sm grid place-items-center" aria-label="Acercar"><Plus className="w-4 h-4" /></button><button type="button" onClick={() => setZoom((value) => Math.max(.9, value - .05))} className="w-9 h-9 rounded-xl bg-white/90 text-[#42634e] shadow-sm grid place-items-center" aria-label="Alejar"><Minus className="w-4 h-4" /></button><button type="button" onClick={() => setZoom(1)} className="w-9 h-9 rounded-xl bg-white/90 text-[#42634e] shadow-sm grid place-items-center" aria-label="Restablecer zoom"><Expand className="w-4 h-4" /></button></div>
             <div className="absolute bottom-3 left-3 rounded-xl bg-white/90 px-3 py-2 text-[10px] text-[#607568] shadow-sm">Arrastra para rotar · rueda para acercar</div>
           </div>
@@ -77,10 +79,10 @@ export function Parcel3DView({ parcel }: Parcel3DViewProps) {
           <div className="flex items-center justify-between"><h3 className="text-sm font-bold text-[var(--agro-text)]">Control ambiental</h3><span className="text-[10px] text-[var(--agro-muted)]">INTERACTIVO</span></div>
           <div><p className="text-[11px] font-bold text-[var(--agro-muted)] mb-2">Tipo de cultivo</p><div className="grid grid-cols-2 gap-2">{(Object.keys(crops) as CropKey[]).map((key) => <button key={key} type="button" onClick={() => setCrop(key)} aria-pressed={crop === key} className={`text-left rounded-xl border p-2.5 transition ${crop === key ? 'border-[var(--agro-lime)] bg-[var(--agro-success-bg)]' : 'border-[var(--agro-line)] bg-[var(--agro-surface)]'}`}><span className="text-xl">{crops[key].emoji}</span><strong className="block text-xs text-[var(--agro-text)] mt-1">{crops[key].name}</strong><small className="block text-[10px] text-[var(--agro-muted)] truncate">{crops[key].description}</small></button>)}</div></div>
           <div><p className="text-[11px] font-bold text-[var(--agro-muted)] mb-2">Condiciones del clima</p><div className="grid grid-cols-4 gap-1.5">{(Object.keys(weather) as WeatherKey[]).map((key) => <button key={key} type="button" onClick={() => setClimate(key)} aria-pressed={climate === key} className={`rounded-lg border p-2 text-[10px] font-bold ${climate === key ? 'border-[var(--agro-lime)] bg-[var(--agro-success-bg)] text-[var(--agro-success-text)]' : 'border-[var(--agro-line)] text-[var(--agro-muted)]'}`}>{weather[key].icon}<span className="block mt-1">{weather[key].label}</span></button>)}</div></div>
-          <label className="block text-[11px] font-bold text-[var(--agro-muted)]">Etapa de crecimiento <output className="float-right text-[var(--agro-text)]">{growth}%</output><input className="w-full mt-3 accent-[var(--agro-lime)]" type="range" min="10" max="100" value={growth} onChange={(event) => setGrowth(Number(event.target.value))} /></label>
-          <label className="block text-[11px] font-bold text-[var(--agro-muted)]">Intensidad del viento <output className="float-right text-[var(--agro-text)]">{wind} km/h</output><input className="w-full mt-3 accent-[var(--agro-lime)]" type="range" min="0" max="80" value={wind} onChange={(event) => setWind(Number(event.target.value))} /></label>
-          <label className="block text-[11px] font-bold text-[var(--agro-muted)]">Hora del día <output className="float-right text-[var(--agro-text)]">{hourLabel}</output><input className="w-full mt-3 accent-[var(--agro-lime)]" type="range" min="6" max="19" value={hour} onChange={(event) => setHour(Number(event.target.value))} /></label>
-          <div className="space-y-1">{([['rain', 'Mostrar lluvia'], ['clouds', 'Mostrar nubes'], ['soil', 'Suelo y surcos'], ['sway', 'Animar el viento']] as const).map(([key, label]) => <div key={key} className="flex items-center justify-between py-2 border-b border-[var(--agro-line)]/60 text-[11px] text-[var(--agro-muted)]"><span>{label}</span><button type="button" onClick={() => toggleLayer(key)} role="switch" aria-checked={layers[key]} className={`w-9 h-5 rounded-full p-1 ${layers[key] ? 'bg-[var(--agro-lime)]' : 'bg-[var(--agro-line)]'}`}><span className={`block w-3 h-3 bg-white rounded-full transition-transform ${layers[key] ? 'translate-x-4' : ''}`} /></button></div>)}</div>
+           <label className="block text-[11px] font-bold text-[var(--agro-muted)]">Etapa de crecimiento <output className="float-right text-[var(--agro-text)]">{growth}%</output><input aria-label="Etapa de crecimiento" className="w-full mt-3 accent-[var(--agro-lime)]" type="range" min="10" max="100" value={growth} onChange={(event) => setGrowth(Number(event.target.value))} /></label>
+           <label className="block text-[11px] font-bold text-[var(--agro-muted)]">Intensidad del viento <output className="float-right text-[var(--agro-text)]">{wind} km/h</output><input aria-label="Intensidad del viento" className="w-full mt-3 accent-[var(--agro-lime)]" type="range" min="0" max="80" value={wind} onChange={(event) => setWind(Number(event.target.value))} /></label>
+           <label className="block text-[11px] font-bold text-[var(--agro-muted)]">Hora del día <output className="float-right text-[var(--agro-text)]">{hourLabel}</output><input aria-label="Hora del día" className="w-full mt-3 accent-[var(--agro-lime)]" type="range" min="6" max="19" value={hour} onChange={(event) => setHour(Number(event.target.value))} /></label>
+           <div className="space-y-1">{([['rain', 'Mostrar lluvia'], ['clouds', 'Mostrar nubes'], ['soil', 'Suelo y surcos'], ['sway', 'Animar el viento']] as const).map(([key, label]) => <div key={key} className="flex items-center justify-between py-2 border-b border-[var(--agro-line)]/60 text-[11px] text-[var(--agro-muted)]"><span>{label}</span><button type="button" onClick={() => toggleLayer(key)} role="switch" aria-label={label} aria-checked={layers[key]} className={`w-9 h-5 rounded-full p-1 ${layers[key] ? 'bg-[var(--agro-lime)]' : 'bg-[var(--agro-line)]'}`}><span className={`block w-3 h-3 bg-white rounded-full transition-transform ${layers[key] ? 'translate-x-4' : ''}`} /></button></div>)}</div>
         </aside>
       </div>
 
