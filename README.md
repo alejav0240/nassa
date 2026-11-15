@@ -111,6 +111,34 @@ curl -X POST http://localhost:8000/api/analyze \
 5. **Antes de exposición pública**: eliminar el binding publicado del puerto 8000 (`127.0.0.1:8000:8000`), agregar rate limiting e identidad multiusuario, configurar backups de Postgres y HTTPS. Si se usa `API_KEY`, definirla para `api` y `web`; Nginx la inyecta al proxy sin enviarla al navegador.
 6. En algunas configuraciones de Coolify es necesario ajustar dominios/puertos proxy. No abrir Postgres públicamente.
 
+## Despliegue del frontend en Netlify
+
+El frontend Vite puede desplegarse en Netlify, pero FastAPI y PostgreSQL deben permanecer en un servicio separado (Render, Railway, Fly.io, Cloud Run o un VPS).
+
+1. Importar el repositorio en Netlify. `netlify.toml` configura automáticamente `frontent/` como base, `npm run build` como comando y `dist/` como directorio publicado.
+2. Configurar en Netlify las variables server-side:
+   - `BACKEND_URL`: URL HTTPS del backend, sin `/api` final.
+   - `API_KEY`: misma clave configurada en FastAPI, si está habilitada.
+3. Mantener vacío `VITE_API_BASE_URL` para que el frontend use `/api` y el proxy server-side de Netlify inyecte la clave sin exponerla al navegador.
+4. Configurar en FastAPI `CORS_ORIGINS` con el dominio de Netlify. Las solicitudes proxificadas son same-origin, pero el dominio debe quedar permitido para accesos directos y preflight.
+5. Verificar `https://tu-sitio.netlify.app/api/health` y después crear una parcela y ejecutar un análisis.
+
+El proxy de Netlify está en `frontent/netlify/functions/api-proxy.mjs`; reenvía los métodos REST al backend y no expone `API_KEY` al cliente.
+
+## Despliegue completo en Render
+
+El archivo `render.yaml` define el stack completo: API FastAPI, frontend estático y PostgreSQL.
+
+1. En Render, abrir **New → Blueprint** y seleccionar este repositorio.
+2. Render leerá `render.yaml` y creará `agroshift-api`, `agroshift-web` y `agroshift-db`.
+3. La API usa `backend/Dockerfile` con `backend/` como contexto de Docker. El `Dockerfile` de la raíz también permite desplegar el servicio desde la configuración Docker predeterminada de Render.
+4. Render inyecta `DATABASE_URL` desde PostgreSQL y genera `API_KEY` automáticamente.
+5. Después del primer despliegue, verificar:
+   - `https://agroshift-api.onrender.com/api/health`
+   - `https://agroshift-web.onrender.com`
+
+El backend normaliza la URL PostgreSQL que Render entrega (`postgresql://`) al dialecto `postgresql+psycopg` usado por SQLAlchemy.
+
 ## Pruebas
 
 ```bash

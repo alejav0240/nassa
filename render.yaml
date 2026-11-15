@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: agroshift-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: agroshift-db
+          property: connectionString
+      - key: CORS_ORIGINS
+        value: https://agroshift-web.onrender.com
+      - key: API_KEY
+        generateValue: true
+      - key: CLIMATE_START_YEAR
+        value: "2020"
+      - key: CLIMATE_END_YEAR
+        value: "2024"
+
+  - type: web
+    name: agroshift-web
+    runtime: static
+    plan: free
+    rootDir: frontent
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://agroshift-api.onrender.com
+
+databases:
+  - name: agroshift-db
+    plan: free
+    region: oregon
+    databaseName: agroshift
+    user: agroshift

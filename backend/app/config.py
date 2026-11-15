@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     climate_end_year: int = 2024
     @model_validator(mode='after')
     def valid_period(self):
+        if self.database_url.startswith('postgresql://'):
+            self.database_url = 'postgresql+psycopg://' + self.database_url.removeprefix('postgresql://')
         if self.api_key is not None:
             self.api_key = self.api_key.strip() or None
         if not 1981 <= self.climate_start_year <= self.climate_end_year < date.today().year:
