@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { backendApi, type ClimateAnomalies } from '../services/apiClient';
-import type { Parcel } from '../types/agroterra';
+import type { Parcel } from '../types/agroshift';
 
 const PILOT_LAT = -16.57;
 const PILOT_LON = -68.69;

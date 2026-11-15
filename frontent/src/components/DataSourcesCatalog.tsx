@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { satelliteService } from '../services/satelliteService';
-import { SatelliteSourceId, SourceTag } from '../types/agroterra';
+import { SatelliteSourceId, SourceTag } from '../types/agroshift';
 import { QualityIndicator } from './QualityBadgeText';
 
 interface DataSourcesCatalogProps {
@@ -156,7 +156,7 @@ export function DataSourcesCatalog({
                       <strong className="text-[var(--agro-text)]">Para qué sirve:</strong> {src.purpose}
                     </p>
                     <p>
-                      <strong className="text-[var(--agro-text)]">Uso en AgroTerra AI:</strong> {src.appUsage}
+                      <strong className="text-[var(--agro-text)]">Uso en AgroShift AI:</strong> {src.appUsage}
                     </p>
                   </div>
 

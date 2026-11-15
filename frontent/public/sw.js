@@ -1,10 +1,10 @@
-const CACHE_NAME = 'agroterra-shell-v1';
+const CACHE_NAME = 'agroshift-shell-v2';
 const APP_SHELL = [
   '/',
   '/manifest.webmanifest',
-  '/icons/agroterra.svg',
-  '/icons/agroterra-192.png',
-  '/icons/agroterra-512.png',
+  '/icons/agroshift-ai.svg',
+  '/icons/agroshift-ai-192.png',
+  '/icons/agroshift-ai-512.png',
 ];
 
 self.addEventListener('install', (event) => {
@@ -15,7 +15,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => Promise.all(
-      keys.filter((key) => key.startsWith('agroterra-shell-') && key !== CACHE_NAME)
+      keys.filter((key) => (key.startsWith('agroterra-shell-') || key.startsWith('agroshift-shell-')) && key !== CACHE_NAME)
         .map((key) => caches.delete(key)),
     )).then(() => self.clients.claim()),
   );

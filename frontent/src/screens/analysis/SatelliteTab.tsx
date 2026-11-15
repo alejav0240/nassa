@@ -16,7 +16,7 @@ import {
 } from 'recharts';
 import { QualityIndicator } from '../../components/QualityBadgeText';
 import { satelliteService } from '../../services/satelliteService';
-import { Parcel, SatelliteSourceId, UserPreferences } from '../../types/agroterra';
+import { Parcel, SatelliteSourceId, UserPreferences } from '../../types/agroshift';
 
 interface SatelliteTabProps {
   parcel: Parcel;

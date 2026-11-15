@@ -11,7 +11,7 @@ import {
 import { useMemo, useState } from 'react';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ParcelFormModal } from '../components/ParcelFormModal';
-import { AnalysisSubTab, NavTab, Parcel } from '../types/agroterra';
+import { AnalysisSubTab, NavTab, Parcel } from '../types/agroshift';
 import {
   formatAreaHa,
   formatPerimeter,

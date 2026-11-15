@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Smartphone, Monitor } from 'lucide-react';
 import { AlertsDrawer } from './components/AlertsDrawer';
 import { BottomNav, SideNavRail } from './components/BottomNav';
-import { useAgroTerraState } from './hooks/useAgroTerraState';
+import { useAgroShiftState } from './hooks/useAgroShiftState';
 const AnalysisScreen = lazy(() => import('./screens/AnalysisScreen').then(m => ({ default: m.AnalysisScreen })));
 import { HomeScreen } from './screens/HomeScreen';
 const MapScreen = lazy(() => import('./screens/MapScreen').then(m => ({ default: m.MapScreen })));
@@ -52,7 +52,7 @@ export default function App() {
     analysisIsStale,
     analysisError,
     runBackendAnalysis,
-  } = useAgroTerraState();
+  } = useAgroShiftState();
 
   const isSimulated = preferences.simulateDeviceFrame;
 

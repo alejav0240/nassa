@@ -1,5 +1,5 @@
 import { SATELLITE_SOURCES, SIMULATED_INSIGHTS } from '../data/mockData';
-import { Parcel, SatelliteSourceId, SimulatedInsight } from '../types/agroterra';
+import { Parcel, SatelliteSourceId, SimulatedInsight } from '../types/agroshift';
 import { checkSpatialRepresentativeness } from '../utils/geo';
 import { getParcelAreaHa } from '../utils/parcelGeometry';
 

@@ -19,7 +19,7 @@ import {
   useMap,
   useMapEvents,
 } from 'react-leaflet';
-import { LatLngPoint, ParcelMeasurement } from '../types/agroterra';
+import { LatLngPoint, ParcelMeasurement } from '../types/agroshift';
 import {
   formatAreaHa,
   formatPerimeter,

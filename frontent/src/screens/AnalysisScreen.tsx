@@ -7,7 +7,7 @@ import {
   CropHistoryRecord,
   Parcel,
   UserPreferences,
-} from '../types/agroterra';
+} from '../types/agroshift';
 import { getParcelAreaHa } from '../utils/parcelGeometry';
 import { FusionTab } from './analysis/FusionTab';
 import { HistoryRotationTab } from './analysis/HistoryRotationTab';

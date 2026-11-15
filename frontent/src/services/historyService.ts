@@ -1,5 +1,5 @@
 import { INITIAL_HISTORY, ROTATION_SCENARIOS } from '../data/mockData';
-import { CropHistoryRecord, RotationScenario } from '../types/agroterra';
+import { CropHistoryRecord, RotationScenario } from '../types/agroshift';
 
 const STORAGE_KEY = 'agroterra_history_v1';
 

@@ -1,6 +1,6 @@
 import area from '@turf/area';
 import { polygon } from '@turf/helpers';
-import { LatLngPoint, SatelliteSourceSpec } from '../types/agroterra';
+import { LatLngPoint, SatelliteSourceSpec } from '../types/agroshift';
 
 /**
  * Calculates approximate polygon area in hectares using Turf.js geodesic calculation.

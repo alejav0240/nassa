@@ -46,4 +46,4 @@ Return endpoints connected, contract files changed, fallback behavior, and exact
 - `backend/app/main.py`
 - `backend/app/schemas.py`
 - `frontent/src/services/apiClient.ts`
-- `frontent/src/hooks/useAgroTerraState.ts`
+- `frontent/src/hooks/useAgroShiftState.ts`

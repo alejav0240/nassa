@@ -46,4 +46,4 @@ Return data sources, labels/limitations added, missing-data behavior, and verifi
 - `README.md`
 - `backend/app/services/nasa.py`
 - `backend/app/services/rotation.py`
-- `frontent/src/types/agroterra.ts`
+- `frontent/src/types/agroshift.ts`

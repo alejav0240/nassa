@@ -41,7 +41,7 @@ import {
   Parcel,
   ParcelMeasurement,
   UserPreferences,
-} from '../types/agroterra';
+} from '../types/agroshift';
 import { formatCoordinates } from '../utils/geo';
 import {
   formatAreaHa,
@@ -75,6 +75,16 @@ interface LayerDef {
   gradient?: string;
   isDemo: boolean;
 }
+
+const DRAWN_PARCEL_CROPS = ['Papa', 'Quinua', 'Haba', 'Cebada', 'Avena', 'Tarwi'];
+const BOLIVIA_BOUNDS = { minLat: -24, maxLat: -9, minLng: -70, maxLng: -57 };
+type DrawnParcelField = 'name' | 'crop' | 'location';
+type DrawnParcelErrors = Partial<Record<DrawnParcelField, string>>;
+const DRAWN_PARCEL_HELP: Record<DrawnParcelField, string> = {
+  name: 'Escribe un nombre para encontrar esta parcela después.',
+  crop: 'Selecciona el cultivo actual de la parcela.',
+  location: 'Indica la comunidad, localidad o municipio donde está ubicada.',
+};
 
 const MAP_LAYERS: LayerDef[] = [
   {
@@ -246,8 +256,11 @@ export function MapScreen({
   } | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [newParcelName, setNewParcelName] = useState('');
-  const [newParcelCrop, setNewParcelCrop] = useState('Papa');
-  const [newParcelLocation, setNewParcelLocation] = useState('Altiplano, Bolivia');
+  const [newParcelCrop, setNewParcelCrop] = useState('');
+  const [newParcelLocation, setNewParcelLocation] = useState('');
+  const [newParcelErrors, setNewParcelErrors] = useState<DrawnParcelErrors>({});
+  const [newParcelFormError, setNewParcelFormError] = useState<string | null>(null);
+  const [focusedNewParcelField, setFocusedNewParcelField] = useState<DrawnParcelField | null>(null);
 
   // Edit / Register modal from map
   const [parcelFormOpen, setParcelFormOpen] = useState(false);
@@ -347,23 +360,68 @@ export function MapScreen({
   ) => {
     setPendingScan({ points, measurement });
     setScannerOpen(false);
-    setNewParcelName(`Parcela Nueva ${parcels.length + 1}`);
+    setNewParcelName('');
+    setNewParcelCrop('');
+    setNewParcelLocation('');
+    setNewParcelErrors({});
+    setNewParcelFormError(null);
+    setFocusedNewParcelField(null);
     setShowSaveModal(true);
   };
 
   const handleSaveDrawnParcel = (e: React.FormEvent) => {
     e.preventDefault();
     if (!pendingScan) return;
+    const errors: DrawnParcelErrors = {};
+    const trimmedName = newParcelName.trim();
+    const trimmedLocation = newParcelLocation.trim();
+    if (trimmedName.length < 2) errors.name = 'Escribe al menos 2 caracteres.';
+    else if (trimmedName.length > 120) errors.name = 'Usa hasta 120 caracteres.';
+    if (!DRAWN_PARCEL_CROPS.includes(newParcelCrop)) errors.crop = 'Selecciona un cultivo disponible.';
+    if (trimmedLocation.length < 2) errors.location = 'Indica una comunidad o municipio.';
+    else if (trimmedLocation.length > 120) errors.location = 'Usa hasta 120 caracteres.';
+
+    const { areaHa, centroid } = pendingScan.measurement;
+    const polygonOutsideBolivia = pendingScan.points.some(
+      (point) =>
+        point.lat < BOLIVIA_BOUNDS.minLat ||
+        point.lat > BOLIVIA_BOUNDS.maxLat ||
+        point.lng < BOLIVIA_BOUNDS.minLng ||
+        point.lng > BOLIVIA_BOUNDS.maxLng
+    );
+    const measurementInvalid =
+      !pendingScan.measurement.valid ||
+      !Number.isFinite(areaHa) ||
+      areaHa < 0.01 ||
+      areaHa > 5000 ||
+      !Number.isFinite(centroid.lat) ||
+      !Number.isFinite(centroid.lng) ||
+      polygonOutsideBolivia;
+    if (measurementInvalid) {
+      setNewParcelFormError('La medición no es válida. Ajusta el contorno al rango geográfico admitido para Bolivia y a una superficie entre 0.01 y 5000 ha.');
+    } else {
+      setNewParcelFormError(null);
+    }
+
+    if (Object.keys(errors).length > 0) {
+      const firstField = Object.keys(errors)[0] as DrawnParcelField;
+      setNewParcelErrors(errors);
+      setFocusedNewParcelField(firstField);
+      window.requestAnimationFrame(() => document.getElementById(`drawn-parcel-${firstField}`)?.focus());
+      return;
+    }
+    if (measurementInvalid) return;
+
     const created: Parcel = {
       id: `parcela-${Date.now()}`,
-      name: newParcelName.trim() || `Parcela ${parcels.length + 1}`,
-      location: newParcelLocation.trim() || 'Bolivia',
-      department: newParcelLocation.trim() || 'Bolivia',
+      name: trimmedName,
+      location: trimmedLocation,
+      department: trimmedLocation,
       areaHa: pendingScan.measurement.areaHa,
       measurement: pendingScan.measurement,
       crop: newParcelCrop,
-      plantingDate: '2026-10-01',
-      estimatedHarvestDate: '2027-03-15',
+      plantingDate: 'No registrada',
+      estimatedHarvestDate: 'No registrada',
       registeredAt: new Date().toISOString().slice(0, 10),
       monitoringStatus: 'Disponible',
       indicatorsAvailable: false,
@@ -387,10 +445,42 @@ export function MapScreen({
     onOpenParcelDetail(created.id);
     setShowSaveModal(false);
     setPendingScan(null);
+    setNewParcelErrors({});
+    setNewParcelFormError(null);
     setScannerInitialPolygon(undefined);
     setMapCenter([created.centroid.lat, created.centroid.lng]);
     setMapZoom(16);
   };
+
+  const clearNewParcelError = (field: DrawnParcelField) => {
+    setNewParcelErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const drawnParcelFieldMessage = (field: DrawnParcelField) => {
+    const fieldError = newParcelErrors[field];
+    const message = fieldError || (focusedNewParcelField === field ? DRAWN_PARCEL_HELP[field] : null);
+    if (!message) return null;
+    const messageId = 'drawn-parcel-' + field + '-message';
+    return (
+      <p
+        id={messageId}
+        className={`mt-1 text-[11px] leading-relaxed ${fieldError ? 'text-[var(--agro-danger-text)]' : 'text-[var(--agro-muted)]'}`}
+        role={fieldError ? 'alert' : 'status'}
+      >
+        {message}
+      </p>
+    );
+  };
+
+  const drawnParcelDescribedBy = (field: DrawnParcelField) =>
+    newParcelErrors[field] || focusedNewParcelField === field
+      ? 'drawn-parcel-' + field + '-message'
+      : undefined;
 
   const moistureValue = selectedParcel
     ? preferences.moistureUnit === 'volumetric'
@@ -1025,6 +1115,7 @@ export function MapScreen({
         >
           <form
             onSubmit={handleSaveDrawnParcel}
+            noValidate
             className="bg-[var(--agro-surface)] w-full max-w-sm rounded-3xl p-5 shadow-xl space-y-4"
           >
             <div>
@@ -1043,43 +1134,69 @@ export function MapScreen({
                 Centroide: {formatCoordinates(pendingScan.measurement.centroid)}
               </p>
             </div>
+            <p className="text-[11px] text-[var(--agro-muted)] bg-[var(--agro-surface-soft)] rounded-xl p-2.5">
+              Completa el nombre, cultivo y ubicación. Enfoca un campo para ver qué dato ingresar.
+            </p>
+            {newParcelFormError && (
+              <p role="alert" className="p-2.5 rounded-xl bg-[var(--agro-danger-bg)] text-[11px] text-[var(--agro-danger-text)]">
+                {newParcelFormError}
+              </p>
+            )}
 
             <div>
-              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1">
+              <label htmlFor="drawn-parcel-name" className="block text-xs font-semibold text-[var(--agro-text)] mb-1">
                 Nombre de la parcela
               </label>
               <input
+                id="drawn-parcel-name"
                 type="text"
                 value={newParcelName}
-                onChange={(e) => setNewParcelName(e.target.value)}
-                required
-                className="w-full h-11 px-3 rounded-xl border border-[var(--agro-line)] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                onChange={(e) => { setNewParcelName(e.target.value); clearNewParcelError('name'); }}
+                onFocus={() => setFocusedNewParcelField('name')}
+                onBlur={() => setFocusedNewParcelField(null)}
+                maxLength={120}
+                aria-invalid={Boolean(newParcelErrors.name)}
+                aria-describedby={drawnParcelDescribedBy('name')}
+                placeholder="Ej. Parcela Norte"
+                className={`w-full h-11 px-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 ${newParcelErrors.name ? 'border-red-500' : 'border-[var(--agro-line)]'}`}
               />
+              {drawnParcelFieldMessage('name')}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1">Cultivo</label>
+                <label htmlFor="drawn-parcel-crop" className="block text-xs font-semibold text-[var(--agro-text)] mb-1">Cultivo</label>
                 <select
+                  id="drawn-parcel-crop"
                   value={newParcelCrop}
-                  onChange={(e) => setNewParcelCrop(e.target.value)}
-                  className="w-full h-11 px-2.5 rounded-xl border border-[var(--agro-line)] text-sm bg-[var(--agro-surface)]"
+                  onChange={(e) => { setNewParcelCrop(e.target.value); clearNewParcelError('crop'); }}
+                  onFocus={() => setFocusedNewParcelField('crop')}
+                  onBlur={() => setFocusedNewParcelField(null)}
+                  aria-invalid={Boolean(newParcelErrors.crop)}
+                  aria-describedby={drawnParcelDescribedBy('crop')}
+                  className={`w-full h-11 px-2.5 rounded-xl border text-sm bg-[var(--agro-surface)] ${newParcelErrors.crop ? 'border-red-500' : 'border-[var(--agro-line)]'}`}
                 >
-                  <option value="Papa">Papa</option>
-                  <option value="Quinua">Quinua</option>
-                  <option value="Maíz">Maíz</option>
-                  <option value="Haba">Haba</option>
-                  <option value="Cebada">Cebada</option>
+                  <option value="" disabled>Selecciona</option>
+                  {DRAWN_PARCEL_CROPS.map((value) => <option key={value} value={value}>{value}</option>)}
                 </select>
+                {drawnParcelFieldMessage('crop')}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1">Zona</label>
+                <label htmlFor="drawn-parcel-location" className="block text-xs font-semibold text-[var(--agro-text)] mb-1">Zona</label>
                 <input
+                  id="drawn-parcel-location"
                   type="text"
                   value={newParcelLocation}
-                  onChange={(e) => setNewParcelLocation(e.target.value)}
-                  className="w-full h-11 px-3 rounded-xl border border-[var(--agro-line)] text-sm"
+                  onChange={(e) => { setNewParcelLocation(e.target.value); clearNewParcelError('location'); }}
+                  onFocus={() => setFocusedNewParcelField('location')}
+                  onBlur={() => setFocusedNewParcelField(null)}
+                  maxLength={120}
+                  aria-invalid={Boolean(newParcelErrors.location)}
+                  aria-describedby={drawnParcelDescribedBy('location')}
+                  placeholder="Ej. Viacha, La Paz"
+                  className={`w-full h-11 px-3 rounded-xl border text-sm ${newParcelErrors.location ? 'border-red-500' : 'border-[var(--agro-line)]'}`}
                 />
+                {drawnParcelFieldMessage('location')}
               </div>
             </div>
 

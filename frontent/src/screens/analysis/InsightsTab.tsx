@@ -2,7 +2,7 @@ import { BrainCircuit, ShieldCheck } from 'lucide-react';
 import { useMemo } from 'react';
 import { QualityIndicator } from '../../components/QualityBadgeText';
 import { fusionService } from '../../services/fusionService';
-import { Parcel } from '../../types/agroterra';
+import { Parcel } from '../../types/agroshift';
 
 interface InsightsTabProps {
   parcel: Parcel;
@@ -17,7 +17,7 @@ export function InsightsTab({ parcel }: InsightsTabProps) {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <BrainCircuit className="w-5 h-5 text-emerald-200" />
-            <h2 className="text-base font-bold">AgroTerra Insights</h2>
+            <h2 className="text-base font-bold">AgroShift AI Insights</h2>
           </div>
           <span className="text-[11px] font-semibold bg-white/15 px-2.5 py-1 rounded-lg">
             Simulación para demostración

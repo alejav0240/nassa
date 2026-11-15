@@ -22,7 +22,7 @@ import {
   FieldObservation,
   Parcel,
   UserPreferences,
-} from '../types/agroterra';
+} from '../types/agroshift';
 import { formatCoordinates } from '../utils/geo';
 import {
   formatAreaHa,

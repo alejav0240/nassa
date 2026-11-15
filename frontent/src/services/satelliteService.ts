@@ -5,7 +5,7 @@ import {
   SatelliteSourceId,
   SatelliteSourceSpec,
   SatelliteTimePoint,
-} from '../types/agroterra';
+} from '../types/agroshift';
 import { getParcelAreaHa } from '../utils/parcelGeometry';
 
 export const satelliteService = {

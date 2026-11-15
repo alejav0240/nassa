@@ -56,7 +56,7 @@ export function InstallAppCard() {
           <Smartphone className="w-5 h-5" />
         </div>
         <div className="min-w-0">
-          <h3 className="text-sm font-bold text-[var(--agro-text)]">AgroTerra en tu dispositivo</h3>
+          <h3 className="text-sm font-bold text-[var(--agro-text)]">AgroShift AI en tu dispositivo</h3>
           <p className="mt-1 text-xs text-[var(--agro-muted)] leading-relaxed">
             Instala la aplicación web para abrirla desde tu pantalla de inicio, en una ventana propia.
           </p>
@@ -65,7 +65,7 @@ export function InstallAppCard() {
 
       {installed ? (
         <p className="text-xs font-semibold text-[var(--agro-lime)] flex items-center gap-1.5">
-          <Check className="w-4 h-4" /> AgroTerra ya está instalada en este dispositivo.
+          <Check className="w-4 h-4" /> AgroShift AI ya está instalada en este dispositivo.
         </p>
       ) : installPrompt ? (
         <button
@@ -78,7 +78,7 @@ export function InstallAppCard() {
         </button>
       ) : !validInstallOrigin ? (
         <p className="text-[11px] text-[var(--agro-muted)] bg-[var(--agro-surface-soft)] p-2.5 rounded-xl leading-relaxed">
-          Para instalarla en Android, abre AgroTerra desde una dirección HTTPS en Chrome. La vista como archivo local no permite instalarla.
+          Para instalarla en Android, abre AgroShift AI desde una dirección HTTPS en Chrome. La vista como archivo local no permite instalarla.
         </p>
       ) : (
         <p className="text-[11px] text-[var(--agro-muted)] bg-[var(--agro-surface-soft)] p-2.5 rounded-xl leading-relaxed">

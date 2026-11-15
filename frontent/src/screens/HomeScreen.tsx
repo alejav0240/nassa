@@ -21,7 +21,7 @@ import {
   YAxis,
 } from 'recharts';
 import { satelliteService } from '../services/satelliteService';
-import { AnalysisSubTab, NavTab, Parcel, UserPreferences } from '../types/agroterra';
+import { AnalysisSubTab, NavTab, Parcel, UserPreferences } from '../types/agroshift';
 import { formatAreaHa, getParcelAreaHa } from '../utils/parcelGeometry';
 
 interface HomeScreenProps {
@@ -149,7 +149,7 @@ export function HomeScreen({
               AT
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-emerald-100 truncate">AgroTerra AI</p>
+              <p className="text-xs font-semibold text-emerald-100 truncate">AgroShift AI</p>
               <h1 className="text-lg font-bold leading-tight truncate">Buenos días</h1>
             </div>
           </div>

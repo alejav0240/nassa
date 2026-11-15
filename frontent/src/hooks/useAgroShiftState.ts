@@ -13,12 +13,12 @@ import {
   Parcel,
   UserPreferences,
   UserProfile,
-} from '../types/agroterra';
+} from '../types/agroshift';
 
 const PREFS_KEY = 'agroterra_prefs_v1';
 const PROFILE_KEY = 'agroterra_profile_v1';
 
-export function useAgroTerraState() {
+export function useAgroShiftState() {
   const [activeTab, setActiveTab] = useState<NavTab>('inicio');
   const [analysisSubTab, setAnalysisSubTab] = useState<AnalysisSubTab>('satelital');
   const [parcels, setParcels] = useState<Parcel[]>(() => parcelService.getAll());

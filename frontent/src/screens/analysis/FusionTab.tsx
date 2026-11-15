@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import { fusionService } from '../../services/fusionService';
 import { satelliteService } from '../../services/satelliteService';
-import { Parcel } from '../../types/agroterra';
+import { Parcel } from '../../types/agroshift';
 import { formatAreaHa, getParcelAreaHa } from '../../utils/parcelGeometry';
 
 interface FusionTabProps {

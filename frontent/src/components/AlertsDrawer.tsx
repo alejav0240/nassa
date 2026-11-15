@@ -11,7 +11,7 @@ import {
   X,
 } from 'lucide-react';
 import { useState } from 'react';
-import { AlertCategory, AppAlert, UserPreferences } from '../types/agroterra';
+import { AlertCategory, AppAlert, UserPreferences } from '../types/agroshift';
 
 interface AlertsDrawerProps {
   open: boolean;

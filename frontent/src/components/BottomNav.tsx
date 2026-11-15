@@ -1,5 +1,5 @@
 import { BarChart3, Home, Layers, Map as MapIcon, User } from 'lucide-react';
-import { NavTab } from '../types/agroterra';
+import { NavTab } from '../types/agroshift';
 
 interface BottomNavProps {
   activeTab: NavTab;
@@ -74,7 +74,7 @@ export function SideNavRail({ activeTab, onSelect }: { activeTab: NavTab; onSele
           </div>
           <div>
             <p className="text-base font-bold text-[var(--agro-text)] leading-tight whitespace-nowrap">
-              AgroTerra AI
+              AgroShift AI
             </p>
             <p className="text-[11px] text-[var(--agro-muted)] whitespace-nowrap">
               Monitoreo Geoespacial

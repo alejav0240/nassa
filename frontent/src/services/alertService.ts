@@ -1,5 +1,5 @@
 import { INITIAL_ALERTS } from '../data/mockData';
-import { AppAlert } from '../types/agroterra';
+import { AppAlert } from '../types/agroshift';
 
 const STORAGE_KEY = 'agroterra_alerts_v1';
 

@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 import { historyService } from '../../services/historyService';
 import { backendApi } from '../../services/apiClient';
-import { CropHistoryRecord, Parcel } from '../../types/agroterra';
+import { CropHistoryRecord, Parcel } from '../../types/agroshift';
 
 interface HistoryRotationTabProps {
   parcel: Parcel;

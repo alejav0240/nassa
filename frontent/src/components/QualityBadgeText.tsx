@@ -1,5 +1,5 @@
 import { AlertTriangle, CheckCircle2, HelpCircle, Info } from 'lucide-react';
-import { DataQualityLevel } from '../types/agroterra';
+import { DataQualityLevel } from '../types/agroshift';
 
 interface QualityIndicatorProps {
   quality: DataQualityLevel;

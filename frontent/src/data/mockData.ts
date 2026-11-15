@@ -8,7 +8,7 @@ import {
   SimulatedInsight,
   UserPreferences,
   UserProfile,
-} from '../types/agroterra';
+} from '../types/agroshift';
 
 export const DEMO_DISCLAIMER =
   'Valores demostrativos simulados para prototipo de interfaz. No representan mediciones satelitales reales de NASA ni pronósticos climáticos oficiales.';
@@ -517,7 +517,7 @@ export const SIMULATED_INSIGHTS: SimulatedInsight[] = [
     title: 'Validación local',
     message:
       'Se recomienda contrastar estos resultados con observaciones realizadas en campo (humedad al tacto, presencia de nubosidad previa y densidad real de plantas) antes de tomar decisiones de manejo.',
-    sourceSummary: 'Protocolo de verificación AgroTerra AI',
+    sourceSummary: 'Protocolo de verificación AgroShift AI',
     referenceDate: '2026-11-13',
     quality: 'Requiere validación local',
     validationState: 'Simulación para demostración',
@@ -647,7 +647,7 @@ export const INITIAL_ALERTS: AppAlert[] = [
     detail:
       'Para validar las series demostrativas de Parcela Experimental, registre observaciones fenológicas y altura de planta en la pestaña Observaciones.',
     date: '2026-11-06 · 09:05',
-    source: 'Protocolo AgroTerra AI (Simulación)',
+    source: 'Protocolo AgroShift AI (Simulación)',
     read: true,
     isSimulated: true,
   },
@@ -658,7 +658,7 @@ export const DEFAULT_USER_PROFILE: UserProfile = {
   role: 'Especialista en Agricultura de Precisión',
   organization: 'Red Agrícola Altiplano & Valles — Bolivia',
   region: 'La Paz, Bolivia',
-  email: 'm.mamani@agroterra-demo.bo',
+  email: 'm.mamani@agroshift-demo.bo',
 };
 
 export const DEFAULT_PREFERENCES: UserPreferences = {

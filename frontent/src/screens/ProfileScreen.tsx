@@ -16,7 +16,7 @@ import {
   Parcel,
   UserPreferences,
   UserProfile,
-} from '../types/agroterra';
+} from '../types/agroshift';
 import { formatAreaHa, getParcelAreaHa } from '../utils/parcelGeometry';
 
 interface ProfileScreenProps {
@@ -81,7 +81,7 @@ export function ProfileScreen({
       <div>
         <h1 className="text-xl font-bold text-[var(--agro-text)]">Perfil y Configuración</h1>
         <p className="text-xs text-[var(--agro-muted)]">
-          Preferencias del prototipo AgroTerra AI
+          Preferencias del prototipo AgroShift AI
         </p>
       </div>
 
@@ -298,14 +298,14 @@ export function ProfileScreen({
         </div>
       </section>
 
-      {/* About AgroTerra AI & Reset */}
+      {/* About AgroShift AI & Reset */}
       <section className="bg-[var(--agro-surface)] rounded-2xl p-4 border border-[var(--agro-line)]/90 space-y-3">
         <h3 className="text-sm font-bold text-[var(--agro-text)] flex items-center gap-1.5">
           <Info className="w-4 h-4 text-[var(--agro-lime)]" />
-          Acerca de AgroTerra AI
+          Acerca de AgroShift AI
         </h3>
         <p className="text-xs text-[var(--agro-muted)] leading-relaxed">
-          AgroTerra AI es un prototipo de arquitectura móvil para agricultura de precisión en
+          AgroShift AI es un prototipo de arquitectura móvil para agricultura de precisión en
           Bolivia, diseñado para integrar cartografía OpenStreetMap, gestión de parcelas y
           conceptualización de fusión multisensor (SMAP, ECOSTRESS, GPM, Landsat, MODIS, GEDI y
           SoilGrids).

@@ -1,6 +1,6 @@
 import { Ruler, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { LatLngPoint, MonitoringStatus, Parcel, ParcelMeasurement } from '../types/agroterra';
+import { LatLngPoint, MonitoringStatus, Parcel, ParcelMeasurement } from '../types/agroshift';
 import {
   createReferencePolygon,
   formatAreaHa,
@@ -22,6 +22,40 @@ const CROP_IMAGES: Record<string, string> = {
   Maíz: '/src/assets/images/parcel_maiz_bolivia_1794679429595.jpg',
 };
 
+const CROP_OPTIONS = ['Papa', 'Quinua', 'Haba', 'Cebada', 'Avena', 'Tarwi'];
+const BOLIVIA_BOUNDS = { minLat: -24, maxLat: -9, minLng: -70, maxLng: -57 };
+
+const FIELD_HELP = {
+  name: 'Escribe un nombre corto para reconocer este terreno, por ejemplo: Parcela Norte.',
+  crop: 'Elige el cultivo actual entre las opciones disponibles para recomendaciones.',
+  areaHa: 'Indica la superficie en hectáreas. Debe ser mayor que 0 y no superar 5000 ha; también puedes medirla en el mapa.',
+  location: 'Escribe la comunidad, localidad o ciudad donde está el terreno.',
+  department: 'Indica el municipio o zona y, si puedes, el departamento.',
+  plantingDate: 'Selecciona la fecha en que sembraste o planeas sembrar.',
+  estimatedHarvestDate: 'Elige una fecha estimada posterior a la siembra.',
+  latitude: 'Ingresa la latitud en grados decimales (por ejemplo, -16.6524).',
+  longitude: 'Ingresa la longitud en grados decimales (por ejemplo, -68.2958).',
+  monitoringStatus: 'Elige qué tan disponible está la parcela para el monitoreo.',
+} as const;
+
+type ParcelFormField = keyof typeof FIELD_HELP;
+type ParcelFormErrors = Partial<Record<ParcelFormField, string>>;
+
+function normalizeCrop(value: string) {
+  return value.trim().toLocaleLowerCase('es')
+    .replaceAll('á', 'a').replaceAll('é', 'e').replaceAll('í', 'i')
+    .replaceAll('ó', 'o').replaceAll('ú', 'u').replaceAll('ü', 'u');
+}
+
+function isValidDate(value: string) {
+  const parts = value.split('-');
+  if (parts.length !== 3 || parts[0].length !== 4 || parts[1].length !== 2 || parts[2].length !== 2) return false;
+  const [year, month, day] = parts.map(Number);
+  if (year < 1900 || year > 2100) return false;
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
+}
+
 export function ParcelFormModal({
   open,
   initialParcel,
@@ -29,16 +63,18 @@ export function ParcelFormModal({
   onSave,
 }: ParcelFormModalProps) {
   const [name, setName] = useState('');
-  const [location, setLocation] = useState('La Paz, Bolivia');
-  const [department, setDepartment] = useState('La Paz (Altiplano)');
-  const [areaHa, setAreaHa] = useState('2.0');
-  const [crop, setCrop] = useState('Papa');
-  const [plantingDate, setPlantingDate] = useState('2026-09-15');
-  const [estimatedHarvestDate, setEstimatedHarvestDate] = useState('2027-02-28');
-  const [lat, setLat] = useState('-16.6524');
-  const [lng, setLng] = useState('-68.2958');
+  const [location, setLocation] = useState('');
+  const [department, setDepartment] = useState('');
+  const [areaHa, setAreaHa] = useState('');
+  const [crop, setCrop] = useState('');
+  const [plantingDate, setPlantingDate] = useState('');
+  const [estimatedHarvestDate, setEstimatedHarvestDate] = useState('');
+  const [lat, setLat] = useState('');
+  const [lng, setLng] = useState('');
   const [monitoringStatus, setMonitoringStatus] = useState<MonitoringStatus>('Disponible');
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<ParcelFormErrors>({});
+  const [focusedField, setFocusedField] = useState<ParcelFormField | null>(null);
   const [measurement, setMeasurement] = useState<ParcelMeasurement | null>(null);
   const [scannedPolygon, setScannedPolygon] = useState<LatLngPoint[] | null>(null);
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -51,8 +87,8 @@ export function ParcelFormModal({
       setDepartment(initialParcel.department);
       setAreaHa(String(initialParcel.measurement?.areaHa ?? initialParcel.areaHa));
       setCrop(initialParcel.crop);
-      setPlantingDate(initialParcel.plantingDate);
-      setEstimatedHarvestDate(initialParcel.estimatedHarvestDate);
+      setPlantingDate(isValidDate(initialParcel.plantingDate) ? initialParcel.plantingDate : '');
+      setEstimatedHarvestDate(isValidDate(initialParcel.estimatedHarvestDate) ? initialParcel.estimatedHarvestDate : '');
       setLat(String(initialParcel.measurement?.centroid.lat ?? initialParcel.centroid.lat));
       setLng(String(initialParcel.measurement?.centroid.lng ?? initialParcel.centroid.lng));
       setMonitoringStatus(initialParcel.monitoringStatus);
@@ -60,20 +96,22 @@ export function ParcelFormModal({
       setScannedPolygon(initialParcel.measurement ? initialParcel.polygon : null);
     } else {
       setName('');
-      setLocation('La Paz, Bolivia');
-      setDepartment('La Paz (Altiplano)');
-      setAreaHa('2.0');
-      setCrop('Papa');
-      setPlantingDate('2026-09-15');
-      setEstimatedHarvestDate('2027-02-28');
-      setLat('-16.6580');
-      setLng('-68.2890');
+      setLocation('');
+      setDepartment('');
+      setAreaHa('');
+      setCrop('');
+      setPlantingDate('');
+      setEstimatedHarvestDate('');
+      setLat('');
+      setLng('');
       setMonitoringStatus('Disponible');
       setMeasurement(null);
       setScannedPolygon(null);
     }
     setScannerOpen(false);
     setError(null);
+    setFieldErrors({});
+    setFocusedField(null);
   }, [open, initialParcel]);
 
   if (!open) return null;
@@ -81,37 +119,64 @@ export function ParcelFormModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedName = name.trim();
-    const parsedArea = Number(areaHa);
-    const parsedLat = Number(lat);
-    const parsedLng = Number(lng);
+    const trimmedLocation = location.trim();
+    const trimmedDepartment = department.trim();
+    const parsedArea = areaHa.trim() ? Number(areaHa) : Number.NaN;
+    const parsedLat = lat.trim() ? Number(lat) : Number.NaN;
+    const parsedLng = lng.trim() ? Number(lng) : Number.NaN;
     const validMeasurement =
-      measurement?.valid && scannedPolygon ? measurement : null;
+      measurement?.valid && scannedPolygon && scannedPolygon.length >= 3 ? measurement : null;
     const effectiveArea = validMeasurement ? validMeasurement.areaHa : parsedArea;
     const effectiveCentroid = validMeasurement
       ? validMeasurement.centroid
       : { lat: parsedLat, lng: parsedLng };
 
-    if (!trimmedName) {
-      setError('Ingresa un nombre válido para la parcela.');
-      return;
+    const errors: ParcelFormErrors = {};
+    if (trimmedName.length < 2) errors.name = 'Escribe al menos 2 caracteres para identificar la parcela.';
+    else if (trimmedName.length > 120) errors.name = 'El nombre no puede superar los 120 caracteres.';
+
+    const cropValues = [...CROP_OPTIONS, ...(initialParcel ? [initialParcel.crop] : [])].map(normalizeCrop);
+    if (!crop.trim() || !cropValues.includes(normalizeCrop(crop))) {
+      errors.crop = 'Selecciona un cultivo de la lista.';
     }
-    if (Number.isNaN(effectiveArea) || effectiveArea <= 0 || effectiveArea > 5000) {
-      setError('La superficie debe estar entre 0.01 y 5000 hectáreas.');
-      return;
+    if (!Number.isFinite(effectiveArea) || effectiveArea < 0.01 || effectiveArea > 5000) {
+      errors.areaHa = 'Ingresa una superficie entre 0.01 y 5000 hectáreas.';
     }
-    if (
-      Number.isNaN(parsedLat) ||
-      Number.isNaN(parsedLng) ||
-      parsedLat < -24 ||
-      parsedLat > -9 ||
-      parsedLng < -70 ||
-      parsedLng > -57
-    ) {
-      setError('Ingresa coordenadas válidas dentro del territorio boliviano (Lat -24 a -9, Lng -70 a -57).');
-      return;
+
+    if (trimmedLocation.length < 2) errors.location = 'Indica la comunidad, localidad o ciudad de la parcela.';
+    else if (trimmedLocation.length > 120) errors.location = 'La ubicación no puede superar los 120 caracteres.';
+    if (trimmedDepartment.length < 2) errors.department = 'Indica el municipio o zona donde está el terreno.';
+    else if (trimmedDepartment.length > 120) errors.department = 'El municipio o zona no puede superar los 120 caracteres.';
+
+    if (!Number.isFinite(effectiveCentroid.lat) || effectiveCentroid.lat < BOLIVIA_BOUNDS.minLat || effectiveCentroid.lat > BOLIVIA_BOUNDS.maxLat) {
+      errors.latitude = 'La latitud debe estar entre -24 y -9 grados (Bolivia).';
     }
-    if (estimatedHarvestDate < plantingDate) {
-      setError('La fecha estimada de cosecha debe ser posterior a la fecha de siembra.');
+    if (!Number.isFinite(effectiveCentroid.lng) || effectiveCentroid.lng < BOLIVIA_BOUNDS.minLng || effectiveCentroid.lng > BOLIVIA_BOUNDS.maxLng) {
+      errors.longitude = 'La longitud debe estar entre -70 y -57 grados (Bolivia).';
+    }
+
+    const datesCanRemainUnknown = Boolean(
+      initialParcel && !isValidDate(initialParcel.plantingDate) && !isValidDate(initialParcel.estimatedHarvestDate)
+    );
+    const bothDatesEmpty = !plantingDate && !estimatedHarvestDate;
+    if (!(datesCanRemainUnknown && bothDatesEmpty)) {
+      if (!isValidDate(plantingDate)) errors.plantingDate = 'Selecciona una fecha de siembra válida.';
+      if (!isValidDate(estimatedHarvestDate)) errors.estimatedHarvestDate = 'Selecciona una fecha de cosecha válida.';
+      if (isValidDate(plantingDate) && isValidDate(estimatedHarvestDate) && estimatedHarvestDate <= plantingDate) {
+        errors.estimatedHarvestDate = 'La cosecha debe ser posterior a la fecha de siembra.';
+      }
+    }
+
+    if (!['Disponible', 'Parcial', 'En revisión'].includes(monitoringStatus)) {
+      errors.monitoringStatus = 'Selecciona un estado de monitoreo válido.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      const firstField = Object.keys(errors)[0] as ParcelFormField;
+      setFieldErrors(errors);
+      setFocusedField(firstField);
+      setError('Revisa los campos marcados para poder registrar la parcela.');
+      window.requestAnimationFrame(() => document.getElementById(`parcel-field-${firstField}`)?.focus());
       return;
     }
 
@@ -129,17 +194,32 @@ export function ParcelFormModal({
           createReferencePolygon(effectiveCentroid, effectiveArea)
         : createReferencePolygon(effectiveCentroid, effectiveArea);
 
+    const polygonLeavesBolivia = polygon.some(
+      (point) =>
+        point.lat < BOLIVIA_BOUNDS.minLat ||
+        point.lat > BOLIVIA_BOUNDS.maxLat ||
+        point.lng < BOLIVIA_BOUNDS.minLng ||
+        point.lng > BOLIVIA_BOUNDS.maxLng
+    );
+    if (polygon.length < 3 || polygonLeavesBolivia) {
+      setFieldErrors({ latitude: 'El centro o contorno excede el rango geográfico admitido para Bolivia.' });
+      setFocusedField('latitude');
+      setError('No se puede registrar una parcela fuera del rango geográfico admitido.');
+      window.requestAnimationFrame(() => document.getElementById('parcel-field-latitude')?.focus());
+      return;
+    }
+
     const parcelToSave: Parcel = initialParcel
       ? {
           ...initialParcel,
           name: trimmedName,
-          location: location.trim() || 'Bolivia',
-          department: department.trim() || location.trim(),
+          location: trimmedLocation,
+          department: trimmedDepartment,
           areaHa: Number(effectiveArea.toFixed(4)),
           measurement: validMeasurement ?? undefined,
-          crop: crop.trim() || 'Papa',
-          plantingDate,
-          estimatedHarvestDate,
+          crop: crop.trim(),
+          plantingDate: plantingDate || initialParcel.plantingDate,
+          estimatedHarvestDate: estimatedHarvestDate || initialParcel.estimatedHarvestDate,
           monitoringStatus,
           centroid: effectiveCentroid,
           polygon,
@@ -148,11 +228,11 @@ export function ParcelFormModal({
       : {
           id: `parcela-${Date.now()}`,
           name: trimmedName,
-          location: location.trim() || 'Bolivia',
-          department: department.trim() || 'Bolivia',
+          location: trimmedLocation,
+          department: trimmedDepartment,
           areaHa: Number(effectiveArea.toFixed(4)),
           measurement: validMeasurement ?? undefined,
-          crop: crop.trim() || 'Papa',
+          crop: crop.trim(),
           plantingDate,
           estimatedHarvestDate,
           registeredAt: new Date().toISOString().slice(0, 10),
@@ -180,6 +260,36 @@ export function ParcelFormModal({
     onClose();
   };
 
+  const clearFieldError = (field: ParcelFormField) => {
+    setFieldErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+    setError(null);
+  };
+
+  const fieldMessage = (field: ParcelFormField) => {
+    const fieldError = fieldErrors[field];
+    const message = fieldError || (focusedField === field ? FIELD_HELP[field] : null);
+    if (!message) return null;
+    return (
+      <p
+        id={`parcel-field-${field}-message`}
+        className={`mt-1.5 text-[11px] leading-relaxed ${
+          fieldError ? 'text-[var(--agro-danger-text)]' : 'text-[var(--agro-muted)]'
+        }`}
+        role={fieldError ? 'alert' : 'status'}
+      >
+        {message}
+      </p>
+    );
+  };
+
+  const fieldDescribedBy = (field: ParcelFormField) =>
+    fieldErrors[field] || focusedField === field ? `parcel-field-${field}-message` : undefined;
+
   return (
     <div
       className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
@@ -203,64 +313,89 @@ export function ParcelFormModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4">
+        <form noValidate onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4">
+          {!initialParcel && (
+            <p className="text-[11px] text-[var(--agro-muted)] leading-relaxed bg-[var(--agro-surface-soft)] rounded-xl px-3 py-2.5">
+              Completa los campos para registrar una parcela real. Puedes usar “Escanear en mapa” para calcular el área y las coordenadas.
+            </p>
+          )}
           {error && (
-            <div className="p-3 rounded-xl bg-[var(--agro-danger-bg)] border border-red-200 text-xs text-[var(--agro-danger-text)] font-medium">
+            <div role="alert" className="p-3 rounded-xl bg-[var(--agro-danger-bg)] border border-red-200 text-xs text-[var(--agro-danger-text)] font-medium">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
+            <label htmlFor="parcel-field-name" className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
               Nombre de la parcela
             </label>
             <input
+              id="parcel-field-name"
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => { setName(e.target.value); clearFieldError('name'); }}
+              onFocus={() => setFocusedField('name')}
+              onBlur={() => setFocusedField(null)}
               placeholder="Ej. Parcela Altiplano Este"
-              className="w-full h-11 px-3.5 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
+              maxLength={120}
+              aria-invalid={Boolean(fieldErrors.name)}
+              aria-describedby={fieldDescribedBy('name')}
+              className={`w-full h-11 px-3.5 rounded-xl border text-sm text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600 ${fieldErrors.name ? 'border-red-500' : 'border-[var(--agro-line)]'}`}
               required
             />
+            {fieldMessage('name')}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
+              <label htmlFor="parcel-field-crop" className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Cultivo actual
               </label>
               <select
+                id="parcel-field-crop"
                 value={crop}
-                onChange={(e) => setCrop(e.target.value)}
-                className="w-full h-11 px-3 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] bg-[var(--agro-surface)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                onChange={(e) => { setCrop(e.target.value); clearFieldError('crop'); }}
+                onFocus={() => setFocusedField('crop')}
+                onBlur={() => setFocusedField(null)}
+                aria-invalid={Boolean(fieldErrors.crop)}
+                aria-describedby={fieldDescribedBy('crop')}
+                className={`w-full h-11 px-3 rounded-xl border text-sm text-[var(--agro-text)] bg-[var(--agro-surface)] focus:outline-none focus:ring-2 focus:ring-emerald-600 ${fieldErrors.crop ? 'border-red-500' : 'border-[var(--agro-line)]'}`}
               >
-                <option value="Papa">Papa</option>
-                <option value="Quinua">Quinua</option>
-                <option value="Maíz">Maíz</option>
-                <option value="Haba">Haba</option>
-                <option value="Cebada">Cebada</option>
-                <option value="Soya">Soya</option>
-                <option value="Descanso">En descanso</option>
+                <option value="" disabled>Selecciona un cultivo</option>
+                {initialParcel && !CROP_OPTIONS.includes(initialParcel.crop) && (
+                  <option value={initialParcel.crop}>{initialParcel.crop}</option>
+                )}
+                {CROP_OPTIONS.map((option) => (
+                  <option key={option} value={option}>{option === 'Descanso' ? 'En descanso' : option}</option>
+                ))}
               </select>
+              {fieldMessage('crop')}
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
+              <label htmlFor="parcel-field-areaHa" className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 {measurement ? 'Superficie medida (ha)' : 'Superficie declarada (ha)'}
               </label>
               <input
+                id="parcel-field-areaHa"
                 type="number"
                 step="0.01"
                 min="0.01"
+                max="5000"
                 value={areaHa}
-                onChange={(e) => setAreaHa(e.target.value)}
+                onChange={(e) => { setAreaHa(e.target.value); clearFieldError('areaHa'); }}
+                onFocus={() => setFocusedField('areaHa')}
+                onBlur={() => setFocusedField(null)}
                 readOnly={Boolean(measurement)}
+                aria-invalid={Boolean(fieldErrors.areaHa)}
+                aria-describedby={fieldDescribedBy('areaHa')}
                 className={`w-full h-11 px-3.5 rounded-xl border text-sm font-mono tabular-nums text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600 ${
                   measurement
                     ? 'border-emerald-200 bg-emerald-50/70 font-semibold text-[#166534]'
-                    : 'border-[var(--agro-line)]'
+                    : fieldErrors.areaHa ? 'border-red-500' : 'border-[var(--agro-line)]'
                 }`}
                 required
               />
+              {fieldMessage('areaHa')}
             </div>
           </div>
 
@@ -279,6 +414,7 @@ export function ParcelFormModal({
                   type="button"
                   onClick={() => {
                     setMeasurement(null);
+                    setScannedPolygon(null);
                   }}
                   className="min-h-[42px] px-3.5 rounded-xl border border-[var(--agro-line)] text-xs font-semibold text-[var(--agro-text)] hover:bg-[var(--agro-soft)]"
                 >
@@ -316,90 +452,132 @@ export function ParcelFormModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
+              <label htmlFor="parcel-field-location" className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Ubicación
               </label>
               <input
+                id="parcel-field-location"
                 type="text"
                 value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="La Paz, Bolivia"
-                className="w-full h-11 px-3.5 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                onChange={(e) => { setLocation(e.target.value); clearFieldError('location'); }}
+                onFocus={() => setFocusedField('location')}
+                onBlur={() => setFocusedField(null)}
+                placeholder="Ej. Comunidad Achocalla"
+                maxLength={120}
+                aria-invalid={Boolean(fieldErrors.location)}
+                aria-describedby={fieldDescribedBy('location')}
+                className={`w-full h-11 px-3.5 rounded-xl border text-sm text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600 ${fieldErrors.location ? 'border-red-500' : 'border-[var(--agro-line)]'}`}
               />
+              {fieldMessage('location')}
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
+              <label htmlFor="parcel-field-department" className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Municipio / Zona
               </label>
               <input
+                id="parcel-field-department"
                 type="text"
                 value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                placeholder="Viacha"
-                className="w-full h-11 px-3.5 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                onChange={(e) => { setDepartment(e.target.value); clearFieldError('department'); }}
+                onFocus={() => setFocusedField('department')}
+                onBlur={() => setFocusedField(null)}
+                placeholder="Ej. Viacha, La Paz"
+                maxLength={120}
+                aria-invalid={Boolean(fieldErrors.department)}
+                aria-describedby={fieldDescribedBy('department')}
+                className={`w-full h-11 px-3.5 rounded-xl border text-sm text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600 ${fieldErrors.department ? 'border-red-500' : 'border-[var(--agro-line)]'}`}
               />
+              {fieldMessage('department')}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
+              <label htmlFor="parcel-field-plantingDate" className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Fecha de siembra
               </label>
               <input
+                id="parcel-field-plantingDate"
                 type="date"
                 value={plantingDate}
-                onChange={(e) => setPlantingDate(e.target.value)}
-                className="w-full h-11 px-3 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                onChange={(e) => { setPlantingDate(e.target.value); clearFieldError('plantingDate'); }}
+                onFocus={() => setFocusedField('plantingDate')}
+                onBlur={() => setFocusedField(null)}
+                aria-invalid={Boolean(fieldErrors.plantingDate)}
+                aria-describedby={fieldDescribedBy('plantingDate')}
+                className={`w-full h-11 px-3 rounded-xl border text-sm text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600 ${fieldErrors.plantingDate ? 'border-red-500' : 'border-[var(--agro-line)]'}`}
               />
+              {fieldMessage('plantingDate')}
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
+              <label htmlFor="parcel-field-estimatedHarvestDate" className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Cosecha estimada
               </label>
               <input
+                id="parcel-field-estimatedHarvestDate"
                 type="date"
                 value={estimatedHarvestDate}
-                onChange={(e) => setEstimatedHarvestDate(e.target.value)}
-                className="w-full h-11 px-3 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                onChange={(e) => { setEstimatedHarvestDate(e.target.value); clearFieldError('estimatedHarvestDate'); }}
+                onFocus={() => setFocusedField('estimatedHarvestDate')}
+                onBlur={() => setFocusedField(null)}
+                aria-invalid={Boolean(fieldErrors.estimatedHarvestDate)}
+                aria-describedby={fieldDescribedBy('estimatedHarvestDate')}
+                className={`w-full h-11 px-3 rounded-xl border text-sm text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600 ${fieldErrors.estimatedHarvestDate ? 'border-red-500' : 'border-[var(--agro-line)]'}`}
               />
+              {fieldMessage('estimatedHarvestDate')}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
+              <label htmlFor="parcel-field-latitude" className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Latitud (centro)
               </label>
               <input
+                id="parcel-field-latitude"
                 type="number"
-                step="0.0001"
+                min={BOLIVIA_BOUNDS.minLat}
+                max={BOLIVIA_BOUNDS.maxLat}
+                step="any"
                 value={lat}
-                onChange={(e) => setLat(e.target.value)}
+                onChange={(e) => { setLat(e.target.value); clearFieldError('latitude'); }}
+                onFocus={() => setFocusedField('latitude')}
+                onBlur={() => setFocusedField(null)}
                 readOnly={Boolean(measurement)}
+                aria-invalid={Boolean(fieldErrors.latitude)}
+                aria-describedby={fieldDescribedBy('latitude')}
                 className={`w-full h-11 px-3.5 rounded-xl border text-sm font-mono tabular-nums text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600 ${
                   measurement
                     ? 'border-emerald-200 bg-emerald-50/70 text-[#166534]'
-                    : 'border-[var(--agro-line)]'
+                    : fieldErrors.latitude ? 'border-red-500' : 'border-[var(--agro-line)]'
                 }`}
               />
+              {fieldMessage('latitude')}
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
+              <label htmlFor="parcel-field-longitude" className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
                 Longitud (centro)
               </label>
               <input
+                id="parcel-field-longitude"
                 type="number"
-                step="0.0001"
+                min={BOLIVIA_BOUNDS.minLng}
+                max={BOLIVIA_BOUNDS.maxLng}
+                step="any"
                 value={lng}
-                onChange={(e) => setLng(e.target.value)}
+                onChange={(e) => { setLng(e.target.value); clearFieldError('longitude'); }}
+                onFocus={() => setFocusedField('longitude')}
+                onBlur={() => setFocusedField(null)}
                 readOnly={Boolean(measurement)}
+                aria-invalid={Boolean(fieldErrors.longitude)}
+                aria-describedby={fieldDescribedBy('longitude')}
                 className={`w-full h-11 px-3.5 rounded-xl border text-sm font-mono tabular-nums text-[var(--agro-text)] focus:outline-none focus:ring-2 focus:ring-emerald-600 ${
                   measurement
                     ? 'border-emerald-200 bg-emerald-50/70 text-[#166534]'
-                    : 'border-[var(--agro-line)]'
+                    : fieldErrors.longitude ? 'border-red-500' : 'border-[var(--agro-line)]'
                 }`}
               />
+              {fieldMessage('longitude')}
             </div>
           </div>
           {measurement && (
@@ -410,18 +588,24 @@ export function ParcelFormModal({
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
+            <label htmlFor="parcel-field-monitoringStatus" className="block text-xs font-semibold text-[var(--agro-text)] mb-1.5">
               Estado de monitoreo
             </label>
             <select
+              id="parcel-field-monitoringStatus"
               value={monitoringStatus}
-              onChange={(e) => setMonitoringStatus(e.target.value as MonitoringStatus)}
-              className="w-full h-11 px-3 rounded-xl border border-[var(--agro-line)] text-sm text-[var(--agro-text)] bg-[var(--agro-surface)] focus:outline-none focus:ring-2 focus:ring-emerald-600"
+              onChange={(e) => { setMonitoringStatus(e.target.value as MonitoringStatus); clearFieldError('monitoringStatus'); }}
+              onFocus={() => setFocusedField('monitoringStatus')}
+              onBlur={() => setFocusedField(null)}
+              aria-invalid={Boolean(fieldErrors.monitoringStatus)}
+              aria-describedby={fieldDescribedBy('monitoringStatus')}
+              className={`w-full h-11 px-3 rounded-xl border text-sm text-[var(--agro-text)] bg-[var(--agro-surface)] focus:outline-none focus:ring-2 focus:ring-emerald-600 ${fieldErrors.monitoringStatus ? 'border-red-500' : 'border-[var(--agro-line)]'}`}
             >
               <option value="Disponible">Disponible</option>
               <option value="Parcial">Parcial</option>
               <option value="En revisión">En revisión</option>
             </select>
+            {fieldMessage('monitoringStatus')}
           </div>
 
           <div className="pt-2 flex items-center gap-3">
@@ -456,6 +640,9 @@ export function ParcelFormModal({
           setAreaHa(String(result.areaHa));
           setLat(String(result.centroid.lat));
           setLng(String(result.centroid.lng));
+          clearFieldError('areaHa');
+          clearFieldError('latitude');
+          clearFieldError('longitude');
           setScannerOpen(false);
         }}
       />

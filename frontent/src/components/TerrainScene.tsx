@@ -5,11 +5,11 @@ import { cropWindFlexibility, getWindMotion } from './terrainWind';
 
 export interface TerrainSceneProps {
   crop: 'papa' | 'quinua' | 'haba' | 'cebada';
-  weather: 'sun' | 'rain' | 'wind' | 'cloud';
+  weather: 'sun' | 'rain' | 'wind' | 'cloud' | 'snow';
   growth: number;
   wind: number;
   hour: number;
-  layers: { rain: boolean; clouds: boolean; soil: boolean; sway: boolean };
+  layers: { rain: boolean; clouds: boolean; soil: boolean; sway: boolean; snow: boolean };
   zoom: number;
 }
 
@@ -145,15 +145,64 @@ export function TerrainScene(props: TerrainSceneProps) {
     const furrows = new THREE.Group(); furrowsRef.current = furrows; const ridgesMaterial = new THREE.MeshStandardMaterial({ color: 0x866044, roughness: 1, side: THREE.DoubleSide });
     for (let row = 0; row < 9; row += 1) { const vertices: number[] = []; const indices: number[] = []; const segments = 96; const across = 12; const cx = -10.6 + row * 2.65; for (let iz = 0; iz <= segments; iz += 1) for (let ix = 0; ix <= across; ix += 1) { const z = -9.55 + iz / segments * 19.1; const u = ix / across * 2 - 1; const x = cx + u * .9; const rise = .58 * Math.pow(Math.max(0, 1 - u * u), 1.45); vertices.push(x, plot(x, z) + rise + .012, z); if (ix < across && iz < segments) { const a = iz * (across + 1) + ix; indices.push(a, a + across + 1, a + 1, a + 1, a + across + 1, a + across + 2); } } const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3)); geo.setIndex(indices); geo.computeVertexNormals(); const ridge = new THREE.Mesh(geo, ridgesMaterial); ridge.castShadow = true; ridge.receiveShadow = true; furrows.add(ridge); }
     furrows.visible = props.layers.soil; world.add(furrows);
+    const snowCover = new THREE.Group();
+    const snowGroundMaterial = new THREE.MeshStandardMaterial({ color: 0xf5f9fc, roughness: 1, transparent: true, opacity: .72, depthWrite: false, side: THREE.DoubleSide });
+    const groundSnow = new THREE.Mesh(
+      sculptedMesh(180, 180, 96, 96, (x, z) => terrainHeight(x, z) - .92, () => 0xf5f9fc),
+      snowGroundMaterial
+    );
+    groundSnow.receiveShadow = true;
+    groundSnow.renderOrder = 1;
+    snowCover.add(groundSnow);
+    const fieldSnow = new THREE.Mesh(
+      sculptedMesh(25.8, 20.8, 64, 56, (x, z) => plot(x, z) + .035, () => 0xfafcff),
+      new THREE.MeshStandardMaterial({ color: 0xfafcff, roughness: .96, transparent: true, opacity: .62, depthWrite: false, side: THREE.DoubleSide })
+    );
+    fieldSnow.renderOrder = 2;
+    snowCover.add(fieldSnow);
+    scene.add(snowCover);
     const puddles = new THREE.Group(); const puddleMaterial = new THREE.MeshPhysicalMaterial({ color: 0x638a8c, metalness: .1, roughness: .26, transparent: true, opacity: .7, depthWrite: false }); for (let i = 0; i < 17; i += 1) { const row = i % 8; const x = -9.27 + row * 2.65 + (hash(i, 3) - .5) * .2; const z = -8.1 + hash(i, 5) * 16; const water = new THREE.Mesh(new THREE.CircleGeometry(.28 + hash(i, 9) * .55, 20), puddleMaterial); water.rotation.x = -Math.PI / 2; water.scale.y = .45 + hash(i, 15) * .5; water.position.set(x, plot(x, z) + .022, z); puddles.add(water); } puddles.visible = props.weather === 'rain'; world.add(puddles);
     const pebbles = new THREE.Group(); const pebbleMaterials = [0x9a8971, 0x746d5c, 0xada28b].map((color) => new THREE.MeshStandardMaterial({ color, roughness: 1 })); const pebbleGeometry = new THREE.IcosahedronGeometry(1, 0); for (let i = 0; i < 235; i += 1) { const x = (hash(i, 15) - .5) * 25.1; const z = (hash(i, 16) - .5) * 20; if (Math.abs(Math.cos((x + 10.6) * Math.PI / 2.65)) > .67) continue; const stone = new THREE.Mesh(pebbleGeometry, pebbleMaterials[i % 3]); const size = .045 + hash(i, 19) * .125; stone.scale.set(size * 1.4, size * .57, size); stone.position.set(x, plot(x, z) + size * .23 + .02, z); stone.castShadow = true; pebbles.add(stone); } world.add(pebbles);
     const plants = addCrops(world, props); plantsRef.current = plants; world.add(plants);
     const hills = new THREE.Group(); const hillMaterials = [0x789477, 0x87a08a, 0x9dac8d].map((color) => new THREE.MeshStandardMaterial({ color, roughness: 1 })); for (let i = 0; i < 27; i += 1) { const angle = i / 27 * Math.PI * 2; const radius = 43 + rng(i + 27) * 36; const height = 7 + rng(i + 12) * 7; const hill = new THREE.Mesh(new THREE.ConeGeometry(8 + rng(i + 41) * 11, height, 6), hillMaterials[i % 3]); hill.position.set(Math.cos(angle) * radius, height / 2 - 1.2, Math.sin(angle) * radius); hill.receiveShadow = true; hills.add(hill); } scene.add(hills);
+    const snowCaps = new THREE.Group();
+    const snowCapMaterial = new THREE.MeshStandardMaterial({ color: 0xf7fbff, roughness: .94 });
+    for (let i = 0; i < 27; i += 1) {
+      const angle = i / 27 * Math.PI * 2;
+      const radius = 43 + rng(i + 27) * 36;
+      const height = 7 + rng(i + 12) * 7;
+      if (height < 10) continue;
+      const hillRadius = 8 + rng(i + 41) * 11;
+      const capHeight = height * .28;
+      const cap = new THREE.Mesh(new THREE.ConeGeometry(hillRadius * .28, capHeight, 6), snowCapMaterial);
+      cap.position.set(Math.cos(angle) * radius, height - 1.2 - capHeight / 2 + .025, Math.sin(angle) * radius);
+      snowCaps.add(cap);
+    }
+    scene.add(snowCaps);
     const clouds = new THREE.Group(); const cloudMaterial = new THREE.MeshStandardMaterial({ color: 0xf5f9f7, roughness: 1, transparent: true, opacity: .84, depthWrite: false }); for (let i = 0; i < 6; i += 1) { const cloud = new THREE.Group(); const pieces = 4 + Math.floor(rng(i + 3) * 4); for (let j = 0; j < pieces; j += 1) { const puff = new THREE.Mesh(new THREE.SphereGeometry(1, 9, 7), cloudMaterial); puff.position.set(j * 1.2 - pieces * .6, Math.sin(j * 1.7) * .34, (rng(i * 17 + j) - .5) * 1.3); puff.scale.set(1.7 + rng(i + j + 6), .6 + rng(i * 3 + j) * .45, 1.08); cloud.add(puff); } cloud.position.set(-17 + i * 6, 12 + rng(i * 4) * 5, -11 + rng(i + 12) * 18); clouds.add(cloud); } scene.add(clouds);
     const drops = 1700; const rainPositions = new Float32Array(drops * 3); const rainVelocity = new Float32Array(drops); for (let i = 0; i < drops; i += 1) { rainPositions[i * 3] = (Math.random() - .5) * 32; rainPositions[i * 3 + 1] = Math.random() * 20; rainPositions[i * 3 + 2] = (Math.random() - .5) * 28; rainVelocity[i] = .18 + Math.random() * .24; } const rainGeometry = new THREE.BufferGeometry(); rainGeometry.setAttribute('position', new THREE.BufferAttribute(rainPositions, 3)); const rain = new THREE.Points(rainGeometry, new THREE.PointsMaterial({ color: 0xc9e1ee, size: .09, transparent: true, opacity: .82, depthWrite: false, sizeAttenuation: true })); scene.add(rain);
+    const snowCount = 850;
+    const snowPositions = new Float32Array(snowCount * 3);
+    const snowSpeeds = new Float32Array(snowCount);
+    const snowPhases = new Float32Array(snowCount);
+    for (let i = 0; i < snowCount; i += 1) {
+      snowPositions[i * 3] = (Math.random() - .5) * 32;
+      snowPositions[i * 3 + 1] = Math.random() * 18;
+      snowPositions[i * 3 + 2] = (Math.random() - .5) * 28;
+      snowSpeeds[i] = .035 + Math.random() * .045;
+      snowPhases[i] = Math.random() * Math.PI * 2;
+    }
+    const snowGeometry = new THREE.BufferGeometry();
+    snowGeometry.setAttribute('position', new THREE.BufferAttribute(snowPositions, 3));
+    const snowflakes = new THREE.Points(
+      snowGeometry,
+      new THREE.PointsMaterial({ color: 0xf7fbff, size: .12, transparent: true, opacity: .92, depthWrite: false, sizeAttenuation: true })
+    );
+    snowflakes.renderOrder = 3;
+    scene.add(snowflakes);
     const windTrails = new THREE.Group(); const trails: THREE.Line[] = []; for (let i = 0; i < 22; i += 1) { const geo = new THREE.BufferGeometry().setFromPoints(Array.from({ length: 12 }, (_, k) => new THREE.Vector3(k * .32, Math.sin(k * .33) * .11, 0))); const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0xe5f4e6, transparent: true, opacity: .37 })); line.position.set(-18 + rng(i + 90) * 32, 1.7 + rng(i + 59) * 5, -12 + rng(i + 104) * 24); windTrails.add(line); trails.push(line); } scene.add(windTrails);
      const resize = () => { const width = host.clientWidth; const height = host.clientHeight; renderer.setSize(width, height, false); camera.aspect = width / height; camera.updateProjectionMatrix(); }; const resizeObserver = new ResizeObserver(resize); resizeObserver.observe(host); resize(); const clock = new THREE.Clock(); let frame = 0; let animation = 0; let isVisible = true;
-     const animate = () => { if (!isVisible) { animation = 0; return; } animation = requestAnimationFrame(animate); const current = propsRef.current; const time = clock.getElapsedTime(); const sunAngle = (((current.hour - 6) / 13) * .85 + .075) * Math.PI; sun.position.set(Math.cos(sunAngle) * 32, Math.max(3, Math.sin(sunAngle) * 37), -21 + Math.sin(sunAngle) * 9); sun.intensity = (.6 + Math.sin(sunAngle) * 2.2) * (current.weather === 'rain' ? .52 : current.weather === 'cloud' ? .75 : 1); hemi.intensity = (.8 + Math.sin(sunAngle) * 1.3) * (current.weather === 'rain' ? .8 : 1); scene.background = new THREE.Color(.62 + (1 - Math.sin(sunAngle)) * .08, .76 + (1 - Math.sin(sunAngle)) * .01, .78 - (1 - Math.sin(sunAngle)) * .04); clouds.visible = current.layers.clouds && current.weather !== 'sun'; rain.visible = current.layers.rain && current.weather === 'rain'; furrows.visible = current.layers.soil; windTrails.visible = current.weather === 'wind' && current.wind > 3; const activePlants = plantsRef.current ?? plants; activePlants.children.forEach((plant) => { const seed = Number(plant.userData.seed); const core = plant.children[0]; if (!core) return; const motion = getWindMotion(time, current.wind, current.layers.sway, reduceMotionRef.current, seed, Number(plant.userData.flexibility) || 1); core.rotation.z = motion.z; core.rotation.x = motion.x; }); if (rain.visible) { const drift = current.wind / 80 * .11; for (let i = 0; i < drops; i += 1) { const k = i * 3; rainPositions[k + 1] -= rainVelocity[i] * 1.4; rainPositions[k] += drift; if (rainPositions[k + 1] < 2) { rainPositions[k + 1] = 13 + Math.random() * 7; rainPositions[k] = (Math.random() - .5) * 28; } } rainGeometry.attributes.position.needsUpdate = true; } if (windTrails.visible) trails.forEach((trail, index) => { trail.position.x += .035 + current.wind * .002; if (trail.position.x > 21) trail.position.x = -19; (trail.material as THREE.LineBasicMaterial).opacity = .15 + Math.sin(time * 1.5 + index) * .07; }); controls.update(); frame += 1; if (frame % 2 === 0) renderer.render(scene, camera); };
+     const animate = () => { if (!isVisible) { animation = 0; return; } animation = requestAnimationFrame(animate); const current = propsRef.current; const time = clock.getElapsedTime(); const sunAngle = (((current.hour - 6) / 13) * .85 + .075) * Math.PI; sun.position.set(Math.cos(sunAngle) * 32, Math.max(3, Math.sin(sunAngle) * 37), -21 + Math.sin(sunAngle) * 9); sun.intensity = (.6 + Math.sin(sunAngle) * 2.2) * (current.weather === 'rain' ? .52 : current.weather === 'cloud' ? .75 : current.weather === 'snow' ? .68 : 1); sun.color.set(current.weather === 'snow' ? 0xd9eaf6 : 0xffecc5); hemi.intensity = (.8 + Math.sin(sunAngle) * 1.3) * (current.weather === 'rain' ? .8 : current.weather === 'snow' ? 1.12 : 1); scene.background = current.weather === 'snow' ? new THREE.Color(0xb8c9d5) : new THREE.Color(.62 + (1 - Math.sin(sunAngle)) * .08, .76 + (1 - Math.sin(sunAngle)) * .01, .78 - (1 - Math.sin(sunAngle)) * .04); clouds.visible = current.layers.clouds && current.weather !== 'sun'; rain.visible = current.layers.rain && current.weather === 'rain'; puddles.visible = current.layers.rain && current.weather === 'rain'; furrows.visible = current.layers.soil; windTrails.visible = current.weather === 'wind' && current.wind > 3; const snowActive = current.weather === 'snow' && current.layers.snow; snowCover.visible = snowActive; snowCaps.visible = snowActive; snowflakes.visible = snowActive && !reduceMotionRef.current; if (snowflakes.visible) { const drift = current.wind / 80 * .075; for (let i = 0; i < snowCount; i += 1) { const k = i * 3; snowPositions[k + 1] -= snowSpeeds[i]; snowPositions[k] += drift + Math.sin(time * .8 + snowPhases[i]) * .006; snowPositions[k + 2] += Math.cos(time * .65 + snowPhases[i]) * .004; if (snowPositions[k + 1] < 1.3) { snowPositions[k] = (Math.random() - .5) * 32; snowPositions[k + 1] = 14 + Math.random() * 5; snowPositions[k + 2] = (Math.random() - .5) * 28; } else { if (snowPositions[k] > 16) snowPositions[k] = -16; if (snowPositions[k] < -16) snowPositions[k] = 16; if (snowPositions[k + 2] > 14) snowPositions[k + 2] = -14; if (snowPositions[k + 2] < -14) snowPositions[k + 2] = 14; } } snowGeometry.attributes.position.needsUpdate = true; } const activePlants = plantsRef.current ?? plants; activePlants.children.forEach((plant) => { const seed = Number(plant.userData.seed); const core = plant.children[0]; if (!core) return; const motion = getWindMotion(time, current.wind, current.layers.sway, reduceMotionRef.current, seed, Number(plant.userData.flexibility) || 1); core.rotation.z = motion.z; core.rotation.x = motion.x; }); if (rain.visible) { const drift = current.wind / 80 * .11; for (let i = 0; i < drops; i += 1) { const k = i * 3; rainPositions[k + 1] -= rainVelocity[i] * 1.4; rainPositions[k] += drift; if (rainPositions[k + 1] < 2) { rainPositions[k + 1] = 13 + Math.random() * 7; rainPositions[k] = (Math.random() - .5) * 28; } } rainGeometry.attributes.position.needsUpdate = true; } if (windTrails.visible) trails.forEach((trail, index) => { trail.position.x += .035 + current.wind * .002; if (trail.position.x > 21) trail.position.x = -19; (trail.material as THREE.LineBasicMaterial).opacity = .15 + Math.sin(time * 1.5 + index) * .07; }); controls.update(); frame += 1; if (frame % 2 === 0) renderer.render(scene, camera); };
      const visibilityObserver = typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver(([entry]) => { isVisible = entry?.isIntersecting ?? true; if (isVisible && !animation) animation = requestAnimationFrame(animate); }, { threshold: .01 }); visibilityObserver?.observe(host); animate(); return () => { cancelAnimationFrame(animation); motionQuery.removeEventListener?.('change', updateMotion); resizeObserver.disconnect(); visibilityObserver?.disconnect(); controls.dispose(); disposeObject(scene); renderer.dispose(); if (renderer.domElement.parentElement === host) host.removeChild(renderer.domElement); sceneRef.current = null; worldRef.current = null; plantsRef.current = null; furrowsRef.current = null; cameraRef.current = null; controlsRef.current = null; };
   }, []);
   useEffect(() => {

@@ -5,7 +5,7 @@ import {
   Parcel,
   ParcelBoundingBox,
   ParcelMeasurement,
-} from '../types/agroterra';
+} from '../types/agroshift';
 
 /**
  * Geodesic helpers for measuring a parcel boundary drawn on the Leaflet map.

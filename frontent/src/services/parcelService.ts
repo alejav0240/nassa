@@ -1,5 +1,5 @@
 import { INITIAL_PARCELS } from '../data/mockData';
-import { FieldObservation, Parcel } from '../types/agroterra';
+import { FieldObservation, Parcel } from '../types/agroshift';
 import { backendApi, BackendField, BackendFieldPayload } from './apiClient';
 
 const STORAGE_KEY = 'agroterra_parcels_v1';

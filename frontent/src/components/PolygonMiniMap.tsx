@@ -1,5 +1,5 @@
 import { MapContainer, Polygon, TileLayer } from 'react-leaflet';
-import { Parcel } from '../types/agroterra';
+import { Parcel } from '../types/agroshift';
 
 interface PolygonMiniMapProps {
   parcel: Parcel;
