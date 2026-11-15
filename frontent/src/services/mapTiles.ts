@@ -9,7 +9,7 @@ function withKey(url: string): string {
 export function getBaseMapTileUrl(theme: MapTheme): string {
   if (!cartoKey) return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
   const style = theme === 'dark' ? 'dark_all' : 'light_all';
-  return withKey(`https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`);
+  return withKey(`https://{s}.basemaps.cartocdn.com/rastertiles/${style}/{z}/{x}/{y}{r}.png`);
 }
 
 export function getBaseMapAttribution(): string {
