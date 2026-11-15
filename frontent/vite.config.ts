@@ -5,6 +5,9 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    // Load the shared local .env from the repository root when Vite runs in frontent/.
+    // Only VITE_-prefixed variables are exposed to browser code.
+    envDir: '..',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
