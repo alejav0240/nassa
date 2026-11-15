@@ -5,9 +5,6 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    // The repository keeps shared local environment values in the project root.
-    // Vite only exposes variables prefixed with VITE_ to browser code.
-    envDir: '..',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
