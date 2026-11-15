@@ -87,7 +87,27 @@ export function ParcelDetailScreen({
         </button>
       </div>
 
-      {/* Custom area visualization + Core Metadata */}
+      <section className="rounded-3xl border border-[var(--agro-line)]/90 bg-[var(--agro-surface)] p-4 shadow-xs">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wide font-bold text-[var(--agro-muted)]">Parcela seleccionada</p>
+            <h1 className="text-xl font-bold text-[var(--agro-text)] mt-1 truncate">{parcel.name}</h1>
+            <p className="text-xs text-[var(--agro-muted)] flex items-center gap-1.5 mt-1">
+              <MapPin className="w-3.5 h-3.5 shrink-0" /> {parcel.department} · {parcel.location}
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full bg-[var(--agro-success-bg)] px-2.5 py-1 text-[11px] font-bold text-[var(--agro-success-text)]">
+            {parcel.monitoringStatus}
+          </span>
+        </div>
+        <div className="grid grid-cols-3 gap-3 mt-4 pt-3 border-t border-[var(--agro-line)]">
+          <div><p className="text-[10px] text-[var(--agro-muted)]">Superficie</p><p className="text-sm font-bold text-[var(--agro-text)] font-mono tabular-nums mt-0.5">{parcel.areaHa.toFixed(2)} ha</p></div>
+          <div><p className="text-[10px] text-[var(--agro-muted)]">Cultivo</p><p className="text-sm font-bold text-[var(--agro-text)] mt-0.5 truncate">{parcel.crop}</p></div>
+          <div><p className="text-[10px] text-[var(--agro-muted)]">Geometría</p><p className="text-sm font-bold text-[var(--agro-text)] mt-0.5">{parcel.polygon.length} vértices</p></div>
+        </div>
+      </section>
+
+      {/* Referencial shape visualization + core metadata */}
       <Parcel3DView parcel={parcel} />
 
       {!hasIndicators && (
@@ -99,7 +119,7 @@ export function ParcelDetailScreen({
       <div className="bg-[var(--agro-surface)] rounded-3xl p-4 border border-[var(--agro-line)]/90 shadow-xs space-y-4">
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2">
-            <h1 className="text-xl font-bold text-[var(--agro-text)]">{parcel.name}</h1>
+            <h2 className="text-base font-bold text-[var(--agro-text)]">Metadatos de la parcela</h2>
             <span className="text-xs font-semibold text-[var(--agro-lime)]">{parcel.monitoringStatus}</span>
           </div>
           <p className="text-xs text-[var(--agro-muted)] flex items-center gap-1.5">
